@@ -1,5 +1,6 @@
 import { config } from 'dotenv';
 import { Type } from '@sinclair/typebox';
+import { AppConfig } from '../types';
 
 config();
 
@@ -16,9 +17,7 @@ export const ConfigSchema = Type.Object({
   ], { default: 'development' })
 });
 
-export type Config = typeof ConfigSchema;
-
-export const appConfig = {
+export const appConfig: AppConfig = {
   PORT: parseInt(process.env.PORT || '3001', 10),
-  NODE_ENV: process.env.NODE_ENV || 'development'
-} as const; 
+  NODE_ENV: (process.env.NODE_ENV as AppConfig['NODE_ENV']) || 'development'
+}; 

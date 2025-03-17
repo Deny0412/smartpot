@@ -2,17 +2,21 @@ import { FastifyPluginAsync } from 'fastify';
 import { Type } from '@sinclair/typebox';
 
 const routes: FastifyPluginAsync = async (fastify) => {
-  // Example route with TypeBox schema
-  fastify.get('/hello', {
+  // Health check endpoint
+  fastify.get('/health', {
     schema: {
       response: {
         200: Type.Object({
-          message: Type.String()
+          status: Type.String(),
+          timestamp: Type.String()
         })
       }
     }
   }, async () => {
-    return { message: 'Hello from the backend!' };
+    return {
+      status: 'ok',
+      timestamp: new Date().toISOString()
+    };
   });
 };
 

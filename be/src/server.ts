@@ -1,8 +1,8 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
-import swagger from '@fastify/swagger';
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { appConfig } from './config/config';
+import { swaggerPlugin } from './plugins/swagger';
 
 const fastify = Fastify({
   logger: true
@@ -13,21 +13,7 @@ fastify.register(cors, {
   origin: true // allow all origins for now
 });
 
-// Swagger documentation
-fastify.register(swagger, {
-  openapi: {
-    info: {
-      title: 'Backend API',
-      description: 'API documentation',
-      version: '1.0.0'
-    },
-    servers: [
-      {
-        url: `http://localhost:${appConfig.PORT}`
-      }
-    ]
-  }
-});
+fastify.register(swaggerPlugin);
 
 // Register routes
 fastify.register(import('./routes'));
