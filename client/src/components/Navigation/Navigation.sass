@@ -1,0 +1,76 @@
+@import "../../styles/global"
+
+.navbar
+  display: flex
+  justify-content: space-between
+  align-items: center
+  padding: 1rem 1.5rem
+  color: white
+  height: 70px
+  
+  &__logo
+    display: flex
+    align-items: center
+    
+    &-icon
+      width: 40px
+      height: 40px
+      margin-right: 10px
+      
+      img
+        width: 100%
+        height: 100%
+    
+    &-text
+      font-size: 1.2rem
+      font-weight: 500
+      color: $secondary-text
+  
+  &__actions
+    display: flex
+    align-items: center
+  
+  &__notification-btn
+    background: none
+    border: none
+    cursor: pointer
+    margin-right: 1rem
+    
+    img
+      width: 24px
+      height: 24px
+  
+  &__menu-btn
+    background: none
+    border: none
+    cursor: pointer
+    padding: 0.5rem
+  
+  &__menu-icon
+    width: 24px
+    height: 18px
+    position: relative
+    display: flex
+    justify-content: center
+    align-items: center
+    flex-direction: column
+    gap: 2.6px 
+    
+    span
+      display: block
+      height: 2px
+      width: 100%
+      background: white
+      border-radius: 2px
+      transition: all 0.3s ease
+  
+    &.open
+      span
+        &:first-child
+          transform: rotate(45deg) translateY(7px)
+
+        &:nth-child(2)
+          opacity: 0
+
+        &:last-child
+          transform: rotate(-45deg) translateY(-7px)
