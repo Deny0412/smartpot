@@ -1,4 +1,4 @@
-import { FastifyPluginAsync } from "fastify";
+import { FastifyPluginAsync, FastifyRequest, FastifyReply } from "fastify";
 import { Type } from "@sinclair/typebox";
 import { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import crypto from "crypto";
@@ -7,7 +7,19 @@ import {
   UserSchema,
   LoginSchema,
   ForgotPasswordSchema,
-} from "../../../auth/src/types/auth";
+  JwtPayload,
+} from "../types/auth";
+import "@fastify/jwt";
+
+declare module "fastify" {
+  interface FastifyInstance {
+    authenticate: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
+    jwt: {
+      sign: (payload: JwtPayload) => string;
+      verify: (token: string) => JwtPayload;
+    };
+  }
+}
 
 // Simulate a simple user database (replace with real database in production)
 const users = new Map<string, User>();
