@@ -5,7 +5,7 @@ export interface IPot extends Document {
   name: string;
 }
 
-const POT_SCHEMA = new Schema<IPot>(
+const potSchema = new Schema<IPot>(
   {
     id_profile: { type: String, required: true },
     name: { type: String, required: true },
@@ -13,6 +13,6 @@ const POT_SCHEMA = new Schema<IPot>(
   { timestamps: true }
 ); // Adds `createdAt` & `updatedAt` fields
 
-const POT_MODEL = model<IPot>("Pot", POT_SCHEMA);
+const PotModel = model<IPot>("Pot", potSchema);
 
-export default POT_MODEL;
+export default PotModel;
