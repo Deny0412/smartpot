@@ -1,16 +1,22 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import potDao from "../../dao/pot/pot-dao"; // Adjust the import based on your DAO structure
-import { sendSuccess, sendError } from "../../middleware/response-handler";
+import { sendSuccess, sendError, sendNotFound, sendClientError } from "../../middleware/response-handler";
+import mongoose from 'mongoose';
 
-async function getPotHandler(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
+async function getPotHandler(id: string, reply: FastifyReply) {
     try {
-        const pot = await potDao.getPot(request.params.id);
-        if (!pot) {
-            return sendError(reply, "Pot not found"); 
+        // Validate ObjectId format first
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return sendClientError(reply, "Invalid pot ID format");
         }
-        sendSuccess(reply, pot, "Pot retrieved successfully");
+
+        const pot = await potDao.getPot(id);
+        if (!pot) {
+            return sendNotFound(reply, "Pot not found");
+        }
+        return sendSuccess(reply, pot, "Pot retrieved successfully");
     } catch (error) {
-        sendError(reply, error); 
+        return sendError(reply, error);
     }
 }
 

@@ -1,8 +1,11 @@
 import PotModel from '../../models/Pot';
-
+import mongoose from 'mongoose';
 
 async function deletePot(id: string) {
-    await PotModel.findByIdAndDelete(id); 
+    
+    const deletedPot = await PotModel.findByIdAndDelete(id);
+    
+    return deletedPot;
 }
 
 export default deletePot; 

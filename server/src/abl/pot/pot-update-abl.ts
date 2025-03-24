@@ -1,39 +1,37 @@
 import Ajv from "ajv";
 const ajv = new Ajv();
 import { FastifyRequest, FastifyReply } from "fastify";
-import potDao from "../../dao/pot/pot-update-dao"; // Adjust the import based on your DAO structure
+import potDao from "../../dao/pot/pot-dao";
+import { IPot } from "../../models/Pot";
+import { sendSuccess, sendError, sendNotFound, sendClientError } from "../../middleware/response-handler";
+import mongoose from 'mongoose';
 
 const SCHEMA = {
     type: "object",
     properties: {
-        id: { type: "string" },
+        _id: { type: "string" },
+        id_profile: { type: "string" },
         name: { type: "string" },
-        // Add other properties as needed
     },
-    required: ["id"],
+    required: ["_id", "id_profile", "name"],
     additionalProperties: false,
 };
 
-async function updatePotHandler(request: FastifyRequest, reply: FastifyReply) {
+async function updatePotHandler(data: IPot, reply: FastifyReply) {
     try {
-        const potData = request.body;
-        const valid = ajv.validate(SCHEMA, potData);
-        if (!valid) {
-            reply.status(400).send({
-                code: "dtoInIsNotValid",
-                message: "dtoIn is not valid",
-                validationError: ajv.errors,
-            });
-            return;
+        
+
+
+        const updatedPot = await potDao.updatePot(String(data._id), data);
+        
+        if (!updatedPot) {
+            return sendNotFound(reply, "Pot not found");
         }
-        const updatedPot = await potDao.updatePot(potData);
-        reply.status(200).send({
-            updatedPot,
-            message: "Pot updated successfully",
-            status: "success",
-        });
+
+        return sendSuccess(reply, updatedPot, "Pot updated successfully");
     } catch (error) {
-        reply.status(500).send({ message: error.message, status: "error" });
+        console.error('Error updating pot:', error);
+        return sendError(reply, "Failed to update pot");
     }
 }
 
