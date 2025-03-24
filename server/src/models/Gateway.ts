@@ -6,7 +6,7 @@ interface IConnectedDevice {
   lastUpdate: Date;
 }
 
-interface IGateway extends Document {
+export interface IGateway extends Document {
   serialNumber: string;
   idHousehold: string;
   status: "online" | "offline";

@@ -1,10 +1,10 @@
 import { Schema, model, Document } from "mongoose";
 
-interface IHousehold extends Document {
+export interface IHousehold extends Document {
   name: string;
   owner: string;
-  members: [string];
-  invites: [string];
+  members: string[];
+  invites: string[];
 }
 
 const HOUSEHOLD_SCHEMA = new Schema<IHousehold>(

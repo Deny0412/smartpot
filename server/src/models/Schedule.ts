@@ -1,6 +1,6 @@
 import { Schema, model, Document } from "mongoose";
 
-interface ISchedule extends Document {
+export interface ISchedule extends Document {
   id_pot: string;
   monday: "";
   tuesday: "";
