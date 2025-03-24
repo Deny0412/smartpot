@@ -1,7 +1,8 @@
-import { Pot } from '../../models/Pot'; // Adjust the import based on your model structure
+import PotModel from '../../models/Pot';
+import { IPot } from '../../models/Pot';
 
-async function createPot(potData: any) {
-    const newPot = new Pot(potData);
+async function createPot(data: IPot) {
+    const newPot = new PotModel(data);
     await newPot.save();
     return newPot;
 }
