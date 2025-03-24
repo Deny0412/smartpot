@@ -22,9 +22,9 @@ export const potController = {
     },
     delete: async (request: FastifyRequest, reply: FastifyReply) => {
         try {
-            const id = (request.params as Params).id; 
-            const response = await potAbl.delete(id, reply);
-            sendSuccess(reply, response, "Pot deleted successfully");
+            const id = (request.params as Params).id;
+            await potAbl.delete(id, reply);
+            // The response is handled in the ABL layer
         } catch (error) {
             sendError(reply, error);
         }
