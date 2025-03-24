@@ -1,13 +1,11 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import potDao from "../../dao/pot/pot-delete-dao"; // Adjust the import based on your DAO structure
-
-async function deletePotHandler(request: FastifyRequest, reply: FastifyReply) {
-    const { id } = request.params; // Assuming the ID is passed as a URL parameter
+import potDao from "../../dao/pot/pot-dao"; // Adjust the import based on your DAO structure
+import {sendError, sendNoContent} from "../../middleware/response-handler";
+async function deletePotHandler(id: string, reply: FastifyReply) {
     try {
-        await potDao.deletePot(id);
-        reply.status(200).send({ message: "Pot deleted successfully", status: "success" });
+        return await potDao.deletePot(id);
     } catch (error) {
-        reply.status(500).send({ message: error.message, status: "error" });
+        sendError(reply, error);
     }
 }
 

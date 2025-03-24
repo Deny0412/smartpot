@@ -21,8 +21,8 @@ async function listPotsByHousehold(pageInfo: any, householdId: string) {
 }
 
 
-async function updatePotById(id: string, potData: IPot) {
-    return await updatePot(id, potData); 
+async function updatePotById(id: string, data: IPot) {
+    return await updatePot(id, data); 
 }
 
 

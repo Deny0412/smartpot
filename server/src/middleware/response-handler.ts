@@ -25,7 +25,6 @@ export const sendNoContent = (reply: FastifyReply, message: string = "No content
 export const sendError = (reply: FastifyReply, error: unknown) => {
     let statusCode = 500; // Default to Internal Server Error
     let message = "Unknown error occurred"; // Default error message
-
     if (error instanceof Error) {
         message = error.message; // Use the error message
         if (message.includes("not found")) {
@@ -39,7 +38,7 @@ export const sendError = (reply: FastifyReply, error: unknown) => {
         }
     }
 
-    sendResponse(reply, statusCode, null, message); // Use sendResponse for error handling
+    sendResponse(reply, statusCode, null, message); 
 };
 
 // 4xx Responses
