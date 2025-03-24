@@ -1,10 +1,9 @@
-import householdDAO from "./household-dao";
+import HOUSEHOLD_MODEL from "../../models/Household";
 import { IHousehold } from "../../models/Household";
 
-export async function createHousehold(data: IHousehold) {
+async function createHousehold(data: IHousehold) {
   try {
-    const household = await householdDAO.create(data);
-    return household;
+    return await HOUSEHOLD_MODEL.create(data);
   } catch (error) {
     if (error instanceof Error) {
       throw { code: "failedToCreateHousehold", message: error.message };
@@ -16,3 +15,4 @@ export async function createHousehold(data: IHousehold) {
     }
   }
 }
+export default createHousehold;

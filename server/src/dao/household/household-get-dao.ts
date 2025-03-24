@@ -1,9 +1,8 @@
-import householdDAO from "./household-dao";
+import HOUSEHOLD_MODEL from "../../models/Household";
 
-export async function getHousehold(id: string) {
+async function getHousehold(id: string) {
   try {
-    const household = await householdDAO.get(id);
-    return household;
+    return await HOUSEHOLD_MODEL.findById(id);
   } catch (error) {
     if (error instanceof Error) {
       throw { code: "failedToGetHousehold", message: error.message };
@@ -15,3 +14,5 @@ export async function getHousehold(id: string) {
     }
   }
 }
+
+export default getHousehold;

@@ -1,13 +1,14 @@
-import householdDAO from "./household-dao";
+import HOUSEHOLD_MODEL from "../../models/Household";
 import { IHousehold } from "../../models/Household";
 
-export async function updateHousehold(id: string, data: IHousehold) {
+async function updateHousehold(id: string, data: IHousehold) {
   if (!id) {
     throw { code: "missingHouseholdId", message: "Household ID is required" };
   }
-
   try {
-    return await householdDAO.update(id, data);
+    return await HOUSEHOLD_MODEL.findByIdAndUpdate(id, data, {
+      new: true,
+    });
   } catch (error) {
     throw {
       code: "failedToUpdateHousehold",
@@ -16,3 +17,4 @@ export async function updateHousehold(id: string, data: IHousehold) {
     };
   }
 }
+export default updateHousehold;
