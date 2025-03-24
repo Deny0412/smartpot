@@ -6,8 +6,8 @@ import listPots from './pot-list-dao';
 import getPot from './pot-get-dao';
 
 
-async function createPot(potData: IPot) {
-    return await create(potData); 
+async function createPot(data: IPot) {
+    return await create(data); 
 }
 
 

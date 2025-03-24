@@ -1,17 +1,16 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import potDao from "../../dao/pot/pot-get-dao"; // Adjust the import based on your DAO structure
+import potDao from "../../dao/pot/pot-dao"; // Adjust the import based on your DAO structure
+import { sendSuccess, sendError } from "../../middleware/response-handler";
 
-async function getPotHandler(request: FastifyRequest, reply: FastifyReply) {
-    const { id } = request.params; // Assuming the ID is passed as a URL parameter
+async function getPotHandler(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
     try {
-        const pot = await potDao.getPot(id);
-        reply.status(200).send({
-            pot,
-            message: "Pot retrieved successfully",
-            status: "success",
-        });
+        const pot = await potDao.getPot(request.params.id);
+        if (!pot) {
+            return sendError(reply, "Pot not found"); 
+        }
+        sendSuccess(reply, pot, "Pot retrieved successfully");
     } catch (error) {
-        reply.status(500).send({ message: error.message, status: "error" });
+        sendError(reply, error); 
     }
 }
 

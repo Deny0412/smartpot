@@ -5,13 +5,14 @@ import deletePotHandler from '../abl/pot/pot-delete-abl';
 import getPotHandler from '../abl/pot/pot-get-abl';
 import listPotsHandler from '../abl/pot/pot-list-abl';
 import updatePotHandler from '../abl/pot/pot-update-abl';
-import { sendSuccess, sendCreated, sendInternalServerError } from '../middleware/response-handler';
+import { sendSuccess, sendCreated,sendError, sendInternalServerError } from '../middleware/response-handler';
 import { IPot } from '@/models/Pot';
 
 export const potController = {
     create: async (request: FastifyRequest, reply: FastifyReply) => {
         try {
-            const response = await potAbl.create(request.body as IPot, reply);
+            const potData = request.body as IPot;
+            const response = await potAbl.create(potData, reply);
             sendCreated(reply, response, "Pot created successfully");
         } catch (error) {
             console.log(error);
@@ -28,7 +29,7 @@ export const potController = {
     },
     get: async (request: FastifyRequest, reply: FastifyReply) => {
         try {
-            const response = await getPotHandler(request, reply);
+            const response = await getPotHandler(request.params.id, reply);
             sendSuccess(reply, response, "Pot retrieved successfully");
         } catch (error) {
             sendError(reply, error);

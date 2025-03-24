@@ -2,17 +2,34 @@ import potDao from "../../dao/pot/pot-dao"; // Adjust the import based on your D
 import { IPot } from "@/models/Pot";
 import createPotHandler from "./pot-create-abl";
 import listPotsHandler from "./pot-list-abl";
+import getPotHandler from "./pot-get-abl";
 import { FastifyRequest, FastifyReply } from "fastify";
-// Define an interface for the page info
+import Ajv from "ajv";
+import { sendClientError } from "@/middleware/response-handler";
+
 interface PageInfo {
     page?: number;
     limit?: number;
     // Add other pagination-related fields if needed
 }
+// TODO: validace pomocí ajv
+const ajv = new Ajv();
+
+const SCHEMA_POT = {
+    type: "object",
+    properties: {
+        id_profile: { type: "string" },
+        name: { type: "string" },
+    },
+};
 
 class PotAbl {
     static async create(data: IPot, reply: FastifyReply) {
         try {
+            const valid = ajv.validate(SCHEMA_POT, data);
+            if (!valid) {
+                sendClientError(reply, "Invalid pot data", 400);
+            }
             return await createPotHandler(data, reply); // Call the handler to create the pot
         } catch (error: unknown) {
           throw error;
@@ -60,21 +77,14 @@ class PotAbl {
         }
     }
 
-    static async get(id: string) {
+    static async get(id: string, reply: FastifyReply) {
         try {
-            const pot = await potDao.getPot(id);
-            if (!pot) {
-                throw new Error("Pot not found");
-            }
-            return pot; // Return the found pot
+            return await getPotHandler(id, reply);
+            
         } catch (error: unknown) {
-            if (error instanceof Error) {
-                throw new Error("Failed to get pot: " + error.message);
-            } else {
-                throw new Error("Failed to get pot: Unknown error occurred");
-            }
+            throw error;
         }
     }
-} 
+}
 
 export default PotAbl;
