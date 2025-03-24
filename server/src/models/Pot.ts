@@ -1,6 +1,6 @@
 import { Schema, model, Document } from "mongoose";
 
-interface IPot extends Document {
+export interface IPot extends Document {
   id_profile: string;
   name: string;
 }

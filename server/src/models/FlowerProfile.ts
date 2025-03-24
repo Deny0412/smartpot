@@ -5,7 +5,7 @@ interface IRange {
   max: number;
 }
 
-interface IFLowerProfile extends Document {
+export interface IFLowerProfile extends Document {
   temperature: IRange;
   humidity: IRange;
   idHouseHold: string;

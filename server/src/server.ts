@@ -28,6 +28,9 @@ fastify.get("/health", async () => {
 });
 */
 
+import householdRoutes from "./controller/household-controller";
+fastify.register(householdRoutes);
+
 // Start server
 const start = async () => {
   try {
@@ -43,13 +46,13 @@ const start = async () => {
 };
 
 // Handle graceful shutdown
-process.on('SIGINT', async () => {
+process.on("SIGINT", async () => {
   try {
     await mongoose.connection.close();
-    console.log('MongoDB connection closed');
+    console.log("MongoDB connection closed");
     process.exit(0);
   } catch (err) {
-    console.error('Error during graceful shutdown:', err);
+    console.error("Error during graceful shutdown:", err);
     process.exit(1);
   }
 });

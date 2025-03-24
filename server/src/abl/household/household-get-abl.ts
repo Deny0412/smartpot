@@ -2,7 +2,7 @@ import Ajv from "ajv";
 const ajv = new Ajv();
 import { FastifyRequest, FastifyReply } from "fastify";
 
-const HOUSEHOLD_DAO = require("../../dao/household/household-delete-dao");
+const HOUSEHOLD_DAO = require("../../dao/household/household-get-dao");
 
 const SCHEMA = {
   type: "object",
@@ -12,14 +12,12 @@ const SCHEMA = {
   required: ["id_household"],
   additionalProperties: false,
 };
-
-interface IHouseholdDelete {
+interface IHouseholdGet {
   id_household: string;
 }
-
-async function deleteHousehold(request: FastifyRequest, reply: FastifyReply) {
+async function getHousehold(request: FastifyRequest, reply: FastifyReply) {
   try {
-    const REQ_PARAM: IHouseholdDelete = request.body as IHouseholdDelete;
+    const REQ_PARAM: IHouseholdGet = request.query as IHouseholdGet;
     const VALID = ajv.validate(SCHEMA, REQ_PARAM);
     if (!VALID) {
       reply.status(400).send({
@@ -29,10 +27,12 @@ async function deleteHousehold(request: FastifyRequest, reply: FastifyReply) {
       });
       return;
     }
-    await HOUSEHOLD_DAO.delete(REQ_PARAM.id_household);
-    reply
-      .status(200)
-      .send({ message: "Household deleted successfully", status: "success" });
+    const HOUSEHOLD = await HOUSEHOLD_DAO.get(REQ_PARAM.id_household);
+    reply.status(200).send({
+      HOUSEHOLD,
+      message: "Household retrieved successfully",
+      status: "success",
+    });
   } catch (error) {
     if (error instanceof Error) {
       reply.status(500).send({ message: error.message, status: "error" });
@@ -43,4 +43,4 @@ async function deleteHousehold(request: FastifyRequest, reply: FastifyReply) {
     }
   }
 }
-export default deleteHousehold;
+export default getHousehold;
