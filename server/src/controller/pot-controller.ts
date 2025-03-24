@@ -1,7 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import potAbl from '../abl/pot/pot-abl';
 
-import listPotsHandler from '../abl/pot/pot-list-abl';
 import { sendSuccess, sendCreated,sendError, sendInternalServerError } from '../middleware/response-handler';
 import { IPot } from '../models/Pot';
 
@@ -24,7 +23,7 @@ export const potController = {
         try {
             const id = (request.params as Params).id;
             await potAbl.delete(id, reply);
-            // The response is handled in the ABL layer
+            // The response tis handled in the ABL layer
         } catch (error) {
             sendError(reply, error);
         }
@@ -38,7 +37,8 @@ export const potController = {
     },
     list: async (request: FastifyRequest, reply: FastifyReply) => {
         try {
-            const response = await listPotsHandler(request, reply);
+            const response = await potAbl.list(request, reply);
+            
             sendSuccess(reply, response, "Pots listed successfully");
         } catch (error) {
             sendError(reply, error);

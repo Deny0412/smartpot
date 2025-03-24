@@ -1,11 +1,12 @@
 import { FastifyInstance } from 'fastify';
 import { potController } from '../controller/pot-controller';
+import { validateObjectId } from '../middleware/validate-object-id';
 
 export default async function potRoutes(fastify: FastifyInstance) {
     fastify.post('/add', potController.create);
     fastify.delete('/delete/:id', potController.delete);
     fastify.get('/get/:id', potController.get);
-    fastify.get('/:householdId/list', potController.list);
+    fastify.get('/list', potController.list);
     fastify.put('/update', potController.update);
     //fastify.get('/pot/history/humidity', /* handler for humidity history */);
     //fastify.get('/pot/history/temperature', /* handler for temperature history */);

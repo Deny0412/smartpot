@@ -50,13 +50,8 @@ class PotAbl {
     static async list(request: FastifyRequest, reply: FastifyReply) {
         try {
             return await listPotsHandler(request, reply);
-        } catch (error: unknown) {
-            if (error instanceof Error) {
-                throw new Error("Failed to list pots: " + error.message);
-            } else {
-                throw new Error("Failed to list pots: Unknown error occurred");
-            }
-        }
+        } catch (error) {
+        throw error}
     }
 
     static async get(request: FastifyRequest, reply: FastifyReply) {

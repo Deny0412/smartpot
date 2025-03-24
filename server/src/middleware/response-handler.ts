@@ -5,7 +5,7 @@ export function sendResponse(reply: FastifyReply, statusCode: number, data: any,
         status: message,
         data: data,
     });
-    console.log("response:", { statusCode, message, data });
+    
 }
 
 // 2xx Responses
