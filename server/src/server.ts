@@ -5,7 +5,7 @@ import { appConfig } from "./config/config";
 import { swaggerPlugin } from "./plugins/swagger";
 import { dbPlugin } from "./config/database";
 import mongoose from "mongoose";
-import routes from './routes'; // Import the routes
+import routes from "./routes"; // Import the routes
 
 const fastify = Fastify({
   logger: true,
@@ -20,7 +20,7 @@ fastify.register(dbPlugin);
 fastify.register(swaggerPlugin);
 
 // Register routes with the /api prefix
-fastify.register(routes, { prefix: '/api' }); // This will add /api to all routes defined in index.ts
+fastify.register(routes, { prefix: "/api" }); // This will add /api to all routes defined in index.ts
 
 // Health check endpoint
 
@@ -29,10 +29,6 @@ fastify.get("/health", async () => {
   return { status: "ok" };
 });
 */
-
-import householdRoutes from "./controller/household-controller";
-fastify.register(householdRoutes);
-
 
 // Start server
 const start = async () => {

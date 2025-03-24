@@ -1,10 +1,10 @@
 import Ajv from "ajv";
 const ajv = new Ajv();
 import { FastifyRequest, FastifyReply } from "fastify";
+import { sendError, sendNoContent } from "../../middleware/response-handler";
+import householdDao from "../../dao/household/household-dao";
 
-const HOUSEHOLD_DAO = require("../../dao/household/household-delete-dao");
-
-const SCHEMA = {
+const schema = {
   type: "object",
   properties: {
     id_household: { type: "string" },
@@ -13,10 +13,22 @@ const SCHEMA = {
   additionalProperties: false,
 };
 
-interface IHouseholdDelete {
-  id_household: string;
+async function deleteHouseholdAbl(id: string, reply: FastifyReply) {
+  try {
+    const valid = ajv.validate(schema, id);
+    if (!valid) {
+      sendError(reply, "DtoIn is not valid");
+      return;
+    }
+    await householdDao.deleteHousehold(id);
+    sendNoContent(reply, "Household deleted successfully");
+  } catch (error) {
+    sendError(reply, error);
+  }
 }
+export default deleteHouseholdAbl;
 
+/*
 async function deleteHousehold(request: FastifyRequest, reply: FastifyReply) {
   try {
     const REQ_PARAM: IHouseholdDelete = request.body as IHouseholdDelete;
@@ -44,3 +56,4 @@ async function deleteHousehold(request: FastifyRequest, reply: FastifyReply) {
   }
 }
 export default deleteHousehold;
+*/

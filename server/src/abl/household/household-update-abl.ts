@@ -1,10 +1,11 @@
 import Ajv from "ajv";
 const ajv = new Ajv();
-import { FastifyRequest, FastifyReply } from "fastify";
+import { FastifyReply } from "fastify";
+import { IHousehold } from "../../models/Household";
+import { sendSuccess, sendError } from "../../middleware/response-handler";
+import householdDao from "../../dao/household/household-dao";
 
-const HOUSEHOLD_DAO = require("../../dao/household/household-update-dao");
-
-const SCHEMA = {
+const schema = {
   type: "object",
   properties: {
     id_household: { type: "string" },
@@ -16,14 +17,28 @@ const SCHEMA = {
   required: ["id_household"],
   additionalProperties: false,
 };
-interface IHouseholdUpdate {
-  id_household: string;
-  name?: string;
-  owner?: string;
-  members?: string[];
-  invites?: string[];
-}
 
+async function updateHouseholdAbl(data: IHousehold, reply: FastifyReply) {
+  try {
+    /*
+    const valid = ajv.validate(schema, data);
+    if (!valid) {
+      sendError(reply, "DtoIn is not valid");
+      return;
+    }
+      */
+    const updatedHousehold = await householdDao.updateHousehold(
+      data._id as string,
+      data
+    );
+    sendSuccess(reply, updatedHousehold, "Pot updated successfully");
+  } catch (error) {
+    sendError(reply, error);
+  }
+}
+export default updateHouseholdAbl;
+
+/*
 async function updateHousehold(request: FastifyRequest, reply: FastifyReply) {
   try {
     const REQ_PARAM: IHouseholdUpdate = request.body as IHouseholdUpdate;
@@ -58,3 +73,4 @@ async function updateHousehold(request: FastifyRequest, reply: FastifyReply) {
   }
 }
 export default updateHousehold;
+*/

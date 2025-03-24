@@ -1,11 +1,11 @@
 import Ajv from "ajv";
 const ajv = new Ajv();
-import { FastifyRequest, FastifyReply } from "fastify";
-
-const HOUSEHOLD_DAO = require("../../dao/household/household-create-dao");
+import { FastifyReply } from "fastify";
+import householdDao from "../../dao/household/household-dao";
 import { IHousehold } from "../../models/Household";
+import { sendCreated, sendError } from "../../middleware/response-handler";
 
-const SCHEMA = {
+const schema = {
   type: "object",
   properties: {
     name: { type: "string" },
@@ -17,6 +17,24 @@ const SCHEMA = {
   additionalProperties: false,
 };
 
+async function createHouseholdAbl(data: IHousehold, reply: FastifyReply) {
+  try {
+    const valid = ajv.validate(schema, data);
+    if (!valid) {
+      sendError(reply, "dtoIn is not valid");
+      return;
+    }
+    const createdHousehold = await householdDao.createHousehold(data);
+
+    sendCreated(reply, createdHousehold, "Pot created successfully");
+  } catch (error) {
+    sendError(reply, error);
+  }
+}
+
+export default createHouseholdAbl;
+
+/*
 async function createHousehold(request: FastifyRequest, reply: FastifyReply) {
   try {
     const REQ_PARAM: IHousehold = request.body as IHousehold;
@@ -51,3 +69,4 @@ async function createHousehold(request: FastifyRequest, reply: FastifyReply) {
 }
 
 export default createHousehold;
+*/
