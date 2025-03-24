@@ -1,7 +1,7 @@
 import PotModel from '../../models/Pot';
 
-async function listPots(pageInfo: any, householdId: string) {
-    const { page = 1, limit = 10 } = pageInfo;
+async function listPots(page: number, householdId: string) {
+    
     const pots = await PotModel.find({ householdId })
         .skip((page - 1) * limit)
         .limit(limit);

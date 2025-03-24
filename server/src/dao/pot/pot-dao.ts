@@ -16,8 +16,8 @@ async function getPotById(id: string) {
 }
 
 
-async function listPotsByHousehold(pageInfo: any, householdId: string) {
-    return await listPots(pageInfo, householdId);
+async function listPotsByHousehold(page: any, householdId: string) {
+    return await listPots(page, householdId);
 }
 
 

@@ -14,19 +14,33 @@ const SCHEMA = {
     required: ["page", "householdId"],
 };
 
-async function listPotsHandler(request: FastifyRequest, reply: FastifyReply) {
+
+interface QueryParams {
+    page?: number; 
+    limit?: number; 
+    householdId?: string;
+}
+
+async function listPotsHandler(request: FastifyRequest<{ Querystring: QueryParams }>, reply: FastifyReply) {
     const requestData = {
         page: request.query.page,
         householdId: request.query.householdId,
     };
 
-    const valid = ajv.validate(SCHEMA, requestData);
+    /*const valid = ajv.validate(SCHEMA, requestData);
     if (!valid) {
         return sendClientError(reply, "dtoIn is not valid", 400);
-    }
+    }*/
 
     try {
-        const pots = await potDao.listPots(requestData, requestData.householdId);
+        const { page, householdId } = requestData; 
+
+        // Ensure householdId is defined before passing it to the DAO
+        if (!householdId) {
+            return sendClientError(reply, "householdId is required", 400);
+        }
+
+        const pots = await potDao.listPots(page, householdId); 
         sendSuccess(reply, pots, "Pots listed successfully");
     } catch (error) {
         sendError(reply, error);

@@ -31,8 +31,7 @@ export const potController = {
     },
     get: async (request: FastifyRequest, reply: FastifyReply) => {
         try {
-            const response = await potAbl.get(request, reply);
-            sendSuccess(reply, response, "Pot retrieved successfully");
+            await potAbl.get(request, reply);
         } catch (error) {
             sendError(reply, error);
         }

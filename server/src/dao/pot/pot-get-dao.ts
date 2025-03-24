@@ -1,9 +1,14 @@
 import PotModel from '../../models/Pot';
-import { sendError } from '../../middleware/response-handler';
+import mongoose from 'mongoose';
 
 async function getPot(id: string) {
- 
-    return await PotModel.findById(id);
+    // Check if the id is a valid MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return null;
+    }
+    
+    const pot = await PotModel.findById(id);
+    return pot;
 }
 
 export default getPot;
