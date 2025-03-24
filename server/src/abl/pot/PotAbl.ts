@@ -5,7 +5,7 @@ import listPotsHandler from "./pot-list-abl";
 import getPotHandler from "./pot-get-abl";
 import { FastifyRequest, FastifyReply } from "fastify";
 import Ajv from "ajv";
-import { sendClientError } from "@/middleware/response-handler";
+import { sendClientError } from "../../middleware/response-handler";
 
 interface PageInfo {
     page?: number;

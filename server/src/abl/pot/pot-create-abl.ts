@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import potDao from "../../dao/pot/pot-dao";
-import { IPot } from "@/models/Pot";
+import { IPot } from "../../models/Pot";
 import { sendCreated, sendError } from "../../middleware/response-handler";
 
 async function createPotHandler(data: IPot, reply: FastifyReply) {

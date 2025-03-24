@@ -6,7 +6,7 @@ import getPotHandler from '../abl/pot/pot-get-abl';
 import listPotsHandler from '../abl/pot/pot-list-abl';
 import updatePotHandler from '../abl/pot/pot-update-abl';
 import { sendSuccess, sendCreated,sendError, sendInternalServerError } from '../middleware/response-handler';
-import { IPot } from '@/models/Pot';
+import { IPot } from '../models/Pot';
 
 export const potController = {
     create: async (request: FastifyRequest, reply: FastifyReply) => {
@@ -29,7 +29,7 @@ export const potController = {
     },
     get: async (request: FastifyRequest, reply: FastifyReply) => {
         try {
-            const response = await getPotHandler(request.params.id, reply);
+            const response = await getPotHandler(request, reply);
             sendSuccess(reply, response, "Pot retrieved successfully");
         } catch (error) {
             sendError(reply, error);
