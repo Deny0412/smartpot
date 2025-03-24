@@ -3,7 +3,7 @@ import { FastifyPluginAsync } from "fastify";
 
 export const dbPlugin: FastifyPluginAsync = async (fastify) => {
   try {
-    const url = process.env.MONGODB_URL || 'mongodb://localhost:27017/your-database';
+    const url = process.env.MONGODB_URL || 'mongodb://localhost:27017/smart-pot';
     await mongoose.connect(url);
     
     fastify.log.info('MongoDB connected successfully');
