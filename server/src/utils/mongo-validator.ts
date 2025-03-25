@@ -5,10 +5,8 @@ export class MongoValidator {
         return !!id && mongoose.Types.ObjectId.isValid(id);
     }
 
-    static validateId(id: string | undefined | null): void {
-        if (!this.isValidObjectId(id)) {
-            throw new Error("Invalid MongoDB ObjectId format");
-        }
+    static validateId(id: string): boolean {
+        return /^[0-9a-fA-F]{24}$/.test(id);
     }
 
     static validateIds(ids: (string | undefined | null)[]): void {

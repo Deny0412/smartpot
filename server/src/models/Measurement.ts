@@ -1,7 +1,7 @@
 import { Schema, model, Document } from "mongoose";
 
 export interface IMeasurement extends Document {
-  pot_id: string;
+  flower_id: string;
   type: "humidity" | "temperature" | "waterlevel";
   value: number;
   unit: string;
@@ -10,7 +10,7 @@ export interface IMeasurement extends Document {
 
 const measurementSchema = new Schema<IMeasurement>(
   {
-    pot_id: { type: String, required: true },
+    flower_id: { type: String, required: true },
     type: { type: String, enum: ["humidity", "temperature", "waterlevel"], required: true },
     value: { type: Number, required: true },
     unit: { type: String, required: true }, // %, °C, cm, atd.
