@@ -4,23 +4,24 @@ import deleteHouseholdDao from "./household-delete-dao";
 import getHouseholdDao from "./household-get-dao";
 //import listHouseholdDao from './household-list-dao';
 import updateHouseholdDao from "./household-update-dao";
+import { FastifyReply } from "fastify";
 
-async function createHousehold(data: IHousehold) {
-  return await createHouseholdDao(data);
+async function createHousehold(data: IHousehold, reply: FastifyReply) {
+  return await createHouseholdDao(data, reply);
 }
 
-async function getHousehold(id: string) {
-  return await getHouseholdDao(id);
+async function getHousehold(id: string, reply: FastifyReply) {
+  return await getHouseholdDao(id, reply);
 }
 
 async function listHousehold() {}
 
-async function updateHousehold(id: string, data: IHousehold) {
-  return await updateHouseholdDao(id, data);
+async function updateHousehold(id: string, data: IHousehold, reply: FastifyReply) {
+  return await updateHouseholdDao(id, data, reply);
 }
 
-async function deleteHousehold(id: string) {
-  return await deleteHouseholdDao(id);
+async function deleteHousehold(id: string, reply: FastifyReply) {
+  return await deleteHouseholdDao(id, reply);
 }
 
 export default {

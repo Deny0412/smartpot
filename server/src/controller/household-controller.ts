@@ -25,7 +25,7 @@ export const householdController = {
   },
   delete: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const id = (request.params as Params).id;
+      const id = (request.body as Params).id;
       await householdAbl.deleteHousehold(id, reply);
     } catch (error) {
       sendError(reply, error);

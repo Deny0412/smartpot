@@ -1,17 +1,13 @@
 import HOUSEHOLD_MODEL from "../../models/Household";
+import { sendError, sendSuccess } from "../../middleware/response-handler";
+import { FastifyReply } from "fastify";
 
-async function getHousehold(id: string) {
+async function getHousehold(id: string, reply: FastifyReply) {
   try {
-    return await HOUSEHOLD_MODEL.findById(id);
+    const household = await HOUSEHOLD_MODEL.findById(id);
+    sendSuccess(reply, household, "Household retrieved successfully");
   } catch (error) {
-    if (error instanceof Error) {
-      throw { code: "failedToGetHousehold", message: error.message };
-    } else {
-      throw {
-        code: "failedToGetHousehold",
-        message: "Unknown error occurred",
-      };
-    }
+    sendError(reply, error);
   }
 }
 

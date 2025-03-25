@@ -1,20 +1,20 @@
 import HOUSEHOLD_MODEL from "../../models/Household";
 import { IHousehold } from "../../models/Household";
+import { sendSuccess, sendError } from "../../middleware/response-handler";
+import { FastifyReply } from "fastify";
 
-async function updateHousehold(id: string, data: IHousehold) {
-  if (!id) {
-    throw { code: "missingHouseholdId", message: "Household ID is required" };
-  }
+async function updateHousehold(
+  id: string,
+  data: IHousehold,
+  reply: FastifyReply
+) {
   try {
-    return await HOUSEHOLD_MODEL.findByIdAndUpdate(id, data, {
+    const updatedHousehold = await HOUSEHOLD_MODEL.findByIdAndUpdate(id, data, {
       new: true,
     });
+    sendSuccess(reply, updatedHousehold, "Household updated successfully");
   } catch (error) {
-    throw {
-      code: "failedToUpdateHousehold",
-      message:
-        error instanceof Error ? error.message : "Unknown error occurred",
-    };
+    sendError(reply, error);
   }
 }
 export default updateHousehold;
