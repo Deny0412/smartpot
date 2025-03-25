@@ -1,11 +1,6 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import householdAbl from "../abl/household/household-abl";
-import {
-  sendSuccess,
-  sendCreated,
-  sendError,
-  sendInternalServerError,
-} from "../middleware/response-handler";
+import { sendInternalServerError } from "../middleware/response-handler";
 import { IHousehold } from "../models/Household";
 
 interface Params {
@@ -16,10 +11,8 @@ export const householdController = {
   create: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const reqParam = request.body as IHousehold;
-      const newHousehold = await householdAbl.createHousehold(reqParam, reply);
-      sendCreated(reply, newHousehold, "Household created successfully");
+      await householdAbl.createHousehold(reqParam, reply);
     } catch (error) {
-      console.log(error);
       sendInternalServerError(reply);
     }
   },
@@ -28,28 +21,23 @@ export const householdController = {
       const id = (request.body as Params).id;
       await householdAbl.deleteHousehold(id, reply);
     } catch (error) {
-      sendError(reply, error);
+      sendInternalServerError(reply);
     }
   },
   get: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const id = (request.params as Params).id;
-      const response = await householdAbl.getHousehold(id, reply);
-      sendSuccess(reply, response, "Household retrieved successfully");
+      await householdAbl.getHousehold(id, reply);
     } catch (error) {
-      sendError(reply, error);
+      sendInternalServerError(reply);
     }
   },
   update: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const updatedHousehold = request.body as IHousehold;
-      const response = await householdAbl.updateHousehold(
-        updatedHousehold,
-        reply
-      );
-      sendSuccess(reply, response, "Household updated successfully");
+      await householdAbl.updateHousehold(updatedHousehold, reply);
     } catch (error) {
-      sendError(reply, error);
+      sendInternalServerError(reply);
     }
   },
 };
