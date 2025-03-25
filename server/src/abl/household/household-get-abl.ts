@@ -7,25 +7,20 @@ import householdDao from "../../dao/household/household-dao";
 const schema = {
   type: "object",
   properties: {
-    id_household: { type: "string" },
+    id: { type: "string" },
   },
-  required: ["id_household"],
+  required: ["id"],
   additionalProperties: false,
 };
 
 async function getHouseholdAbl(id: string, reply: FastifyReply) {
   try {
-    // Wrap `id` in an object before validation
-    const idObject = { id_household: id };
-
+    const idObject = { id: id };
     const valid = ajv.validate(schema, idObject);
     if (!valid) {
-      sendError(reply, "DtoIn is not valid");
-      return;
+      throw new Error("DtoIn is not valid");
     }
-
-    const household = await householdDao.getHousehold(id);
-    sendSuccess(reply, household, "Household retrieved successfully");
+    await householdDao.getHousehold(id, reply);
   } catch (error) {
     sendError(reply, error);
   }

@@ -1,17 +1,14 @@
 import HOUSEHOLD_MODEL from "../../models/Household";
+import { FastifyReply } from "fastify";
+import { sendError, sendNoContent } from "../../middleware/response-handler";
 
-async function deleteHousehold(id: string) {
+async function deleteHousehold(id: string, reply: FastifyReply) {
   try {
-    return await HOUSEHOLD_MODEL.findByIdAndDelete(id);
+    await HOUSEHOLD_MODEL.findByIdAndDelete(id);
+    sendNoContent(reply, "Household deleted successfully");
+    return;
   } catch (error) {
-    if (error instanceof Error) {
-      throw { code: "failedToDeleteHousehold", message: error.message };
-    } else {
-      throw {
-        code: "failedToDeleteHousehold",
-        message: "Unknown error occurred",
-      };
-    }
+    sendError(reply, error);
   }
 }
 
