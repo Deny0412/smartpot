@@ -10,7 +10,7 @@ import { FastifyRequest, FastifyReply } from "fastify";
 import Ajv from "ajv";
 import { sendClientError, sendError } from "../../middleware/response-handler";
 import { IMeasurement } from "@/models/Measurement";
-import flowerAddMeasurementHandler from "./flower-measurent-add";
+import flowerAddMeasurementHandler from "./flower-measurent-add-abl";
 
 interface PageInfo {
     page?: number;

@@ -1,8 +1,8 @@
 import Ajv from "ajv";
 const ajv = new Ajv();
 import { FastifyRequest, FastifyReply } from "fastify";
-import potDao from "../../dao/pot/pot-dao";
-import { IPot } from "../../models/Flower";
+import flowerDao from "../../dao/flower/flower-dao";
+import { IFlower } from "../../models/Flower";
 import { sendSuccess, sendError, sendNotFound, sendClientError } from "../../middleware/response-handler";
 import mongoose from 'mongoose';
 
@@ -17,22 +17,22 @@ const SCHEMA = {
     additionalProperties: false,
 };
 
-async function updatePotHandler(data: IPot, reply: FastifyReply) {
+async function updateFlowerHandler(data: IFlower, reply: FastifyReply) {
     try {
         
 
 
-        const updatedPot = await potDao.updatePot(String(data._id), data);
+        const updatedFlower = await flowerDao.updateFlower(String(data.id), data);
         
-        if (!updatedPot) {
-            return sendNotFound(reply, "Pot not found");
+        if (!updatedFlower) {
+            return sendNotFound(reply, "Flower not found");
         }
 
-        return sendSuccess(reply, updatedPot, "Pot updated successfully");
+        return sendSuccess(reply, updatedFlower, "Flower updated successfully");
     } catch (error) {
-        console.error('Error updating pot:', error);
-        return sendError(reply, "Failed to update pot");
+        console.error('Error updating flower:', error);
+        return sendError(reply, "Failed to update flower");
     }
 }
 
-export default updatePotHandler;
+export default updateFlowerHandler;

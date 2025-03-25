@@ -1,7 +1,7 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import flowerDao from "../../dao/flower/flower-dao"; // Adjust the import based on your DAO structure
 import { sendSuccess, sendError, sendNotFound, sendClientError } from "../../middleware/response-handler";
-import { MongoValidator } from "@/utils/mongo-validator";
+import { MongoValidator } from "../../utils/mongo-validator";
 
 async function getFlowerHandler(id: string, reply: FastifyReply) {
     try {

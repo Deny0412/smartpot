@@ -4,7 +4,6 @@ import flowerAbl from '../abl/flower/flower-abl';
 import { sendSuccess, sendCreated,sendError, sendInternalServerError } from '../middleware/response-handler';
 import { IFlower } from '../models/Flower';
 import { IMeasurement } from '@/models/Measurement';
-import flower from '@/routes/flower';
 
 interface Params {
     id: string; 
