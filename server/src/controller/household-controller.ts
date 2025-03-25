@@ -1,43 +1,43 @@
-import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
-import CREATE from "../abl/household/household-create-abl";
-import DELETE from "../abl/household/household-delete-abl";
-import GET from "../abl/household/household-get-abl";
-import UPDATE from "../abl/household/household-update-abl";
-import LIST from "../abl/household/household-list-abl";
+import { FastifyRequest, FastifyReply } from "fastify";
+import householdAbl from "../abl/household/household-abl";
+import { sendInternalServerError } from "../middleware/response-handler";
+import { IHousehold } from "../models/Household";
 
-export default async function householdRoutes(fastify: FastifyInstance) {
-  fastify.post(
-    "/household/create",
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      return CREATE(request, reply);
-    }
-  );
-
-  fastify.delete(
-    "/household/delete",
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      return DELETE(request, reply);
-    }
-  );
-
-  fastify.get(
-    "/household/get",
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      return GET(request, reply);
-    }
-  );
-
-  fastify.put(
-    "/household/update",
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      return UPDATE(request, reply);
-    }
-  );
-
-  fastify.get(
-    "/household/list",
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      return LIST(request, reply);
-    }
-  );
+interface Params {
+  id: string;
 }
+
+export const householdController = {
+  create: async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const reqParam = request.body as IHousehold;
+      await householdAbl.createHousehold(reqParam, reply);
+    } catch (error) {
+      sendInternalServerError(reply);
+    }
+  },
+  delete: async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const id = (request.body as Params).id;
+      await householdAbl.deleteHousehold(id, reply);
+    } catch (error) {
+      sendInternalServerError(reply);
+    }
+  },
+  get: async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const id = (request.params as Params).id;
+      await householdAbl.getHousehold(id, reply);
+    } catch (error) {
+      sendInternalServerError(reply);
+    }
+  },
+  update: async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const updatedHousehold = request.body as IHousehold;
+      await householdAbl.updateHousehold(updatedHousehold, reply);
+    } catch (error) {
+      sendInternalServerError(reply);
+    }
+  },
+};

@@ -1,7 +1,9 @@
 import PotModel from '../../models/Pot';
 
 async function getPot(id: string) {
-    return await PotModel.findById(id);
+    
+    const pot = await PotModel.findById(id);
+    return pot;
 }
 
 export default getPot;

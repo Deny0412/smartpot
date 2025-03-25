@@ -1,60 +1,32 @@
 import Ajv from "ajv";
 const ajv = new Ajv();
-import { FastifyRequest, FastifyReply } from "fastify";
+import { FastifyReply } from "fastify";
+import { IHousehold } from "../../models/Household";
+import { sendSuccess, sendError } from "../../middleware/response-handler";
+import householdDao from "../../dao/household/household-dao";
 
-const HOUSEHOLD_DAO = require("../../dao/household/household-update-dao");
-
-const SCHEMA = {
+const schema = {
   type: "object",
   properties: {
-    id_household: { type: "string" },
+    id: { type: "string" },
     name: { type: "string" },
     owner: { type: "string" },
     members: { type: "array", items: { type: "string" } },
     invites: { type: "array", items: { type: "string" } },
   },
-  required: ["id_household"],
+  required: ["id"],
   additionalProperties: false,
 };
-interface IHouseholdUpdate {
-  id_household: string;
-  name?: string;
-  owner?: string;
-  members?: string[];
-  invites?: string[];
-}
 
-async function updateHousehold(request: FastifyRequest, reply: FastifyReply) {
+async function updateHouseholdAbl(data: IHousehold, reply: FastifyReply) {
   try {
-    const REQ_PARAM: IHouseholdUpdate = request.body as IHouseholdUpdate;
-
-    const VALID = ajv.validate(SCHEMA, REQ_PARAM);
-    if (!VALID) {
-      reply.status(400).send({
-        code: "dtoInIsNotValid",
-        message: "dtoIn is not valid",
-        validationError: ajv.errors,
-      });
-      return;
+    const valid = ajv.validate(schema, data);
+    if (!valid) {
+      throw new Error("DtoIn is not valid");
     }
-    const HOUSEHOLD_ID = REQ_PARAM.id_household;
-    const UPDATED_HOUSEHOLD = await HOUSEHOLD_DAO.update(
-      HOUSEHOLD_ID,
-      REQ_PARAM
-    );
-    reply.status(200).send({
-      UPDATED_HOUSEHOLD,
-      message: "Household updated successfully",
-      status: "success",
-    });
+    await householdDao.updateHousehold(data.id as string, data, reply);
   } catch (error) {
-    if (error instanceof Error) {
-      reply.status(500).send({ message: error.message, status: "error" });
-    } else {
-      reply
-        .status(500)
-        .send({ message: "Unknown error occurred", status: "error" });
-    }
+    sendError(reply, error);
   }
 }
-export default updateHousehold;
+export default updateHouseholdAbl;

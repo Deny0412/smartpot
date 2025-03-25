@@ -1,18 +1,14 @@
 import HOUSEHOLD_MODEL from "../../models/Household";
 import { IHousehold } from "../../models/Household";
+import { FastifyReply } from "fastify";
+import { sendCreated, sendError } from "../../middleware/response-handler";
 
-async function createHousehold(data: IHousehold) {
+async function createHousehold(data: IHousehold, reply: FastifyReply) {
   try {
-    return await HOUSEHOLD_MODEL.create(data);
+    const createdHousehold = await HOUSEHOLD_MODEL.create(data);
+    sendCreated(reply, createdHousehold, "Household created successfully");
   } catch (error) {
-    if (error instanceof Error) {
-      throw { code: "failedToCreateHousehold", message: error.message };
-    } else {
-      throw {
-        code: "failedToCreateHousehold",
-        message: "Unknown error occurred",
-      };
-    }
+    sendError(reply, error);
   }
 }
 export default createHousehold;

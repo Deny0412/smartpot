@@ -1,13 +1,22 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import potDao from "../../dao/pot/pot-delete-dao"; // Adjust the import based on your DAO structure
+import potDao from "../../dao/pot/pot-dao"; // Adjust the import based on your DAO structure
+import { sendClientError, sendError, sendNoContent, sendNotFound } from "../../middleware/response-handler";
+import mongoose from 'mongoose';
 
-async function deletePotHandler(request: FastifyRequest, reply: FastifyReply) {
-    const { id } = request.params; // Assuming the ID is passed as a URL parameter
+async function deletePotHandler(id: string, reply: FastifyReply) {
     try {
-        await potDao.deletePot(id);
-        reply.status(200).send({ message: "Pot deleted successfully", status: "success" });
+        // Validate ObjectId format first
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return sendClientError(reply, "Invalid pot ID format");
+        }
+
+        const deletedPot = await potDao.deletePot(id);
+        if (!deletedPot) {
+            return sendNotFound(reply, "Pot not found");
+        }
+        return sendNoContent(reply);
     } catch (error) {
-        reply.status(500).send({ message: error.message, status: "error" });
+        sendError(reply, error);
     }
 }
 

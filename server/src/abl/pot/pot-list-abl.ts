@@ -9,24 +9,25 @@ const SCHEMA = {
     type: "object",
     properties: {
         page: { type: "number" },
-        householdId: { type: "string" },
+        id_household: { type: "string" },
+        limit: { type: "number" },
     },
     required: ["page", "householdId"],
 };
 
-async function listPotsHandler(request: FastifyRequest, reply: FastifyReply) {
-    const requestData = {
-        page: request.query.page,
-        householdId: request.query.householdId,
-    };
+interface QueryParams {
+    page: number; 
+    limit?: number;
+    id_household: string;
+}
 
-    const valid = ajv.validate(SCHEMA, requestData);
-    if (!valid) {
-        return sendClientError(reply, "dtoIn is not valid", 400);
-    }
+async function listPotsHandler(request: FastifyRequest, reply: FastifyReply) {
+    const page = (request.query as QueryParams).page;
+    const id_household = (request.query as QueryParams).id_household;
+    const limit = (request.query as QueryParams).limit;
 
     try {
-        const pots = await potDao.listPots(requestData, requestData.householdId);
+        const pots = await potDao.listPots(page, id_household,Number(limit));
         sendSuccess(reply, pots, "Pots listed successfully");
     } catch (error) {
         sendError(reply, error);
