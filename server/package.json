@@ -21,7 +21,8 @@
     "@sinclair/typebox": "^0.31.0",
     "dotenv": "^16.0.0",
     "fastify": "^4.0.0",
-    "mongoose": "^8.12.1"
+    "mongoose": "^8.12.1",
+    "node-fetch": "^3.3.2"
   },
   "devDependencies": {
     "@types/express": "^5.0.1",
