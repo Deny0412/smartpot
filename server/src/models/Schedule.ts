@@ -1,7 +1,7 @@
 import { Schema, model, Document } from "mongoose";
 
 export interface ISchedule extends Document {
-  id_pot: string;
+  flower_id: string;
   monday: "";
   tuesday: "";
   wednesday: "";
@@ -13,7 +13,7 @@ export interface ISchedule extends Document {
 
 const SCHEDULE_SCHEMA = new Schema<ISchedule>(
   {
-    id_pot: { type: String, required: true },
+    flower_id: { type: String, required: true },
     monday: {},
     tuesday: {},
     wednesday: {},
