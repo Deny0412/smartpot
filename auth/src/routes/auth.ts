@@ -93,7 +93,7 @@ const auth: FastifyPluginAsync = async (fastify) => {
         })
       }
     }
-  }, async (request: any, ) => {
+  }, async (request: any) => {
     const user = users.get(request.user.email);
     if (!user) {
       throw new Error('User not found');
@@ -103,6 +103,26 @@ const auth: FastifyPluginAsync = async (fastify) => {
       email: user.email
     };
   });
+
+  // Check authorization endpoint
+  server.get('/auth/check', {
+    onRequest: [server.authenticate],
+    schema: {
+      response: {
+        200: Type.Object({
+          message: Type.String(),
+          authorized: Type.Boolean(),
+          email: Type.String(),
+        })
+      }
+    }
+  }, async (request: any) => {
+    return {
+      message: 'User is authorized',
+        authorized: true ,
+        email: request.user.email,
+    };
+  });
 };
 
-export default auth; 
+export default auth;
