@@ -5,9 +5,12 @@ import listPotsHandler from "./pot-list-abl";
 import getPotHandler from "./pot-get-abl";
 import updatePotHandler from "./pot-update-abl";
 import deletePotHandler from "./pot-delete-abl";
+import potHistoryHandler from "./pot-history-abl";
 import { FastifyRequest, FastifyReply } from "fastify";
 import Ajv from "ajv";
 import { sendClientError, sendError } from "../../middleware/response-handler";
+import { IMeasurement } from "@/models/Measurement";
+import potAddMeasurementHandler from "./pot-measurent-add";
 
 interface PageInfo {
     page?: number;
@@ -64,6 +67,30 @@ class PotAbl {
             sendError(reply, error); 
         }
             
+    }
+    static async history(data: IMeasurement, reply: FastifyReply) {
+        try{
+            const pot = await potHistoryHandler(data, reply);
+            
+            return pot;
+        }catch(error){
+            sendError(reply, error); 
+        }
+            
+    }
+    static async addMeasurement(data: IMeasurement, reply: FastifyReply) {
+        try {
+            // Check if the pot exists
+            const potExists = await potDao.getPot(data.pot_id);
+            if (!potExists) {
+                return sendClientError(reply, "Pot ID does not exist");
+            }
+
+            const pot = await potAddMeasurementHandler(data, reply);
+            return pot;
+        } catch (error) {
+            sendError(reply, error);
+        }
     }
 }
 

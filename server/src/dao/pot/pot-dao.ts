@@ -4,9 +4,11 @@ import deletePot from './pot-delete-dao';
 import updatePot from './pot-update-dao'; 
 import listPots from './pot-list-dao';
 import getPot from './pot-get-dao';
+import getPotHistory from './pot-history-dao';
 import { MongoValidator } from '../../utils/mongo-validator';
-
-
+import { IMeasurement } from '@/models/Measurement';
+import addMeasurement from './pot-measurement-add';
+import PotModel from '../../models/Pot';
 
 async function createPot(data: IPot) {
     return await create(data); 
@@ -50,10 +52,31 @@ async function deletePotById(id: string) {
     }
 }
 
+async function getPotHistoryById(pot_id: string) {
+    try {
+        MongoValidator.validateId(pot_id);
+        return await getPotHistory(pot_id);
+    } catch (error) {
+        return null;
+    }
+}
+
+async function addMeasurementById(data: IMeasurement) {
+    return await addMeasurement(data);
+}
+
+async function checkPotExists(id: string) {
+    const pot = await PotModel.findById(id);
+    return !!pot;
+}
+
 export default {
     createPot,
     getPot: getPotById,
     listPots: listPotsByHousehold,
     updatePot: updatePotById, 
     deletePot: deletePotById, 
+    getPotHistory: getPotHistoryById,
+    addMeasurement: addMeasurementById,
+    checkPotExists,
 };
