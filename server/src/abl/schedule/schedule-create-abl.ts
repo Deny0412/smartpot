@@ -2,7 +2,7 @@ import { FastifyReply } from "fastify";
 import { createSchedule, hasActiveSchedule } from "../../dao/schedule/schedule-create-dao";
 import { ISchedule } from "../../models/Schedule";
 import { sendClientError, sendCreated, sendError } from "../../middleware/response-handler";
-import flowerDao from "../../dao/flower/flower-dao";
+import checkFlowerExists from "../../dao/flower/flower-exists-dao";
 import { validateCreateSchedule, formatValidationErrors } from "../../validation/schedule-validation";
 
 
@@ -13,7 +13,7 @@ async function createScheduleHandler(data: ISchedule, reply: FastifyReply) {
             return sendClientError(reply, formatValidationErrors(validateCreateSchedule.errors));
         }
 
-        const flower = await flowerDao.getFlower(data.flower_id.toString());
+        const flower = await checkFlowerExists(data.flower_id.toString());
         if (!flower) {
             return sendClientError(reply, "Flower not found");
         }
