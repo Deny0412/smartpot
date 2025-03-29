@@ -1,8 +1,7 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import flowerDao from "../../dao/flower/flower-dao"; 
 import Ajv from "ajv";
 import { sendClientError, sendSuccess, sendError } from "../../middleware/response-handler";
-
+import listFlowers from "../../dao/flower/flower-list-dao";
 const ajv = new Ajv();
 
 const SCHEMA = {
@@ -27,7 +26,7 @@ async function listFlowersHandler(request: FastifyRequest, reply: FastifyReply) 
     const limit = (request.query as QueryParams).limit;
 
     try {
-        const flowers = await flowerDao.listFlowers(page, household_id,Number(limit));
+        const flowers = await listFlowers(page, household_id,Number(limit));
         sendSuccess(reply, flowers, "Flowers listed successfully");
     } catch (error) {
         sendError(reply, error);

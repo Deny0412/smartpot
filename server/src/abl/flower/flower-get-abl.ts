@@ -1,7 +1,8 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import flowerDao from "../../dao/flower/flower-dao"; // Adjust the import based on your DAO structure
+
 import { sendSuccess, sendError, sendNotFound, sendClientError } from "../../middleware/response-handler";
 import { MongoValidator } from "../../validation/mongo-validator";
+import getFlower from "../../dao/flower/flower-get-dao";
 
 async function getFlowerHandler(id: string, reply: FastifyReply) {
     try {
@@ -9,7 +10,7 @@ async function getFlowerHandler(id: string, reply: FastifyReply) {
             return sendClientError(reply, "Invalid flower ID format");
         }
 
-        const flower = await flowerDao.getFlower(id);
+        const flower = await getFlower(id);
         if (!flower) {
             return sendNotFound(reply, "Flower not found");
         }

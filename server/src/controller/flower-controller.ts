@@ -1,6 +1,11 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import flowerAbl from '../abl/flower/flower-abl';
-
+import flowerCreateAbl from '../abl/flower/flower-create-abl';
+import flowerUpdateAbl from '../abl/flower/flower-update-abl';
+import flowerDeleteAbl from '../abl/flower/flower-delete-abl';
+import flowerListAbl from '../abl/flower/flower-list-abl';
+import flowerGetAbl from '../abl/flower/flower-get-abl';
+import flowerHistoryAbl from '../abl/flower/flower-history-abl';
+import flowerAddMeasurementAbl from '../abl/flower/flower-measurent-add-abl';
 import { sendSuccess, sendCreated,sendError, sendInternalServerError } from '../middleware/response-handler';
 import { IFlower } from '../models/Flower';
 import { IMeasurement } from '@/models/Measurement';
@@ -17,7 +22,7 @@ export const flowerController = {
     create: async (request: FastifyRequest, reply: FastifyReply) => {
         try {
             const data = request.body as IFlower;
-            const response = await flowerAbl.create(data, reply);
+            const response = await flowerCreateAbl(data, reply);
             sendCreated(reply, response, "Flower created successfully");
         } catch (error) {
             sendInternalServerError(reply);
@@ -26,7 +31,7 @@ export const flowerController = {
     delete: async (request: FastifyRequest, reply: FastifyReply) => {
         try {
             const id = (request.params as Params).id;
-            await flowerAbl.delete(id, reply);
+            await flowerDeleteAbl(id, reply);
             // The response tis handled in the ABL layer
         } catch (error) {
             sendError(reply, error);
@@ -34,14 +39,15 @@ export const flowerController = {
     },
     get: async (request: FastifyRequest, reply: FastifyReply) => {
         try {
-            await flowerAbl.get(request, reply);
+            const id = (request.params as Params).id;
+            await flowerGetAbl(id, reply);
         } catch (error) {
             sendError(reply, error);
         }
     },
     list: async (request: FastifyRequest, reply: FastifyReply) => {
         try {
-            const response = await flowerAbl.list(request, reply);
+            const response = await flowerListAbl(request, reply);
             
             sendSuccess(reply, response, "Flowers listed successfully");
         } catch (error) {
@@ -51,7 +57,7 @@ export const flowerController = {
     update: async (request: FastifyRequest, reply: FastifyReply) => {
         try {
             const data = request.body as IFlower;
-            const response = await flowerAbl.update(data, reply);
+            const response = await flowerUpdateAbl(data, reply);
             sendSuccess(reply, response, "Flower updated successfully");
         } catch (error) {
             sendError(reply, error);
@@ -64,7 +70,7 @@ export const flowerController = {
                 return sendError(reply, "Flower ID is required");
             }
             const measurementData = { flower_id } as unknown as IMeasurement;
-            await flowerAbl.history(measurementData, reply);
+            await flowerHistoryAbl(measurementData, reply);
         } catch (error) {
             sendError(reply, error);
         }
@@ -72,7 +78,7 @@ export const flowerController = {
     addMeasurement: async (request: FastifyRequest, reply: FastifyReply) => {
         try {
             const measurementData = request.body as IMeasurement;
-            await flowerAbl.addMeasurement(measurementData, reply);
+            await flowerAddMeasurementAbl(measurementData, reply);
         } catch (error) {
             sendError(reply, error);
         }
