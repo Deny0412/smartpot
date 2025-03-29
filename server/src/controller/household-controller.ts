@@ -32,6 +32,14 @@ export const householdController = {
       sendInternalServerError(reply);
     }
   },
+  list: async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const user_id = (request.body as Params).id;
+      await householdAbl.listHousehold(user_id, reply);
+    } catch (error) {
+      sendInternalServerError(reply);
+    }
+  },
   update: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const updatedHousehold = request.body as IHousehold;

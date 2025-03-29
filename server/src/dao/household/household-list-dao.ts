@@ -1,22 +1,15 @@
 import HOUSEHOLD_MODEL from "../../models/Household";
+import { FastifyReply } from "fastify";
+import { sendSuccess, sendError } from "../../middleware/response-handler";
 
-async function listHousehold(user_id?: string) {
+async function listHousehold(user_id: string, reply: FastifyReply) {
   try {
-    if (user_id) {
-      return await HOUSEHOLD_MODEL.find({
-        $or: [{ owner: user_id }, { members: user_id }],
-      });
-    }
-    return await HOUSEHOLD_MODEL.find();
+    const householdFiltered = await HOUSEHOLD_MODEL.find({
+      $or: [{ owner: user_id }, { members: user_id }],
+    });
+    sendSuccess(reply, householdFiltered, "Households listed successfully");
   } catch (error) {
-    if (error instanceof Error) {
-      throw { code: "failedToListHouseholds", message: error.message };
-    } else {
-      throw {
-        code: "failedToListHouseholds",
-        message: "Unknown error occurred",
-      };
-    }
+    sendError(reply, error);
   }
 }
 export default listHousehold;

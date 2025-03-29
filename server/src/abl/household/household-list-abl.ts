@@ -1,46 +1,28 @@
 import Ajv from "ajv";
 const ajv = new Ajv();
-import { FastifyRequest, FastifyReply } from "fastify";
+import { FastifyReply } from "fastify";
+import { sendSuccess, sendError } from "../../middleware/response-handler";
+import householdDao from "../../dao/household/household-dao";
 
-const HOUSEHOLD_DAO = require("../../dao/household/household-list-dao");
-
-const SCHEMA = {
+const schema = {
   type: "object",
   properties: {
-    id_user: { type: "string" },
+    user_id: { type: "string" },
   },
-  required: [],
+  required: ["user_id"],
   additionalProperties: false,
 };
-interface IHouseholdList {
-  id_user: string;
-}
-async function listHousehold(request: FastifyRequest, reply: FastifyReply) {
+
+async function listHouseholdAbl(user_id: string, reply: FastifyReply) {
   try {
-    const REQ_PARAM: IHouseholdList = request.query as IHouseholdList;
-    const VALID = ajv.validate(SCHEMA, REQ_PARAM);
-    if (!VALID) {
-      reply.status(400).send({
-        code: "dtoInIsNotValid",
-        message: "dtoIn is not valid",
-        validationError: ajv.errors,
-      });
-      return;
+    const idObject = { id: user_id };
+    const valid = ajv.validate(schema, idObject);
+    if (!valid) {
+      throw new Error("DtoIn is not valid");
     }
-    const HOUSEHOLDS = await HOUSEHOLD_DAO.get(REQ_PARAM.id_user);
-    reply.status(200).send({
-      HOUSEHOLDS,
-      message: "Households listed successfully",
-      status: "success",
-    });
+    await householdDao.listHousehold(user_id, reply);
   } catch (error) {
-    if (error instanceof Error) {
-      reply.status(500).send({ message: error.message, status: "error" });
-    } else {
-      reply
-        .status(500)
-        .send({ message: "Unknown error occurred", status: "error" });
-    }
+    sendError(reply, error);
   }
 }
-export default listHousehold;
+export default listHouseholdAbl;
