@@ -1,3 +1,4 @@
+/*
 import Ajv from "ajv";
 const ajv = new Ajv();
 import { FastifyReply } from "fastify";
@@ -27,3 +28,4 @@ async function householdListAbl(user_id: string, reply: FastifyReply) {
   }
 }
 export default householdListAbl;
+*/

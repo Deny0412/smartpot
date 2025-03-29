@@ -2,6 +2,7 @@ import { FastifyPluginAsync } from "fastify";
 import { Type } from "@sinclair/typebox";
 import flowerRoutes from "./flower"; // Import the flower routes
 import householdRoutes from "./household"; // Import the household routes
+import flowerProfileRoutes from "./flowerProfile"; // Import the household routes
 
 const routes: FastifyPluginAsync = async (fastify) => {
   // Health check endpoint
@@ -28,6 +29,7 @@ const routes: FastifyPluginAsync = async (fastify) => {
   // Register routes under the /api prefix
   fastify.register(flowerRoutes, { prefix: "/flower" });
   fastify.register(householdRoutes, { prefix: "/household" });
+  fastify.register(flowerProfileRoutes, { prefix: "/flowerProfile" });
 };
 
 export default routes;
