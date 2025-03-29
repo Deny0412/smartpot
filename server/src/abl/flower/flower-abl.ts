@@ -81,7 +81,7 @@ class FlowerAbl {
     static async addMeasurement(data: IMeasurement, reply: FastifyReply) {
         try {
             // Check if the flower exists
-            const flowerExists = await flowerDao.getFlower(data.flower_id);
+            const flowerExists = await flowerDao.getFlower(data.flower_id.toString());
             if (!flowerExists) {
                 return sendClientError(reply, "Flower ID does not exist");
             }
