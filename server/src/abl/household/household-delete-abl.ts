@@ -1,11 +1,7 @@
 import Ajv from "ajv";
 const ajv = new Ajv();
-import { FastifyRequest, FastifyReply } from "fastify";
-import {
-  sendError,
-  sendNoContent,
-  sendSuccess,
-} from "../../middleware/response-handler";
+import { FastifyReply } from "fastify";
+import { sendError, sendNoContent } from "../../middleware/response-handler";
 import deleteHouseholdDao from "../../dao/household/household-delete-dao";
 
 const schema = {
