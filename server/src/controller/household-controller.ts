@@ -1,5 +1,4 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-//import householdAbl from "../abl/household/household-abl";
 import householdCreateAbl from "../abl/household/household-create-abl";
 import householdDeleteAbl from "../abl/household/household-delete-abl";
 import householdGetAbl from "../abl/household/household-get-abl";
