@@ -1,5 +1,11 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import householdAbl from "../abl/household/household-abl";
+//import householdAbl from "../abl/household/household-abl";
+import householdCreateAbl from "../abl/household/household-create-abl";
+import householdDeleteAbl from "../abl/household/household-delete-abl";
+import householdGetAbl from "../abl/household/household-get-abl";
+import householdListAbl from "../abl/household/household-list-abl";
+import householdUpdateAbl from "../abl/household/household-update-abl";
+
 import { sendInternalServerError } from "../middleware/response-handler";
 import { IHousehold } from "../models/Household";
 
@@ -11,7 +17,7 @@ export const householdController = {
   create: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const reqParam = request.body as IHousehold;
-      await householdAbl.createHousehold(reqParam, reply);
+      await householdCreateAbl(reqParam, reply);
     } catch (error) {
       sendInternalServerError(reply);
     }
@@ -19,7 +25,7 @@ export const householdController = {
   delete: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const id = (request.body as Params).id;
-      await householdAbl.deleteHousehold(id, reply);
+      await householdDeleteAbl(id, reply);
     } catch (error) {
       sendInternalServerError(reply);
     }
@@ -27,7 +33,7 @@ export const householdController = {
   get: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const id = (request.params as Params).id;
-      await householdAbl.getHousehold(id, reply);
+      await householdGetAbl(id, reply);
     } catch (error) {
       sendInternalServerError(reply);
     }
@@ -35,7 +41,7 @@ export const householdController = {
   list: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const user_id = (request.body as Params).id;
-      await householdAbl.listHousehold(user_id, reply);
+      await householdListAbl(user_id, reply);
     } catch (error) {
       sendInternalServerError(reply);
     }
@@ -43,7 +49,7 @@ export const householdController = {
   update: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const updatedHousehold = request.body as IHousehold;
-      await householdAbl.updateHousehold(updatedHousehold, reply);
+      await householdUpdateAbl(updatedHousehold, reply);
     } catch (error) {
       sendInternalServerError(reply);
     }

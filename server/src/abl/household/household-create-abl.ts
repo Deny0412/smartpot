@@ -1,9 +1,9 @@
 import Ajv from "ajv";
 const ajv = new Ajv();
 import { FastifyReply } from "fastify";
-import householdDao from "../../dao/household/household-dao";
+import householdCreateDao from "../../dao/household/household-create-dao";
 import { IHousehold } from "../../models/Household";
-import { sendError } from "../../middleware/response-handler";
+import { sendError, sendSuccess } from "../../middleware/response-handler";
 
 const schema = {
   type: "object",
@@ -25,7 +25,8 @@ async function createHouseholdAbl(data: IHousehold, reply: FastifyReply) {
       throw new Error("DtoIn is not valid");
       //return;
     }
-    await householdDao.createHousehold(data, reply);
+    const newHousehold = await householdCreateDao(data);
+    sendSuccess(reply, newHousehold, "Household creates successfully");
   } catch (error) {
     sendError(reply, error);
   }

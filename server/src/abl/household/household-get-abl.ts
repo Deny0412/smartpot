@@ -2,7 +2,7 @@ import Ajv from "ajv";
 const ajv = new Ajv();
 import { FastifyReply } from "fastify";
 import { sendSuccess, sendError } from "../../middleware/response-handler";
-import householdDao from "../../dao/household/household-dao";
+import householdGetDao from "../../dao/household/household-get-dao";
 
 const schema = {
   type: "object",
@@ -20,7 +20,8 @@ async function getHouseholdAbl(id: string, reply: FastifyReply) {
     if (!valid) {
       throw new Error("DtoIn is not valid");
     }
-    await householdDao.getHousehold(id, reply);
+    const household = await householdGetDao(id);
+    sendSuccess(reply, household, "Household retrieved successfully");
   } catch (error) {
     sendError(reply, error);
   }

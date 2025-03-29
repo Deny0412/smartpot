@@ -1,8 +1,12 @@
 import Ajv from "ajv";
 const ajv = new Ajv();
 import { FastifyRequest, FastifyReply } from "fastify";
-import { sendError, sendNoContent } from "../../middleware/response-handler";
-import householdDao from "../../dao/household/household-dao";
+import {
+  sendError,
+  sendNoContent,
+  sendSuccess,
+} from "../../middleware/response-handler";
+import deleteHouseholdDao from "../../dao/household/household-delete-dao";
 
 const schema = {
   type: "object",
@@ -20,7 +24,8 @@ async function deleteHouseholdAbl(id: string, reply: FastifyReply) {
     if (!valid) {
       throw new Error("DtoIn is not valid");
     }
-    await householdDao.deleteHousehold(id, reply);
+    await deleteHouseholdDao(id);
+    sendNoContent(reply, "Household deleted successfully");
   } catch (error) {
     sendError(reply, error);
   }
