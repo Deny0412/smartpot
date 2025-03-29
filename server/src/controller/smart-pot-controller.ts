@@ -14,7 +14,7 @@ export const smartpotController = {
             const response = await smartpotAbl.create(data, reply);
             sendCreated(reply, response, "SmartPot created successfully");
         } catch (error) {
-            sendInternalServerError(reply);
+            sendError(reply, error);
         }
     },
     get: async (request: FastifyRequest, reply: FastifyReply) => {
@@ -23,7 +23,7 @@ export const smartpotController = {
             const response = await smartpotAbl.get(id, reply);
             sendSuccess(reply, response, "SmartPot retrieved successfully");
         } catch (error) {
-            sendInternalServerError(reply);
+            sendError(reply, error);
         }
     }
 };

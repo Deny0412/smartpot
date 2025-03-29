@@ -1,72 +1,40 @@
 import { Schema, model, Document, Types } from "mongoose";
 
-export interface ISchedule extends Document {
-  flower_id: Types.ObjectId;
-  active: boolean;
-  monday: {
-    from: Date;
-    to: Date;
-  };
-  tuesday: {
-    from: Date;
-    to: Date;
-  };
-  wednesday: {
-    from: Date;
-    to: Date;
-  };
-  thursday: {
-    from: Date;
-    to: Date;
-  };  
-  friday: {
-    from: Date;
-    to: Date;
-  };
-  saturday: {
-    from: Date;
-    to: Date;
-  };    
-  sunday: {
-    from: Date;
-    to: Date;
-  };  
+interface TimeSlot {
+    from: string | null;
+    to: string | null;
 }
 
+export interface ISchedule extends Document {
+    flower_id: Types.ObjectId;
+    active: boolean;
+    monday: TimeSlot;
+    tuesday: TimeSlot;
+    wednesday: TimeSlot;
+    thursday: TimeSlot;
+    friday: TimeSlot;
+    saturday: TimeSlot;
+    sunday: TimeSlot;
+}
+
+const timeSlotSchema = new Schema({
+    from: { type: String, required: false, default: null },
+    to: { type: String, required: false, default: null }
+});
+
 const SCHEDULE_SCHEMA = new Schema<ISchedule>(
-  {
-    flower_id: { type: Schema.Types.ObjectId, ref: "Flower", required: true },
-    active: { type: Boolean, required: true },
-    monday: {
-      "from": { type: Date, required: false },
-      "to": { type: Date, required: false },
+    {
+        flower_id: { type: Schema.Types.ObjectId, ref: "Flower", required: true },
+        active: { type: Boolean, required: true, default: false },
+        monday: { type: timeSlotSchema, required: true, default: () => ({}) },
+        tuesday: { type: timeSlotSchema, required: true, default: () => ({}) },
+        wednesday: { type: timeSlotSchema, required: true, default: () => ({}) },
+        thursday: { type: timeSlotSchema, required: true, default: () => ({}) },
+        friday: { type: timeSlotSchema, required: true, default: () => ({}) },
+        saturday: { type: timeSlotSchema, required: true, default: () => ({}) },
+        sunday: { type: timeSlotSchema, required: true, default: () => ({}) }
     },
-    tuesday: {
-      "from": { type: Date, required: false },
-      "to": { type: Date, required: false },
-    },
-    wednesday: {
-      "from": { type: Date, required: false },
-      "to": { type: Date, required: false },
-    },
-    thursday: {
-      "from": { type: Date, required: false },
-      "to": { type: Date, required: false },
-    },
-    friday: {
-      "from": { type: Date, required: false },
-      "to": { type: Date, required: false },
-    },
-    saturday: {
-      "from": { type: Date, required: false },
-      "to": { type: Date, required: false },
-    },
-    sunday: {
-      "from": { type: Date, required: false },
-      "to": { type: Date, required: false },
-    },
-  },
-  { timestamps: true }
+    { timestamps: true }
 ); // Adds `createdAt` & `updatedAt` fields
 
 const SCHEDULE_MODEL = model<ISchedule>("Schedule", SCHEDULE_SCHEMA);

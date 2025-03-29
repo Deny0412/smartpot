@@ -1,7 +1,7 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import smartpotGetDao from "../../dao/smartpot/smart-pot-get-dao"; // Adjust the import based on your DAO structure
 import { sendSuccess, sendError, sendNotFound, sendClientError } from "../../middleware/response-handler";
-import { MongoValidator } from "../../utils/mongo-validator";
+import { MongoValidator } from "../../validation/mongo-validator";
 
 async function getSmartPotHandler(id: string, reply: FastifyReply) {
     try {

@@ -58,12 +58,12 @@ export const flowerController = {
         }
     },
     history: async (request: FastifyRequest, reply: FastifyReply) => {
-        try {
+        try {   
             const { flower_id } = request.query as HistoryQuery;
             if (!flower_id) {
                 return sendError(reply, "Flower ID is required");
             }
-            const measurementData = { flower_id } as IMeasurement;
+            const measurementData = { flower_id } as unknown as IMeasurement;
             await flowerAbl.history(measurementData, reply);
         } catch (error) {
             sendError(reply, error);

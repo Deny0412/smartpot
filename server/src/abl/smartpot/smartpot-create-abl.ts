@@ -1,9 +1,9 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import smartpotDao from "../../dao/smartpot/smart-pot-create-dao";
+import smartpotCreateDao from "../../dao/smartpot/smart-pot-create-dao";
 import { ISmartPot } from "../../models/SmartPot";
 import { sendClientError, sendCreated, sendError } from "../../middleware/response-handler";
 import Ajv from "ajv";
-import householdDao from "../../dao/household/household-dao";
+//import householdDao from "../../dao/household/household-dao";
 const schema = {
     type: "object",
     properties: {
@@ -23,7 +23,7 @@ async function createSmartPotHandler(data: ISmartPot, reply: FastifyReply) {
             return;
         }
        // const doesHouseholdExist = await householdDao.getHousehold(data.household_id.toString());
-        const createdSmartPot = await smartpotDao.createSmartPot(data);
+        const createdSmartPot = await smartpotCreateDao(data);
         sendCreated(reply, createdSmartPot, "SmartPot created successfully");
     } catch (error) {
         sendError(reply, error);

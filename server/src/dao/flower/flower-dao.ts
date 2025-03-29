@@ -5,7 +5,7 @@ import updateFlower from '../flower/flower-update-dao';
 import listFlowers from '../flower/flower-list-dao';
 import getFlower from '../flower/flower-get-dao';
 import getFlowerHistory from '../flower/flower-history-dao';
-import { MongoValidator } from '../../utils/mongo-validator';
+import { MongoValidator } from '../../validation/mongo-validator';
 import { IMeasurement } from '@/models/Measurement';
 import addMeasurement from '../flower/flower-measurement-add';
 import FlowerModel from '../../models/Flower';
