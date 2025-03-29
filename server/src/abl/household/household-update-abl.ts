@@ -18,7 +18,7 @@ const schema = {
   additionalProperties: false,
 };
 
-async function updateHouseholdAbl(data: IHousehold, reply: FastifyReply) {
+async function householdUpdateAbl(data: IHousehold, reply: FastifyReply) {
   try {
     const valid = ajv.validate(schema, data);
     if (!valid) {
@@ -34,4 +34,4 @@ async function updateHouseholdAbl(data: IHousehold, reply: FastifyReply) {
     sendError(reply, error);
   }
 }
-export default updateHouseholdAbl;
+export default householdUpdateAbl;

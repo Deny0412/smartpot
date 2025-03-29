@@ -5,27 +5,30 @@ interface IRange {
   max: number;
 }
 
-export interface IFLowerProfile extends Document {
+export interface IFlowerProfile extends Document {
   temperature: IRange;
   humidity: IRange;
-  idHouseHold: string;
+  flower_id: string;
 }
 
-const RANGE_SCHEMA = new Schema<IRange>({
-  min: { type: Number, required: true },
-  max: { type: Number, required: true },
-});
+const RANGE_SCHEMA = new Schema<IRange>(
+  {
+    min: { type: Number, required: true },
+    max: { type: Number, required: true },
+  },
+  { _id: false } // This disables the creation of _id for each subdocument
+);
 
-const FLOWER_PROFILE_SCHEMA = new Schema<IFLowerProfile>(
+const FLOWER_PROFILE_SCHEMA = new Schema<IFlowerProfile>(
   {
     temperature: { type: RANGE_SCHEMA, required: true },
     humidity: { type: RANGE_SCHEMA, required: true },
-    idHouseHold: { type: String, required: true },
+    flower_id: { type: String, required: true },
   },
   { timestamps: true } // Adds createdAt & updatedAt fields
 );
 
-const FLOWER_PROFILE_MODEL = model<IFLowerProfile>(
+const FLOWER_PROFILE_MODEL = model<IFlowerProfile>(
   "FlowerProfile",
   FLOWER_PROFILE_SCHEMA
 );

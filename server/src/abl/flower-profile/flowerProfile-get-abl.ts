@@ -1,0 +1,29 @@
+import Ajv from "ajv";
+const ajv = new Ajv();
+import { FastifyReply } from "fastify";
+import { sendSuccess, sendError } from "../../middleware/response-handler";
+import flowerProfileGetDao from "../../dao/flower-profile/flowerProfile-get-dao";
+
+const schema = {
+  type: "object",
+  properties: {
+    flowerProfile_id: { type: "string" },
+  },
+  required: ["flowerProfile_id"],
+  additionalProperties: false,
+};
+
+async function flowerProfileGetAbl(id: string, reply: FastifyReply) {
+  try {
+    const idObject = { flowerProfile_id: id };
+    const valid = ajv.validate(schema, idObject);
+    if (!valid) {
+      throw new Error("DtoIn is not valid");
+    }
+    const flowerProfile = await flowerProfileGetDao(id);
+    sendSuccess(reply, flowerProfile, "Flower profile retrieved successfully");
+  } catch (error) {
+    sendError(reply, error);
+  }
+}
+export default flowerProfileGetAbl;
