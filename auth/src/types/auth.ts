@@ -8,14 +8,21 @@ export interface JwtPayload {
 export interface User {
   email: string;
   password: string;
+  name?: string;
+  surname?: string;
 }
 
 export const UserSchema = Type.Object({
   email: Type.String({ format: 'email' }),
-  password: Type.String({ minLength: 6 })
+  password: Type.String({ minLength: 6 }),
+  name: Type.Optional(Type.String()),
+  surname: Type.Optional(Type.String())
 });
 
-export const LoginSchema = UserSchema;
+export const LoginSchema = Type.Object({
+  email: Type.String({ format: 'email' }),
+  password: Type.String()
+});
 
 export const ForgotPasswordSchema = Type.Object({
   email: Type.String({ format: 'email' })
