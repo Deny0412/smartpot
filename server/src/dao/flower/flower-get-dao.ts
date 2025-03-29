@@ -1,9 +1,9 @@
-import PotModel from '../../models/Flower';
+import FlowerModel from '../../models/Flower';
 
-async function getPot(id: string) {
+async function getFlower(id: string) {
     
-    const pot = await PotModel.findById(id);
-    return pot;
+    const flower = await FlowerModel.findById(id);
+    return flower;
 }
 
-export default getPot;
+export default getFlower;

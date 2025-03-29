@@ -5,6 +5,7 @@ import flowerDao from "../../dao/flower/flower-dao";
 import { IFlower } from "../../models/Flower";
 import { sendSuccess, sendError, sendNotFound, sendClientError } from "../../middleware/response-handler";
 import mongoose from 'mongoose';
+import { MongoValidator } from "../../validation/mongo-validator";
 
 const SCHEMA = {
     type: "object",
@@ -19,7 +20,10 @@ const SCHEMA = {
 
 async function updateFlowerHandler(data: IFlower, reply: FastifyReply) {
     try {
-        
+        const valid = MongoValidator.validateId(data.id);
+        if (!valid) {
+            return sendClientError(reply, "Invalid flower ID format");
+        }
 
 
         const updatedFlower = await flowerDao.updateFlower(String(data.id), data);

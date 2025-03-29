@@ -2,127 +2,179 @@ import { FastifyPluginAsync } from 'fastify';
 import { Type } from '@sinclair/typebox';
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import crypto from 'crypto';
-import { User, UserSchema, LoginSchema, ForgotPasswordSchema } from '../types/auth';
-
-// Simulate a simple user database (replace with real database in production)
-const users = new Map<string, User>();
+import { UserSchema, LoginSchema, ForgotPasswordSchema } from '../types/auth';
+import UserModel, { IUser } from '../models/User';
 
 function hashPassword(password: string): string {
-  return crypto.createHash('sha256').update(password).digest('hex');
+    return crypto.createHash('sha256').update(password).digest('hex');
+}
+
+declare module 'fastify' {
+    interface FastifyInstance {
+        authenticate: any;
+    }
 }
 
 const auth: FastifyPluginAsync = async (fastify) => {
-  const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
+    const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
 
-  // Register endpoint
-  server.post('/auth/register', {
-    schema: {
-      body: UserSchema,
-      response: {
-        200: Type.Object({
-          message: Type.String()
-        })
-      }
-    }
-  }, async (request: any, reply: any) => {
-    const { email, password } = request.body;
-    
-    if (users.has(email)) {
-      return reply.code(400).send({ error: 'User already exists' });
-    }
+    // Register endpoint
+    server.post('/auth/register', {
+        schema: {
+            body: UserSchema,
+            response: {
+                200: Type.Object({
+                    message: Type.String()
+                })
+            }
+        }
+    }, async (request: any, reply: any) => {
+        try {
+            const { email, password, name, surname } = request.body;
 
-    const hashedPassword = hashPassword(password);
-    users.set(email, {
-      email,
-      password: hashedPassword
+            // Check if user already exists
+            const existingUser = await UserModel.findOne({ email });
+            if (existingUser) {
+                return reply.code(400).send({ error: 'User already exists' });
+            }
+
+            // Create new user
+            const hashedPassword = hashPassword(password);
+            const user = new UserModel({
+                email,
+                password: hashedPassword,
+                name,
+                surname
+            });
+
+            await user.save();
+            return { message: 'User registered successfully' };
+        } catch (error) {
+            console.error('Registration error:', error);
+            return reply.code(500).send({ error: 'Internal server error' });
+        }
     });
 
-    return { message: 'User registered successfully' };
-  });
+    // Login endpoint
+    server.post('/auth/login', {
+        schema: {
+            body: LoginSchema,
+            response: {
+                200: Type.Object({
+                    token: Type.String()
+                })
+            }
+        }
+    }, async (request: any, reply: any) => {
+        try {
+            const { email, password } = request.body;
+            const user = await UserModel.findOne({ email });
 
-  // Login endpoint
-  server.post('/auth/login', {
-    schema: {
-      body: LoginSchema,
-      response: {
-        200: Type.Object({
-          token: Type.String()
-        })
-      }
-    }
-  }, async (request: any, reply: any) => {
-    const { email, password } = request.body;
-    const user = users.get(email);
+            if (!user || user.password !== hashPassword(password)) {
+                return reply.code(401).send({ error: 'Invalid credentials' });
+            }
 
-    if (!user || user.password !== hashPassword(password)) {
-      return reply.code(401).send({ error: 'Invalid credentials' });
-    }
+            const token = server.jwt.sign({ 
+                email: user.email,
+                userId: user._id 
+            });
+            return { token };
+        } catch (error) {
+            console.error('Login error:', error);
+            return reply.code(500).send({ error: 'Internal server error' });
+        }
+    });
 
-    const token = server.jwt.sign({ email: user.email });
-    return { token };
-  });
+    // Forgot password endpoint
+    server.post('/auth/forgotPassword', {
+        schema: {
+            body: ForgotPasswordSchema,
+            response: {
+                200: Type.Object({
+                    message: Type.String()
+                })
+            }
+        }
+    }, async (request: any, reply: any) => {
+        try {
+            const { email } = request.body;
+            const user = await UserModel.findOne({ email });
 
-  // Forgot password endpoint
-  server.post('/auth/forgotPassword', {
-    schema: {
-      body: ForgotPasswordSchema,
-      response: {
-        200: Type.Object({
-          message: Type.String()
-        })
-      }
-    }
-  }, async (request: any, reply: any) => {
-    const { email } = request.body;
-    
-    if (!users.has(email)) {
-      return reply.code(404).send({ error: 'User not found' });
-    }
+            if (!user) {
+                return reply.code(404).send({ error: 'User not found' });
+            }
 
-    // In a real application, send password reset email
-    return { message: 'Password reset instructions sent to email' };
-  });
+            // In a real application, send password reset email
+            return { message: 'Password reset instructions sent to email' };
+        } catch (error) {
+            console.error('Forgot password error:', error);
+            return reply.code(500).send({ error: 'Internal server error' });
+        }
+    });
 
-  // Get user info endpoint (protected route)
-  server.get('/auth/get', {
-    onRequest: [server.authenticate],
-    schema: {
-      response: {
-        200: Type.Object({
-          email: Type.String()
-        })
-      }
-    }
-  }, async (request: any) => {
-    const user = users.get(request.user.email);
-    if (!user) {
-      throw new Error('User not found');
-    }
+    // Get user info endpoint (protected route)
+    server.get('/auth/get', {
+        onRequest: [server.authenticate],
+        schema: {
+            response: {
+                200: Type.Object({
+                    email: Type.String(),
+                    name: Type.Optional(Type.String()),
+                    surname: Type.Optional(Type.String())
+                })
+            }
+        }
+    }, async (request: any, reply: any) => {
+        try {
+            const user = await UserModel.findOne({ email: request.user.email });
+            if (!user) {
+                return reply.code(404).send({ error: 'User not found' });
+            }
 
-    return {
-      email: user.email
-    };
-  });
+            return {
+                email: user.email,
+                name: user.name,
+                surname: user.surname
+            };
+        } catch (error) {
+            console.error('Get user info error:', error);
+            return reply.code(500).send({ error: 'Internal server error' });
+        }
+    });
 
-  // Check authorization endpoint
-  server.get('/auth/check', {
-    onRequest: [server.authenticate],
-    schema: {
-      response: {
-        200: Type.Object({
-          message: Type.String(),
-          authorized: Type.Boolean(),
-          email: Type.String(),
-        })
-      }
-    }
-  }, async (request: any) => {
-    return {
-      message: 'User is authorized',
-        authorized: true ,
-        email: request.user.email,
-    };
-  });
+    // Check authorization endpoint
+    server.get('/auth/check', {
+        onRequest: [server.authenticate],
+        schema: {
+            response: {
+                200: Type.Object({
+                    message: Type.String(),
+                    authorized: Type.Boolean(),
+                    email: Type.String(),
+                })
+            }
+        }
+    }, async (request: any, reply: any) => {
+        try {
+            const user = await UserModel.findOne({ email: request.user.email });
+            if (!user) {
+                return reply.code(401).send({ 
+                    message: 'User not authorized',
+                    authorized: false,
+                    email: request.user.email
+                });
+            }
+
+            return {
+                message: 'User is authorized',
+                authorized: true,
+                email: user.email
+            };
+        } catch (error) {
+            console.error('Auth check error:', error);
+            return reply.code(500).send({ error: 'Internal server error' });
+        }
+    });
 };
 
 export default auth;

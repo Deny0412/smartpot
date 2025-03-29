@@ -1,20 +1,20 @@
-import { Schema, model, Document } from "mongoose";
+import { Schema, model, Document, Types } from "mongoose";
 
 export interface IMeasurement extends Document {
-  flower_id: string;
-  type: "humidity" | "temperature" | "waterlevel";
-  value: number;
-  unit: string;
-  timestamp: Date;
+  flower_id: Types.ObjectId;
+  humidity: number;
+  waterlevel: number;
+  temperature: number;
+  light: number;
 }
 
 const measurementSchema = new Schema<IMeasurement>(
   {
-    flower_id: { type: String, required: true },
-    type: { type: String, enum: ["humidity", "temperature", "waterlevel"], required: true },
-    value: { type: Number, required: true },
-    unit: { type: String, required: true }, // %, °C, cm, atd.
-    timestamp: { type: Date, default: Date.now }
+    flower_id: { type: Schema.Types.ObjectId, ref: "Flower", required: true },
+    humidity: { type: Number, required: true },
+    waterlevel: { type: Number, required: true },
+    temperature: { type: Number, required: true },
+    light: { type: Number, required: true },
   },
   { timestamps: true }
 ); // createdAt = zápis do DB, timestamp = čas měření
