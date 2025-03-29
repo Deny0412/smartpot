@@ -5,6 +5,7 @@ import { sendClientError, sendCreated, sendError } from "../../middleware/respon
 import flowerDao from "../../dao/flower/flower-dao";
 import { validateCreateSchedule, formatValidationErrors } from "../../validation/schedule-validation";
 
+
 async function createScheduleHandler(data: ISchedule, reply: FastifyReply) {
     try {
         const valid = validateCreateSchedule(data);

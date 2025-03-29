@@ -2,7 +2,7 @@ import Ajv, { JSONSchemaType } from "ajv";
 import { ISchedule } from "../models/Schedule";
 import addFormats from "ajv-formats";
 
-const ajv = new Ajv({ allErrors: true });
+const ajv = new Ajv({ allErrors: true, useDefaults: true });
 addFormats(ajv);
 
 // Time slot schema for reusability
@@ -12,15 +12,18 @@ const timeSlotSchema = {
     from: {
       type: ["string", "null"],
       pattern: "^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$", // HH:mm format
-      nullable: true
+      nullable: true,
+      default: null
     },
     to: {
       type: ["string", "null"],
       pattern: "^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$", // HH:mm format
-      nullable: true
+      nullable: true,
+      default: null
     },
   },
   additionalProperties: false,
+  default: { from: null, to: null }
 } as const;
 
 // Create schedule schema
@@ -29,13 +32,13 @@ export const createScheduleSchema = {
   properties: {
     flower_id: { type: "string", pattern: "^[0-9a-fA-F]{24}$" }, // MongoDB ObjectId format
     active: { type: "boolean", default: false },
-    monday: timeSlotSchema,
-    tuesday: timeSlotSchema,
-    wednesday: timeSlotSchema,
-    thursday: timeSlotSchema,
-    friday: timeSlotSchema,
-    saturday: timeSlotSchema,
-    sunday: timeSlotSchema,
+    monday: { ...timeSlotSchema, default: { from: null, to: null } },
+    tuesday: { ...timeSlotSchema, default: { from: null, to: null } },
+    wednesday: { ...timeSlotSchema, default: { from: null, to: null } },
+    thursday: { ...timeSlotSchema, default: { from: null, to: null } },
+    friday: { ...timeSlotSchema, default: { from: null, to: null } },
+    saturday: { ...timeSlotSchema, default: { from: null, to: null } },
+    sunday: { ...timeSlotSchema, default: { from: null, to: null } }
   },
   required: ["flower_id"],
   additionalProperties: false,

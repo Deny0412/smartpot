@@ -20,19 +20,21 @@ export interface ISchedule extends Document {
 const timeSlotSchema = new Schema({
     from: { type: String, required: false, default: null },
     to: { type: String, required: false, default: null }
-});
+}, { _id: false });
+
+const defaultTimeSlot = { from: null, to: null };
 
 const SCHEDULE_SCHEMA = new Schema<ISchedule>(
     {
         flower_id: { type: Schema.Types.ObjectId, ref: "Flower", required: true },
         active: { type: Boolean, required: true, default: false },
-        monday: { type: timeSlotSchema, required: true, default: () => ({}) },
-        tuesday: { type: timeSlotSchema, required: true, default: () => ({}) },
-        wednesday: { type: timeSlotSchema, required: true, default: () => ({}) },
-        thursday: { type: timeSlotSchema, required: true, default: () => ({}) },
-        friday: { type: timeSlotSchema, required: true, default: () => ({}) },
-        saturday: { type: timeSlotSchema, required: true, default: () => ({}) },
-        sunday: { type: timeSlotSchema, required: true, default: () => ({}) }
+        monday: { type: timeSlotSchema, required: true, default: () => ({...defaultTimeSlot}) },
+        tuesday: { type: timeSlotSchema, required: true, default: () => ({...defaultTimeSlot}) },
+        wednesday: { type: timeSlotSchema, required: true, default: () => ({...defaultTimeSlot}) },
+        thursday: { type: timeSlotSchema, required: true, default: () => ({...defaultTimeSlot}) },
+        friday: { type: timeSlotSchema, required: true, default: () => ({...defaultTimeSlot}) },
+        saturday: { type: timeSlotSchema, required: true, default: () => ({...defaultTimeSlot}) },
+        sunday: { type: timeSlotSchema, required: true, default: () => ({...defaultTimeSlot}) }
     },
     { timestamps: true }
 ); // Adds `createdAt` & `updatedAt` fields
