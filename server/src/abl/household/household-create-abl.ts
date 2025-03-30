@@ -19,6 +19,8 @@ const schema = {
 
 async function householdCreateAbl(data: IHousehold, reply: FastifyReply) {
   try {
+    data.members = data.members ?? [];
+    data.invites = data.invites ?? [];
     const valid = ajv.validate(schema, data);
     if (!valid) {
       //sendError(reply, "BOMBA");
