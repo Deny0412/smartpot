@@ -10,19 +10,21 @@ import {
   //sendNoContent,
   sendNotFound,
 } from "../../middleware/response-handler";
-import kickHouseholdDao from "../../dao/household/household-kick-dao";
+import householdDecisionDao from "../../dao/household/household-decision-dao";
 import householdGetDao from "../../dao/household/household-get-dao";
+
 const schema = {
   type: "object",
   properties: {
     id: { type: "string" },
-    kicked_user_id: { type: "string" },
+    decision: { type: "boolean" },
+    invited_user_id: { type: "string" },
   },
-  required: ["id", "kicked_user_id"],
+  required: ["id", "decision", "invited_user_id"],
   additionalProperties: false,
 };
 
-async function householdKickAbl(data: Object, reply: FastifyReply) {
+async function householdDecisionAbl(data: Object, reply: FastifyReply) {
   try {
     const validate = ajv.compile(schema);
     const valid = validate(data);
@@ -37,22 +39,27 @@ async function householdKickAbl(data: Object, reply: FastifyReply) {
     if (!household) {
       sendNotFound(reply, "Household does not exist");
     }
-    const kickedUserObjectId = new Types.ObjectId(String(data.kicked_user_id));
+
+    const invitedUserObjectId = new Types.ObjectId(
+      String(data.invited_user_id)
+    );
+
     if (
-      !household?.members.some((member) =>
-        member._id.equals(kickedUserObjectId)
+      household?.members.some((member) =>
+        member._id.equals(invitedUserObjectId)
       )
     ) {
       //sendClientError(reply, "User is not member");
-      throw new Error("User is not member");
+      throw new Error("User is already member");
     }
-    const updatedHousehold = await kickHouseholdDao(
+    const updatedHousehold = await householdDecisionDao(
       String(data.id),
-      String(data.kicked_user_id)
+      String(data.invited_user_id),
+      Boolean(data.decision)
     );
-    sendSuccess(reply, updatedHousehold, "User kicked successfully");
+    sendSuccess(reply, updatedHousehold, "User decided successfully");
   } catch (error) {
     sendError(reply, error);
   }
 }
-export default householdKickAbl;
+export default householdDecisionAbl;
