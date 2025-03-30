@@ -8,7 +8,7 @@ interface IRange {
 export interface IFlowerProfile extends Document {
   temperature: IRange;
   humidity: IRange;
-  flower_id: string;
+  //flower_id: string;
 }
 
 const RANGE_SCHEMA = new Schema<IRange>(
@@ -23,7 +23,7 @@ const FLOWER_PROFILE_SCHEMA = new Schema<IFlowerProfile>(
   {
     temperature: { type: RANGE_SCHEMA, required: true },
     humidity: { type: RANGE_SCHEMA, required: true },
-    flower_id: { type: String, required: true },
+    //flower_id: { type: String, required: true },
   },
   { timestamps: true } // Adds createdAt & updatedAt fields
 );

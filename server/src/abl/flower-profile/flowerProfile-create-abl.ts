@@ -26,9 +26,8 @@ const schema = {
       required: ["min", "max"],
       additionalProperties: false,
     },
-    flower_id: { type: "string" },
   },
-  required: ["temperature", "humidity", "flower_id"],
+  required: ["temperature", "humidity"],
   additionalProperties: false,
 };
 
