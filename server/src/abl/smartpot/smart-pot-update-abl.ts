@@ -17,9 +17,26 @@ function isValidObjectId(id: string): boolean {
   return mongoose.Types.ObjectId.isValid(id);
 }
 
+const schema = {
+  type: "object",
+  properties: {
+    serial_number: { type: "string" },
+    active_flower_id: { type: "string" },
+    household_id: { type: "string" },
+  },
+  required: ["serial_number"],
+};
+
 async function updateSmartPotHandler(data: ISmartPot, reply: FastifyReply) {
   try {
+    const validate = ajv.compile(schema);
+        const valid = validate(data);
+        if(!valid){
+            sendClientError(reply, JSON.stringify(validate.errors?.map(error => error.message)));
+            return;
+        }
     // Validate IDs format
+
     if (data.active_flower_id && !isValidObjectId(data.active_flower_id.toString())) {
       sendClientError(reply, "Invalid active_flower_id format");
       return;

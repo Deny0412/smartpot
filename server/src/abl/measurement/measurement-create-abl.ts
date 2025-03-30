@@ -9,11 +9,12 @@ const schema = {
     properties: {
         flower_id: { type: "string" },
         humidity: { type: ["number", "null"] },
-        waterlevel: { type: ["number", "null"] },
+        water_level: { type: ["number", "null"] },
         temperature: { type: ["number", "null"] },
         light: { type: ["number", "null"] },
     },
     required: ["flower_id"],
+    additionalProperties: false,
 };
 
 const ajv = new Ajv();

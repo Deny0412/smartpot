@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import smartpotAbl from '../abl/smartpot/smart-pot-abl';
-
+import smartpotCreateAbl from '../abl/smartpot/smartpot-create-abl';
+import smartpotGetAbl from '../abl/smartpot/smartpot-get-abl';
 import { sendSuccess, sendCreated,sendError, sendInternalServerError } from '../middleware/response-handler';
 import { ISmartPot } from '../models/SmartPot';
 import SmartPotAblUpdate from '../abl/smartpot/smart-pot-update-abl';
@@ -12,7 +12,7 @@ export const smartpotController = {
     create: async (request: FastifyRequest, reply: FastifyReply) => {
         try {
             const data = request.body as ISmartPot;
-            const response = await smartpotAbl.create(data, reply);
+            const response = await smartpotCreateAbl(data, reply);
             sendCreated(reply, response, "SmartPot created successfully");
         } catch (error) {
             sendError(reply, error);
@@ -21,7 +21,7 @@ export const smartpotController = {
     get: async (request: FastifyRequest, reply: FastifyReply) => {
         try {
             const id = (request.params as Params).id;
-            const response = await smartpotAbl.get(id, reply);
+            const response = await smartpotGetAbl(id, reply);
             sendSuccess(reply, response, "SmartPot retrieved successfully");
         } catch (error) {
             sendError(reply, error);
