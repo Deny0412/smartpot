@@ -9,6 +9,7 @@ import flowerAddMeasurementAbl from '../abl/flower/flower-measurent-add-abl';
 import { sendSuccess, sendCreated,sendError, sendInternalServerError } from '../middleware/response-handler';
 import { IFlower } from '../models/Flower';
 import { IMeasurement } from '@/models/Measurement';
+import listActiveFlowersHandler from '../abl/flower/flower-list-active-abl';
 
 interface Params {
     id: string; 
@@ -16,6 +17,12 @@ interface Params {
 
 interface HistoryQuery {
     flower_id: string;
+}   
+
+interface QueryParams {
+    page: number;
+    household_id: string;
+    limit: number;
 }
 
 export const flowerController = {
@@ -79,6 +86,14 @@ export const flowerController = {
         try {
             const measurementData = request.body as IMeasurement;
             await flowerAddMeasurementAbl(measurementData, reply);
+        } catch (error) {
+            sendError(reply, error);
+        }
+    },
+    listActive: async (request: FastifyRequest, reply: FastifyReply) => {
+        try {
+            const data = request.query as QueryParams;
+            await listActiveFlowersHandler(data,reply);
         } catch (error) {
             sendError(reply, error);
         }

@@ -15,10 +15,10 @@ const SCHEMA = {
   type: "object",
   properties: {
     _id: { type: "string" },
-    id_profile: { type: "string" },
+    profile_id: { type: "string" },
     name: { type: "string" },
   },
-  required: ["_id", "id_profile", "name"],
+  required: ["_id", "profile_id", "name"],
   additionalProperties: false,
 };
 
@@ -28,17 +28,19 @@ async function updateFlowerHandler(data: IFlower, reply: FastifyReply) {
     if (!valid) {
       return sendClientError(reply, "Invalid flower ID format");
     }
-    const id_profile_validated = MongoValidator.validateId(data.profile_id.toString());
-    if (!id_profile_validated) {
+    const profile_id_validated = MongoValidator.validateId(
+      data.profile_id.toString()
+    );
+    if (!profile_id_validated) {
       return sendClientError(reply, "Invalid profile ID format");
     }
 
     const doesFlowerProfileExist = await flowerProfileGetDao(
       data.profile_id.toString()
     );
-    if(!doesFlowerProfileExist){
-        sendClientError(reply, "Flower profile does not exist");
-        return;
+    if (!doesFlowerProfileExist) {
+      sendClientError(reply, "Flower profile does not exist");
+      return;
     }
 
     const updatedFlower = await updateFlower(String(data.id), data);
