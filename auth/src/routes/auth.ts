@@ -4,6 +4,7 @@ import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import crypto from 'crypto';
 import { UserSchema, LoginSchema, ForgotPasswordSchema } from '../types/auth';
 import UserModel, { IUser } from '../models/User';
+import { exists } from 'fs';
 
 function hashPassword(password: string): string {
     return crypto.createHash('sha256').update(password).digest('hex');
@@ -141,7 +142,34 @@ const auth: FastifyPluginAsync = async (fastify) => {
             return reply.code(500).send({ error: 'Internal server error' });
         }
     });
+    server.get('/auth/exists', {
+        schema: {
+            querystring: Type.Object({
+                user_id: Type.String()
+            }),
+            response: {
+                200: Type.Object({
+                    exists: Type.Boolean()
+                })
+            }
+        }
+    }, async (request: any, reply: any) => {
+        try {
+            const { user_id } = request.query;
+            
+            if (!user_id) {
+                return reply.code(400).send({ error: 'user_id query parameter is required' });
+            }
 
+            const user = await UserModel.findById(user_id);
+            return {
+                exists: !!user
+            };
+        } catch (error) {
+            console.error('User exists check error:', error);
+            return reply.code(500).send({ error: 'Internal server error' });
+        }
+    });
     // Check authorization endpoint
     server.get('/auth/check', {
         onRequest: [server.authenticate],

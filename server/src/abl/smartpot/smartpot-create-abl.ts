@@ -13,7 +13,7 @@ const schema = {
         household_id: { type: "string" },
         active_flower_id: { type: "string" },
     },
-    required: [ "serial_number", "household_id",],
+    required: [ "serial_number", ],
 };
 const ajv = new Ajv();
 async function createSmartPotHandler(data: ISmartPot, reply: FastifyReply) {

@@ -11,6 +11,7 @@ import {
 } from "../../middleware/response-handler";
 import { MongoValidator } from "../../validation/mongo-validator";
 import checkFlowerExists from "../../dao/flower/flower-exists-dao";
+import getHousehold from "../../dao/household/household-get-dao";
 async function updateSmartPotHandler(data: ISmartPot, reply: FastifyReply) {
   try {
     const active_flower_id_validated = MongoValidator.validateId(data.active_flower_id.toString());
@@ -21,8 +22,12 @@ async function updateSmartPotHandler(data: ISmartPot, reply: FastifyReply) {
     if (!existsFlower) {
       return sendNotFound(reply, "Flower not found");
     }
+    const existsHousehold = await getHousehold(data.household_id.toString());
+    if (!existsHousehold) {
+      return sendNotFound(reply, "Household not found");
+    }
     const updatedSmartPot = await smartpotUpdateDao(String(data.serial_number), data);
-
+    
     if (!updatedSmartPot) {
       return sendNotFound(reply, "SmartPot not found");
     }
