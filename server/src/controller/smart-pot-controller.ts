@@ -3,6 +3,7 @@ import smartpotAbl from '../abl/smartpot/smart-pot-abl';
 
 import { sendSuccess, sendCreated,sendError, sendInternalServerError } from '../middleware/response-handler';
 import { ISmartPot } from '../models/SmartPot';
+import SmartPotAblUpdate from '../abl/smartpot/smart-pot-update-abl';
 
 interface Params {
     id: string; 
@@ -25,5 +26,15 @@ export const smartpotController = {
         } catch (error) {
             sendError(reply, error);
         }
+    },
+    update: async (request: FastifyRequest, reply: FastifyReply) => {
+        try {
+            const data = request.body as ISmartPot;
+            const response = await SmartPotAblUpdate(data, reply);
+            sendSuccess(reply, response, "SmartPot updated successfully");
+        } catch (error) {
+            sendError(reply, error);
+        }
     }
 };
+

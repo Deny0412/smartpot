@@ -9,6 +9,8 @@ import flowerCreateDao from "../../dao/flower/flower-create-dao";
 import householdGetDao from "../../dao/household/household-get-dao";
 import Ajv from "ajv";
 import checkSmartPotExists from "../../dao/smartpot/smart-pot-exists-dao";
+import flowerProfileGetDao from "../../dao/flower-profile/flowerProfile-get-dao";
+import { MongoValidator } from "../../validation/mongo-validator";
 const schema = {
   type: "object",
   properties: {
@@ -23,6 +25,16 @@ const ajv = new Ajv();
 async function createFlowerHandler(data: IFlower, reply: FastifyReply) {
     console.log(data);
   try {
+      const validateIdProfile=await MongoValidator.validateId(data.profile_id.toString());
+      if(!validateIdProfile){
+          sendClientError(reply, "Invalid profile id");
+          return;
+      }
+      const validateIdHousehold=MongoValidator.validateId(data.household_id.toString());
+      if(!validateIdHousehold){
+          sendClientError(reply, "Invalid household id");
+          return;
+      }
     const validate = ajv.compile(schema);
     const valid = validate(data);
     if (!valid) {
@@ -31,6 +43,13 @@ async function createFlowerHandler(data: IFlower, reply: FastifyReply) {
         JSON.stringify(validate.errors?.map((error) => error.message))
       );
       return;
+    }
+    const doesFlowerProfileExist = await flowerProfileGetDao(
+      data.profile_id.toString()
+    );
+    if(!doesFlowerProfileExist){
+        sendClientError(reply, "Flower profile does not exist");
+        return;
     }
     const doesHouseholdExist = await householdGetDao(
       data.household_id.toString()
@@ -48,7 +67,8 @@ async function createFlowerHandler(data: IFlower, reply: FastifyReply) {
     const createdFlower = await flowerCreateDao(data);
     sendCreated(reply, createdFlower, "Flower created successfully");
   } catch (error) {
-    sendError(reply, error);
+    console.error("Error creating flower:", error);
+    sendError(reply, error as Error);
   }
 }
 

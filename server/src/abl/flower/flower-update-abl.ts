@@ -10,6 +10,7 @@ import {
 } from "../../middleware/response-handler";
 import { MongoValidator } from "../../validation/mongo-validator";
 import updateFlower from "../../dao/flower/flower-update-dao";
+import flowerProfileGetDao from "../../dao/flower-profile/flowerProfile-get-dao";
 const SCHEMA = {
   type: "object",
   properties: {
@@ -26,6 +27,18 @@ async function updateFlowerHandler(data: IFlower, reply: FastifyReply) {
     const valid = MongoValidator.validateId(data.id);
     if (!valid) {
       return sendClientError(reply, "Invalid flower ID format");
+    }
+    const id_profile_validated = MongoValidator.validateId(data.profile_id.toString());
+    if (!id_profile_validated) {
+      return sendClientError(reply, "Invalid profile ID format");
+    }
+
+    const doesFlowerProfileExist = await flowerProfileGetDao(
+      data.profile_id.toString()
+    );
+    if(!doesFlowerProfileExist){
+        sendClientError(reply, "Flower profile does not exist");
+        return;
     }
 
     const updatedFlower = await updateFlower(String(data.id), data);
