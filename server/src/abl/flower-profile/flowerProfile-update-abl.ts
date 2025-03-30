@@ -26,7 +26,6 @@ const schema = {
       required: ["min", "max"],
       additionalProperties: false,
     },
-    flower_id: { type: "string" },
     id: { type: "string" },
   },
   required: ["id"],
