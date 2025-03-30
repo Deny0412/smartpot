@@ -22,13 +22,6 @@ fastify.register(swaggerPlugin);
 // Register routes with the /api prefix
 fastify.register(routes, { prefix: "/api" }); // This will add /api to all routes defined in index.ts
 
-// Health check endpoint
-
-/*
-fastify.get("/health", async () => {
-  return { status: "ok" };
-});
-*/
 
 // Start server
 const start = async () => {
