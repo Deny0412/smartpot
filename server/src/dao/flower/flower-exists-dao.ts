@@ -2,7 +2,12 @@ import FlowerModel from "../../models/Flower";
 
 async function checkFlowerExists(id: string) {
     const flower = await FlowerModel.findById(id);
-    return !!flower;
+    if(flower){
+        console.log("flower", flower);
+        return true;
+    }
+    console.log("flower not found");
+    return false;
 }
 
 export default checkFlowerExists;
