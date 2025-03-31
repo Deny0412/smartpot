@@ -9,7 +9,7 @@ async function updateFlower(id: string, flowerData: IFlower) {
     }
     const updatedFlower = await FlowerModel.findByIdAndUpdate(
         id,
-        { $set: { name: flowerData.name, profile_id: flowerData.profile_id } },
+        { $set: { name: flowerData.name, profile_id: flowerData.profile_id, serial_number: flowerData.serial_number } },
         { new: true }
     );
     return updatedFlower;
