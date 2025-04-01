@@ -9,10 +9,14 @@ export interface IFlower extends Document {
 
 const flowerSchema = new Schema<IFlower>(
   {
-    profile_id: { type: String, required: true },
+    profile_id: { type: String, required: false, default: null },
     name: { type: String, required: true },
-    household_id: { type: Schema.Types.ObjectId, ref: "Household", required: true },
-    serial_number:{type:String, required:true}
+    household_id: {
+      type: Schema.Types.ObjectId,
+      ref: "Household",
+      required: true,
+    },
+    serial_number: { type: String, required: false, default: null },
   },
   { timestamps: true }
 ); // Adds `createdAt` & `updatedAt` fields

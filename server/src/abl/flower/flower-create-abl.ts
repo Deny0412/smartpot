@@ -23,18 +23,8 @@ const schema = {
 };
 const ajv = new Ajv();
 async function createFlowerHandler(data: IFlower, reply: FastifyReply) {
-    console.log(data);
+  console.log(data);
   try {
-      const validateIdProfile=await MongoValidator.validateId(data.profile_id.toString());
-      if(!validateIdProfile){
-          sendClientError(reply, "Invalid profile id");
-          return;
-      }
-      const validateIdHousehold=MongoValidator.validateId(data.household_id.toString());
-      if(!validateIdHousehold){
-          sendClientError(reply, "Invalid household id");
-          return;
-      }
     const validate = ajv.compile(schema);
     const valid = validate(data);
     if (!valid) {
@@ -44,26 +34,33 @@ async function createFlowerHandler(data: IFlower, reply: FastifyReply) {
       );
       return;
     }
-    const doesFlowerProfileExist = await flowerProfileGetDao(
-      data.profile_id.toString()
-    );
-    if(!doesFlowerProfileExist){
+    if (data.profile_id) {
+      const doesFlowerProfileExist = await flowerProfileGetDao(data.profile_id);
+      if (!doesFlowerProfileExist) {
         sendClientError(reply, "Flower profile does not exist");
         return;
+      }
     }
-    const doesHouseholdExist = await householdGetDao(
-      data.household_id.toString()
-    );
-    const doesSmartPotExist = await checkSmartPotExists(
-      data.serial_number.toString()
-    );
-    if(!doesSmartPotExist){
+    if (data.household_id) {
+      const doesHouseholdExist = await householdGetDao(
+        data.household_id.toString()
+      );
+      if (!doesHouseholdExist) {
+        sendClientError(reply, "Household does not exist");
+        return;
+      }
+    }
+    if (data.serial_number) {
+      const doesSmartPotExist = await checkSmartPotExists(
+        data.serial_number.toString()
+      );
+      if (!doesSmartPotExist) {
         sendClientError(reply, "Smart pot does not exist");
         return;
+      }
     }
     //TODO
 
-    
     const createdFlower = await flowerCreateDao(data);
     sendCreated(reply, createdFlower, "Flower created successfully");
   } catch (error) {

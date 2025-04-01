@@ -38,6 +38,7 @@ async function flowerAddMeasurementHandler(
       return;
     }
     const flowerExists = await getFlower(data.flower_id.toString());
+    console.log("flowerExists", flowerExists);
     if (!flowerExists) {
       return sendClientError(reply, "Flower ID does not exist");
     }
