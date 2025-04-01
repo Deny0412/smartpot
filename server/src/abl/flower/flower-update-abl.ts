@@ -21,7 +21,8 @@ const SCHEMA = {
     id: { type: "string" },
     profile_id: { type: "string", required: false },
     name: { type: "string" },
-    serial_number: { type: "string" },
+    serial_number: { type: "string",required: false},
+    household_id: { type: "string", required: false },
   },
   required: ["id"],
   additionalProperties: false,
@@ -47,10 +48,10 @@ async function updateFlowerHandler(data: IFlower, reply: FastifyReply) {
       }
     }
     //TODO: Check if serial number exists
+    if(data.serial_number){
     const doesSerialNumberExist = await smartpotGetBySerialNumberDao(
-      data.serial_number
+        data.serial_number
     );
-
     if (!doesSerialNumberExist) {
       sendClientError(
         reply,
@@ -58,13 +59,18 @@ async function updateFlowerHandler(data: IFlower, reply: FastifyReply) {
       );
       return;
     }
+    }
+
+    
     const old_flower = await flowerGetDao(data.id);
 
     const old_serial_number = old_flower?.serial_number;
     const old_smart_pot = await smartpotGetBySerialNumberDao(
       String(old_serial_number)
     );
-
+    const new_smart_pot = await smartpotGetBySerialNumberDao(
+      String(data.serial_number)
+    );
     //Logic for when the flower is moved to a different smartpot
     if (
       old_smart_pot?.active_flower_id?.toString() ===
@@ -74,6 +80,20 @@ async function updateFlowerHandler(data: IFlower, reply: FastifyReply) {
     ) {
       old_smart_pot.active_flower_id = null;
       const updatedSmartpot = await updateSmartPot(old_smart_pot);
+    }
+    
+    
+    if(new_smart_pot?.household_id.toString()!==old_flower?.household_id.toString() &&!data.household_id){
+      sendClientError(reply, "Flower must be from the same household as the smartpot");
+      return;
+    }
+    
+    if(data.serial_number&&data.household_id&&new_smart_pot?.household_id.toString()!==data.household_id.toString()){
+      sendClientError(reply, "Flower must be from the same household as the smartpot");
+      return;
+    }
+    if(data.household_id&&!data.serial_number&&data.household_id!==old_flower?.household_id){
+    data.serial_number=null;
     }
 
     const updatedFlower = await updateFlower(String(data.id), data);
