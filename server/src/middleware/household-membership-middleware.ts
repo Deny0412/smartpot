@@ -31,9 +31,9 @@ export function householdAuthMidlleware(authorizedRole: string[]) {
         // Hledání ID v query, params nebo body (v tomto pořadí)
         const householdId: string | undefined = 
             (request.query as Record<string, string | undefined>)?.[householdIdKey] 
-            || (request.params as Record<string, string | undefined>)?.[householdIdKey] 
+            || (request.params as Record<string, string | undefined>)?.[householdIdKey]
             || (request.body as Record<string, string | undefined>)?.[householdIdKey];
-            
+
         if (!householdId) {
             return reply.code(400).send({ error: "Household ID is required" });
         }

@@ -23,7 +23,8 @@ export const householdController = {
   create: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const reqParam = request.body as IHousehold;
-      await householdCreateAbl(reqParam, reply);
+      const user_id = (request.user as { user?: { id?: string } })?.user?.id as string;
+      await householdCreateAbl(reqParam, user_id, reply);
     } catch (error) {
       sendError(reply, error);
     }
@@ -46,7 +47,7 @@ export const householdController = {
   },
   list: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const user_id = (request.params as Params).user_id;
+      const user_id = (request.user as { user?: { id?: string } })?.user?.id;
       await householdListAbl(String(user_id), reply);
     } catch (error) {
       sendError(reply, error);

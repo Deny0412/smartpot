@@ -8,23 +8,23 @@ import {
   sendSuccess,
   sendClientError,
 } from "../../middleware/response-handler";
+import { Types } from "mongoose";
 
 const schema = {
   type: "object",
   properties: {
     name: { type: "string" },
-    owner: { type: "string" },
     members: { type: "array", items: { type: "string" } },
     invites: { type: "array", items: { type: "string" } },
   },
-  required: ["name", "owner"],
-  additionalProperties: false,
+  required: ["name"],
 };
 
-async function householdCreateAbl(data: IHousehold, reply: FastifyReply) {
+async function householdCreateAbl(data: IHousehold,user_id: string, reply: FastifyReply) {
   try {
     data.members = data.members ?? [];
     data.invites = data.invites ?? [];
+    data.owner = new Types.ObjectId(user_id);
 
     const validate = ajv.compile(schema);
     const valid = validate(data);
