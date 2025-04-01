@@ -19,7 +19,7 @@ const schema = {
     name: { type: "string" },
     serial_number: { type: "string" },
   },
-  required: ["household_id", "profile_id", "name", "serial_number"],
+  required: ["household_id", "name"],
 };
 const ajv = new Ajv();
 async function createFlowerHandler(data: IFlower, reply: FastifyReply) {

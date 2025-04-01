@@ -2,8 +2,13 @@ import Ajv from "ajv";
 const ajv = new Ajv();
 import { FastifyReply } from "fastify";
 import flowerProfileCreateDao from "../../dao/flower-profile/flowerProfile-create-dao";
+
 import { IFlowerProfile } from "../../models/FlowerProfile";
-import { sendError, sendSuccess } from "../../middleware/response-handler";
+import {
+  sendError,
+  sendSuccess,
+  sendClientError,
+} from "../../middleware/response-handler";
 
 const schema = {
   type: "object",
@@ -36,9 +41,14 @@ async function flowerProfileCreateAbl(
   reply: FastifyReply
 ) {
   try {
-    const valid = ajv.validate(schema, data);
+    const validate = ajv.compile(schema);
+    const valid = validate(data);
     if (!valid) {
-      throw new Error("DtoIn is not valid");
+      sendClientError(
+        reply,
+        JSON.stringify(validate.errors?.map((error) => error.message))
+      );
+      return;
     }
     const newFlowerProfile = await flowerProfileCreateDao(data);
     sendSuccess(

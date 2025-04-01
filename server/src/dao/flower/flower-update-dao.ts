@@ -1,7 +1,7 @@
 import FlowerModel, { IFlower } from '../../models/Flower';
 
 async function updateFlower(id: string, flowerData: IFlower) {
-
+console.log(flowerData);
 
     const existingFlower = await FlowerModel.findById(id);
     if (!existingFlower) {
@@ -9,7 +9,7 @@ async function updateFlower(id: string, flowerData: IFlower) {
     }
     const updatedFlower = await FlowerModel.findByIdAndUpdate(
         id,
-        { $set: { name: flowerData.name, profile_id: flowerData.profile_id } },
+        { $set: { name: flowerData.name, profile_id: flowerData.profile_id, serial_number: flowerData.serial_number,household_id:flowerData.household_id } },
         { new: true }
     );
     return updatedFlower;
