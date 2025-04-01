@@ -21,7 +21,7 @@ export async function authMiddleware(request: FastifyRequest, reply: FastifyRepl
   }
 
   try {
-    const authServerUrl = process.env.AUTH_SERVER_URL;
+    const authServerUrl = process.env.AUTH_SERVER_URL || 'http://localhost:3000';
     if (!authServerUrl) {
       throw new Error('AUTH_SERVER_URL environment variable is not set');
     }
