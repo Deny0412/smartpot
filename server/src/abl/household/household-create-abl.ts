@@ -20,7 +20,11 @@ const schema = {
   required: ["name"],
 };
 
-async function householdCreateAbl(data: IHousehold,user_id: string, reply: FastifyReply) {
+async function householdCreateAbl(
+  data: IHousehold,
+  user_id: string,
+  reply: FastifyReply
+) {
   try {
     data.members = data.members ?? [];
     data.invites = data.invites ?? [];

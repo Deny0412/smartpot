@@ -23,7 +23,8 @@ export const householdController = {
   create: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const reqParam = request.body as IHousehold;
-      const user_id = (request.user as { user?: { id?: string } })?.user?.id as string;
+      const user_id = (request.user as { user?: { id?: string } })?.user
+        ?.id as string;
       await householdCreateAbl(reqParam, user_id, reply);
     } catch (error) {
       sendError(reply, error);
