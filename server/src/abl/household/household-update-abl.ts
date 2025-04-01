@@ -16,7 +16,6 @@ const schema = {
   properties: {
     id: { type: "string" },
     name: { type: "string" },
-    owner: { type: "string" },
     members: { type: "array", items: { type: "string" } },
     invites: { type: "array", items: { type: "string" } },
   },
