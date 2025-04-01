@@ -3,7 +3,11 @@ const ajv = new Ajv();
 import { FastifyReply } from "fastify";
 import householdCreateDao from "../../dao/household/household-create-dao";
 import { IHousehold } from "../../models/Household";
-import { sendError, sendSuccess } from "../../middleware/response-handler";
+import {
+  sendError,
+  sendSuccess,
+  sendClientError,
+} from "../../middleware/response-handler";
 
 const schema = {
   type: "object",
@@ -21,12 +25,17 @@ async function householdCreateAbl(data: IHousehold, reply: FastifyReply) {
   try {
     data.members = data.members ?? [];
     data.invites = data.invites ?? [];
-    const valid = ajv.validate(schema, data);
+
+    const validate = ajv.compile(schema);
+    const valid = validate(data);
     if (!valid) {
-      //sendError(reply, "BOMBA");
-      throw new Error("DtoIn is not valid");
-      //return;
+      sendClientError(
+        reply,
+        JSON.stringify(validate.errors?.map((error) => error.message))
+      );
+      return;
     }
+
     const newHousehold = await householdCreateDao(data);
     sendSuccess(reply, newHousehold, "Household creates successfully");
   } catch (error) {

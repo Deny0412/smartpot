@@ -4,12 +4,19 @@ import householdDeleteAbl from "../abl/household/household-delete-abl";
 import householdGetAbl from "../abl/household/household-get-abl";
 import householdListAbl from "../abl/household/household-list-abl";
 import householdUpdateAbl from "../abl/household/household-update-abl";
-
-import { sendInternalServerError } from "../middleware/response-handler";
+import householdInviteAbl from "../abl/household/household-invite-abl";
+import householdKickAbl from "../abl/household/household-kick-abl";
+import householdChangeOwnerAbl from "../abl/household/household-changeOwner-abl";
+import householdDecisionAbl from "../abl/household/household-decision-abl";
+import { sendError } from "../middleware/response-handler";
 import { IHousehold } from "../models/Household";
 
 interface Params {
   id: string;
+  user_id?: string;
+  invited_user_id?: string;
+  kicked_user_id?: string;
+  new_owner_id?: string;
 }
 
 export const householdController = {
@@ -18,7 +25,7 @@ export const householdController = {
       const reqParam = request.body as IHousehold;
       await householdCreateAbl(reqParam, reply);
     } catch (error) {
-      sendInternalServerError(reply);
+      sendError(reply, error);
     }
   },
   delete: async (request: FastifyRequest, reply: FastifyReply) => {
@@ -26,7 +33,7 @@ export const householdController = {
       const id = (request.body as Params).id;
       await householdDeleteAbl(id, reply);
     } catch (error) {
-      sendInternalServerError(reply);
+      sendError(reply, error);
     }
   },
   get: async (request: FastifyRequest, reply: FastifyReply) => {
@@ -34,15 +41,15 @@ export const householdController = {
       const id = (request.params as Params).id;
       await householdGetAbl(id, reply);
     } catch (error) {
-      sendInternalServerError(reply);
+      sendError(reply, error);
     }
   },
   list: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const user_id = (request.body as Params).id;
-      await householdListAbl(user_id, reply);
+      const user_id = (request.params as Params).user_id;
+      await householdListAbl(String(user_id), reply);
     } catch (error) {
-      sendInternalServerError(reply);
+      sendError(reply, error);
     }
   },
   update: async (request: FastifyRequest, reply: FastifyReply) => {
@@ -50,7 +57,39 @@ export const householdController = {
       const updatedHousehold = request.body as IHousehold;
       await householdUpdateAbl(updatedHousehold, reply);
     } catch (error) {
-      sendInternalServerError(reply);
+      sendError(reply, error);
+    }
+  },
+  invite: async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const invite = request.body as Params;
+      await householdInviteAbl(invite, reply);
+    } catch (error) {
+      sendError(reply, error);
+    }
+  },
+  kick: async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const kick = request.body as Params;
+      await householdKickAbl(kick, reply);
+    } catch (error) {
+      sendError(reply, error);
+    }
+  },
+  changeOwner: async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const newOwner = request.body as Params;
+      await householdChangeOwnerAbl(newOwner, reply);
+    } catch (error) {
+      sendError(reply, error);
+    }
+  },
+  decision: async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const updatedHousehold = request.body as Params;
+      await householdDecisionAbl(updatedHousehold, reply);
+    } catch (error) {
+      sendError(reply, error);
     }
   },
 };

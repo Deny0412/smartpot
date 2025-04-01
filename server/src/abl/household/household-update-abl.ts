@@ -2,8 +2,14 @@ import Ajv from "ajv";
 const ajv = new Ajv();
 import { FastifyReply } from "fastify";
 import { IHousehold } from "../../models/Household";
-import { sendSuccess, sendError } from "../../middleware/response-handler";
+import {
+  sendSuccess,
+  sendError,
+  sendClientError,
+  sendNotFound,
+} from "../../middleware/response-handler";
 import householdUpdateDao from "../../dao/household/household-update-dao";
+import householdGetDao from "../../dao/household/household-get-dao";
 
 const schema = {
   type: "object",
@@ -20,10 +26,20 @@ const schema = {
 
 async function householdUpdateAbl(data: IHousehold, reply: FastifyReply) {
   try {
-    const valid = ajv.validate(schema, data);
+    const validate = ajv.compile(schema);
+    const valid = validate(data);
     if (!valid) {
-      throw new Error("DtoIn is not valid");
+      sendClientError(
+        reply,
+        JSON.stringify(validate.errors?.map((error) => error.message))
+      );
+      return;
     }
+    const household = await householdGetDao(data.id);
+    if (!household) {
+      sendNotFound(reply, "Household does not exist");
+    }
+
     const updatedHousehold = await householdUpdateDao(data.id as string, data);
     return sendSuccess(
       reply,
