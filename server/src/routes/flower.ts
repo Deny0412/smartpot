@@ -1,9 +1,14 @@
 import { flowerController } from '../controller/flower-controller';
 import { FastifyInstance } from 'fastify';
 import { authMiddleware } from '../middleware/auth-middleware';
+import { householdAuthMidlleware } from '../middleware/household-membership-middleware';
 
 export default async function flowerRoutes(fastify: FastifyInstance) {
-    fastify.post('/add'/*,{ preHandler: authMiddleware }*/, flowerController.create);
+    fastify.post('/add', { 
+        onRequest: [authMiddleware],  // Authenticate first
+        preHandler: [householdAuthMidlleware(["owner", "member" , "fuj"])] // Then check household auth
+    }, flowerController.create);
+    
     fastify.delete('/delete/:id', flowerController.delete);
     fastify.get('/get/:id', flowerController.get);
     fastify.get('/list', flowerController.list);

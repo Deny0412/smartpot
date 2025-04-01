@@ -3,6 +3,7 @@ import { Type } from '@sinclair/typebox';
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import crypto from 'crypto';
 import { UserSchema, LoginSchema, ForgotPasswordSchema } from '../types/auth';
+import fastifyJwt from '@fastify/jwt';
 import UserModel, { IUser } from '../models/User';
 import { exists } from 'fs';
 
@@ -76,8 +77,7 @@ const auth: FastifyPluginAsync = async (fastify) => {
             }
 
             const token = server.jwt.sign({ 
-                email: user.email,
-                userId: user._id 
+                user: { id: user._id, email: user.email, name: user.name, surname: user.surname , expiresIn: '1h'}
             });
             return { token };
         } catch (error) {
@@ -173,36 +173,37 @@ const auth: FastifyPluginAsync = async (fastify) => {
     // Check authorization endpoint
     server.get('/auth/check', {
         onRequest: [server.authenticate],
-        schema: {
-            response: {
-                200: Type.Object({
-                    message: Type.String(),
-                    authorized: Type.Boolean(),
-                    email: Type.String(),
-                })
-            }
-        }
-    }, async (request: any, reply: any) => {
+        }, async (request: any, reply: any) => {
         try {
-            const user = await UserModel.findOne({ email: request.user.email });
-            if (!user) {
-                return reply.code(401).send({ 
-                    message: 'User not authorized',
-                    authorized: false,
-                    email: request.user.email
-                });
-            }
+            const authHeader = request.headers.authorization;
 
-            return {
-                message: 'User is authorized',
-                authorized: true,
-                email: user.email
-            };
+            if (!authHeader || !authHeader.startsWith("Bearer ")) {
+                return reply.code(400).send({ message: "Authorization header missing or invalid" });
+            }
+    
+            const token = authHeader.split(" ")[1];
+    
+            // Verify the token using the secret
+            const user = server.jwt.verify(token);
+          if (!user) {
+            return reply.code(401).send({
+              message: 'User not authorized',
+              authorized: false,
+              user: user
+            });
+          }
+      
+          return {
+            message: 'User is authorized',
+            authorized: true,
+            user: user
+          };
         } catch (error) {
-            console.error('Auth check error:', error);
-            return reply.code(500).send({ error: 'Internal server error' });
+          console.error('Auth check error:', error);
+          return reply.code(500).send({ error: 'Internal server error' });
         }
-    });
+      });
+      
 };
 
 export default auth;
