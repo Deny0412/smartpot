@@ -43,8 +43,8 @@ async function householdKickAbl(data: Object, reply: FastifyReply) {
         member._id.equals(kickedUserObjectId)
       )
     ) {
-      //sendClientError(reply, "User is not member");
-      throw new Error("User is not member");
+      sendClientError(reply, "User is not member");
+      return;
     }
     const updatedHousehold = await kickHouseholdDao(
       String(data.id),

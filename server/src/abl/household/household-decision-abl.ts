@@ -18,16 +18,20 @@ const schema = {
   properties: {
     id: { type: "string" },
     decision: { type: "boolean" },
-    invited_user_id: { type: "string" },
   },
-  required: ["id", "decision", "invited_user_id"],
+  required: ["id", "decision"],
   additionalProperties: false,
 };
 
-async function householdDecisionAbl(data: Object, reply: FastifyReply) {
+async function householdDecisionAbl(
+  data: Object,
+  user_id: string,
+  reply: FastifyReply
+) {
   try {
     const validate = ajv.compile(schema);
     const valid = validate(data);
+    const invited_user_id = new Types.ObjectId(user_id);
     if (!valid) {
       sendClientError(
         reply,
@@ -39,22 +43,15 @@ async function householdDecisionAbl(data: Object, reply: FastifyReply) {
     if (!household) {
       sendNotFound(reply, "Household does not exist");
     }
-
-    const invitedUserObjectId = new Types.ObjectId(
-      String(data.invited_user_id)
-    );
-
     if (
-      household?.members.some((member) =>
-        member._id.equals(invitedUserObjectId)
-      )
+      household?.members.some((member) => member._id.equals(invited_user_id))
     ) {
-      //sendClientError(reply, "User is not member");
-      throw new Error("User is already member");
+      sendClientError(reply, "User is not member");
+      return;
     }
     const updatedHousehold = await householdDecisionDao(
       String(data.id),
-      String(data.invited_user_id),
+      String(invited_user_id),
       Boolean(data.decision)
     );
     sendSuccess(reply, updatedHousehold, "User decided successfully");
