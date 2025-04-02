@@ -15,89 +15,129 @@ import smartpotGetBySerialNumberDao from "../../dao/smartpot/smart-pot-get-by-se
 import smartpotUpdateActiveFlowerDao from "../../dao/smartpot/smart-pot-update-dao";
 import flowerGetDao from "../../dao/flower/flower-get-dao";
 import updateSmartPot from "../../dao/smartpot/smart-pot-update-dao";
+
 const SCHEMA = {
   type: "object",
   properties: {
     id: { type: "string" },
-    profile_id: { type: "string", required: false },
     name: { type: "string" },
-    serial_number: { type: "string",required: false},
-    household_id: { type: "string", required: false },
+    serial_number: { type: "string" },
+    household_id: { type: "string" },
+    profile: {
+      type: "object",
+      properties: {
+        humidity: {
+          type: "object",
+          properties: {
+            min: { type: "number" },
+            max: { type: "number" }
+          }
+        },
+        temperature: {
+          type: "object",
+          properties: {
+            min: { type: "number" },
+            max: { type: "number" }
+          }
+        },
+        light: {
+          type: "object",
+          properties: {
+            min: { type: "number" },
+            max: { type: "number" }
+          }
+        },
+        water_level: {
+          type: "object",
+          properties: {
+            min: { type: "number" }
+          }
+        }
+      }
+    }
   },
   required: ["id"],
-  additionalProperties: false,
+  additionalProperties: true
 };
 
 async function updateFlowerHandler(data: IFlower, reply: FastifyReply) {
   try {
+
+    const validate = ajv.compile(SCHEMA);
+    const isValid = validate(data);
+    if (!isValid) {
+      console.log("Validation errors:", validate.errors);
+      sendClientError(
+        reply,
+        JSON.stringify(validate.errors?.map((error) => error.message))
+      );
+      return;
+    }
+
     const valid = MongoValidator.validateId(data.id);
     if (!valid) {
       return sendClientError(reply, "Invalid flower ID format");
     }
-    if (data.profile_id) {
-      const profile_id_validated = MongoValidator.validateId(data.profile_id);
-      if (!profile_id_validated) {
-        return sendClientError(reply, "Invalid profile ID format");
-      }
-    }
-    if (data.profile_id) {
-      const doesFlowerProfileExist = await flowerProfileGetDao(data.profile_id);
-      if (!doesFlowerProfileExist) {
-        sendClientError(reply, "Flower profile does not exist");
+
+    if(data.serial_number){
+      const doesSerialNumberExist = await smartpotGetBySerialNumberDao(
+        data.serial_number
+      );
+      if (!doesSerialNumberExist) {
+        sendClientError(
+          reply,
+          "Smart pot with pasted serial number does not exist"
+        );
         return;
       }
     }
-    //TODO: Check if serial number exists
-    if(data.serial_number){
-    const doesSerialNumberExist = await smartpotGetBySerialNumberDao(
-        data.serial_number
-    );
-    if (!doesSerialNumberExist) {
-      sendClientError(
-        reply,
-        "Smart pot with pasted serial number does not exist"
-      );
-      return;
-    }
-    }
 
-    
     const old_flower = await flowerGetDao(data.id);
+    if (!old_flower) {
+      return sendNotFound(reply, "Flower not found");
+    }
 
-    const old_serial_number = old_flower?.serial_number;
+    // If household_id is not provided, use the existing one
+    if (!data.household_id) {
+      data.household_id = old_flower.household_id;
+    }
+
+    const old_serial_number = old_flower.serial_number;
     const old_smart_pot = await smartpotGetBySerialNumberDao(
       String(old_serial_number)
     );
-    const new_smart_pot = await smartpotGetBySerialNumberDao(
-      String(data.serial_number)
-    );
-    //Logic for when the flower is moved to a different smartpot
-    if (
-      old_smart_pot?.active_flower_id?.toString() ===
-        old_flower?._id?.toString() &&
-      old_flower?.serial_number.toString() ===
-        old_smart_pot?.serial_number.toString()
+
+    const new_smart_pot = data.serial_number ? 
+      await smartpotGetBySerialNumberDao(String(data.serial_number)) : 
+      null;
+
+    // Logic for when the flower is moved to a different smartpot
+    if (old_smart_pot && 
+        old_smart_pot.active_flower_id?.toString() === old_flower._id?.toString() &&
+        old_flower.serial_number === old_smart_pot.serial_number
     ) {
-      old_smart_pot.active_flower_id = null;
-      const updatedSmartpot = await updateSmartPot(old_smart_pot);
+      const updateData = {
+        serial_number: old_smart_pot.serial_number,
+        active_flower_id: undefined,
+        household_id: old_smart_pot.household_id
+      };
+      await updateSmartPot(updateData);
     }
-    
-    
-    if(new_smart_pot?.household_id.toString()!==old_flower?.household_id.toString() &&!data.household_id){
-      sendClientError(reply, "Flower must be from the same household as the smartpot");
-      return;
+
+    // Validate household consistency
+    if (new_smart_pot && data.household_id) {
+      if (new_smart_pot.household_id.toString() !== data.household_id.toString()) {
+        sendClientError(reply, "Flower must be from the same household as the smartpot");
+        return;
+      }
     }
-    
-    if(data.serial_number&&data.household_id&&new_smart_pot?.household_id.toString()!==data.household_id.toString()){
-      sendClientError(reply, "Flower must be from the same household as the smartpot");
-      return;
-    }
-    if(data.household_id&&!data.serial_number&&data.household_id!==old_flower?.household_id){
-    data.serial_number=null;
+
+    // Handle household change
+    if (data.household_id?.toString() !== old_flower.household_id?.toString()) {
+      data.serial_number = "";
     }
 
     const updatedFlower = await updateFlower(String(data.id), data);
-
     if (!updatedFlower) {
       return sendNotFound(reply, "Flower not found");
     }

@@ -5,7 +5,8 @@ export function sendResponse(
   statusCode: number,
   data: any,
   message: string
-) {
+) 
+{
   reply.status(statusCode).send({
     status: message,
     data: data,

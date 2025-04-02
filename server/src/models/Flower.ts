@@ -5,18 +5,52 @@ export interface IFlower extends Document {
   name: string;
   household_id: Types.ObjectId;
   serial_number: string;
+  profile: {
+    humidity: {
+      min: number | null;
+      max: number | null;
+    };
+    temperature: {
+      min: number | null;
+      max: number | null;
+    };
+    light: {
+      min: number | null;
+      max: number | null;
+    };
+    water_level: {
+      min: number | null;
+    };
+  };
 }
 
 const flowerSchema = new Schema<IFlower>(
   {
-    profile_id: { type: String, required: false, default: null },
     name: { type: String, required: true },
     household_id: {
       type: Schema.Types.ObjectId,
       ref: "Household",
-      required: true,
+      required: false,
     },
     serial_number: { type: String, required: false, default: null },
+    profile:{
+      humidity:{
+        min: { type: Number, required: false, default: null},
+        max: { type: Number, required: false, default: null},
+      },
+      temperature:{
+        min: { type: Number, required: false, default: null},
+        max: { type: Number, required: false, default: null},
+      },
+      light:{
+        min: { type: Number, required: false, default: null},
+        max: { type: Number, required: false, default: null},
+      },
+      water_level:{
+        min: { type: Number, required: false, default: null},
+      },
+
+    }
   },
   { timestamps: true }
 ); // Adds `createdAt` & `updatedAt` fields
