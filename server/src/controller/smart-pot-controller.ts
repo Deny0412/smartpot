@@ -29,6 +29,7 @@ export const smartpotController = {
     },
     update: async (request: FastifyRequest, reply: FastifyReply) => {
         try {
+            const user=request.user;
             const data = request.body as ISmartPot;
             const response = await SmartPotAblUpdate(data, reply);
             sendSuccess(reply, response, "SmartPot updated successfully");

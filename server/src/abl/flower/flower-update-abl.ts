@@ -15,7 +15,7 @@ import smartpotGetBySerialNumberDao from "../../dao/smartpot/smart-pot-get-by-se
 import smartpotUpdateActiveFlowerDao from "../../dao/smartpot/smart-pot-update-dao";
 import flowerGetDao from "../../dao/flower/flower-get-dao";
 import updateSmartPot from "../../dao/smartpot/smart-pot-update-dao";
-
+import { ISmartPot } from "../../models/SmartPot";
 const SCHEMA = {
   type: "object",
   properties: {
@@ -121,7 +121,7 @@ async function updateFlowerHandler(data: IFlower, reply: FastifyReply) {
         active_flower_id: undefined,
         household_id: old_smart_pot.household_id
       };
-      await updateSmartPot(updateData);
+      await updateSmartPot(updateData as unknown as ISmartPot);
     }
 
     // Validate household consistency
