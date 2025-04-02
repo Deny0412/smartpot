@@ -45,8 +45,11 @@ export function householdAuthMidlleware(authorizedRole: string[]) {
         if (isFlowerRoute) {
             // Pokud jsme na flower route, ID květiny je `id`
             flowerId = requestData.query?.id || requestData.params?.id || requestData.body?.id;
-            householdId = requestData.body?.[householdIdKey];
-            console.log(requestData.query, requestData.params, requestData.body);
+            householdId =
+                requestData.query?.[householdIdKey] ||
+                requestData.params?.[householdIdKey] ||
+                requestData.body?.[householdIdKey];
+            
         } else {
             // Jinak hledáme `household_id`
             householdId =
@@ -55,13 +58,12 @@ export function householdAuthMidlleware(authorizedRole: string[]) {
                 requestData.body?.[householdIdKey];
         }
 
-        console.log("householdId:", householdId);
-        console.log("flowerId:", flowerId);
+
 
         // Pokud máme `flowerId` a ne `householdId`, pokusíme se ho získat
         if (!householdId && flowerId) {
             try {
-                console.log("Fetching flower with ID:", flowerId);
+          
                 const flower = await getFlower(flowerId as string);
                 if (!flower || !flower.household_id) {
                     return reply.code(404).send({ error: `Flower with ID ${flowerId} not found or missing household_id` });
@@ -77,7 +79,6 @@ export function householdAuthMidlleware(authorizedRole: string[]) {
             return reply.code(400).send({ error: "Household ID is required" });
         }
 
-        console.log("Final Household ID:", householdId);
 
         let household: IHousehold;
         try {
