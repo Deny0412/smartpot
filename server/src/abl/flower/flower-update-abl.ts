@@ -125,11 +125,14 @@ async function updateFlowerHandler(data: IFlower, reply: FastifyReply) {
     }
 
     // Validate household consistency
-    if (new_smart_pot && data.household_id) {
-      if (new_smart_pot.household_id.toString() !== data.household_id.toString()) {
-        sendClientError(reply, "Flower must be from the same household as the smartpot");
-        return;
-      }
+    if(new_smart_pot?.household_id.toString()!==old_flower?.household_id.toString() &&!data.household_id){
+      sendClientError(reply, "Flower must be from the same household as the smartpot");
+      return;
+    }
+
+    if(data.serial_number&&data.household_id&&new_smart_pot?.household_id.toString()!==data.household_id.toString()){
+      sendClientError(reply, "Flower must be from the same household as the smartpot");
+      return;
     }
 
     // Handle household change
