@@ -2,7 +2,7 @@ import { FastifyRequest, FastifyReply } from "fastify";
 import flowerProfileCreateAbl from "../abl/flower-profile/flowerProfile-create-abl";
 import flowerProfileDeleteAbl from "../abl/flower-profile/flowerProfile-delete-abl";
 import flowerProfileGetAbl from "../abl/flower-profile/flowerProfile-get-abl";
-//import flowerProfileListAbl from "../abl/flower-profile/flowerProfile-list-abl";
+import flowerProfileListAbl from "../abl/flower-profile/flowerProfile-list-abl";
 import flowerProfileUpdateAbl from "../abl/flower-profile/flowerProfile-update-abl";
 
 import { sendInternalServerError } from "../middleware/response-handler";
@@ -33,6 +33,13 @@ export const flowerProfileController = {
     try {
       const id = (request.params as Params).id;
       await flowerProfileGetAbl(id, reply);
+    } catch (error) {
+      sendInternalServerError(reply);
+    }
+  },
+  list: async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      await flowerProfileListAbl(reply);
     } catch (error) {
       sendInternalServerError(reply);
     }
