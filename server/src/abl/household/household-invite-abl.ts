@@ -44,8 +44,8 @@ async function householdInviteAbl(data: Object, reply: FastifyReply) {
         member._id.equals(invitedUserObjectId)
       )
     ) {
-      //sendClientError(reply, "User already member");
-      throw new Error("User already member");
+      sendClientError(reply, "User already member");
+      return;
     }
 
     if (
@@ -53,13 +53,13 @@ async function householdInviteAbl(data: Object, reply: FastifyReply) {
         invite._id.equals(invitedUserObjectId)
       )
     ) {
-      //sendClientError(reply, "User already invited");
-      throw new Error("User already invited");
+      sendClientError(reply, "User already invited");
+      return;
     }
 
     if (household?.owner.equals(invitedUserObjectId)) {
-      //sendClientError(reply, "User is already the owner of the household");
-      throw new Error("User is already the owner of the household");
+      sendClientError(reply, "User is already the owner of the household");
+      return;
     }
 
     const updatedHousehold = await householdInviteDao(

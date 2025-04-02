@@ -89,7 +89,10 @@ export const householdController = {
   decision: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const updatedHousehold = request.body as Params;
-      await householdDecisionAbl(updatedHousehold, reply);
+      const user_id = (request.user as { user?: { id?: string } })?.user
+        ?.id as string;
+
+      await householdDecisionAbl(updatedHousehold, user_id, reply);
     } catch (error) {
       sendError(reply, error);
     }
