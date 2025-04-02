@@ -32,6 +32,23 @@ const schema = {
       required: ["min", "max"],
       additionalProperties: false,
     },
+    light: {
+      type: "object",
+      properties: {
+        min: { type: "number" },
+        max: { type: "number" },
+      },
+      required: ["min", "max"],
+      additionalProperties: false,
+    },
+    water_level: {
+      type: "object",
+      properties: {
+        min: { type: "number" },
+      },
+      required: ["min"],
+      additionalProperties: false,
+    },
     id: { type: "string" },
   },
   required: ["id"],

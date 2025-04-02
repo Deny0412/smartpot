@@ -8,7 +8,8 @@ interface IRange {
 export interface IFlowerProfile extends Document {
   temperature: IRange;
   humidity: IRange;
-  //flower_id: string;
+  light: IRange;
+  water_level: { min: number }; // Change water_level type
 }
 
 const RANGE_SCHEMA = new Schema<IRange>(
@@ -16,16 +17,19 @@ const RANGE_SCHEMA = new Schema<IRange>(
     min: { type: Number, required: true },
     max: { type: Number, required: true },
   },
-  { _id: false } // This disables the creation of _id for each subdocument
+  { _id: false }
 );
 
 const FLOWER_PROFILE_SCHEMA = new Schema<IFlowerProfile>(
   {
     temperature: { type: RANGE_SCHEMA, required: true },
     humidity: { type: RANGE_SCHEMA, required: true },
-    //flower_id: { type: String, required: true },
+    light: { type: RANGE_SCHEMA, required: true },
+    water_level: {
+      min: { type: Number, required: true },
+    },
   },
-  { timestamps: true } // Adds createdAt & updatedAt fields
+  { timestamps: true }
 );
 
 const FLOWER_PROFILE_MODEL = model<IFlowerProfile>(
