@@ -15,7 +15,6 @@ const schema = {
   type: "object",
   properties: {
     household_id: { type: "string" },
-    profile_id: { type: "string" },
     name: { type: "string" },
     serial_number: { type: "string" },
   },
