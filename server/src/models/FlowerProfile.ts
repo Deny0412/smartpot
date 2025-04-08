@@ -9,7 +9,6 @@ export interface IFlowerProfile extends Document {
   temperature: IRange;
   humidity: IRange;
   light: IRange;
-  water_level: { min: number }; // Change water_level type
 }
 
 const RANGE_SCHEMA = new Schema<IRange>(
@@ -25,9 +24,7 @@ const FLOWER_PROFILE_SCHEMA = new Schema<IFlowerProfile>(
     temperature: { type: RANGE_SCHEMA, required: true },
     humidity: { type: RANGE_SCHEMA, required: true },
     light: { type: RANGE_SCHEMA, required: true },
-    water_level: {
-      min: { type: Number, required: true },
-    },
+
   },
   { timestamps: true }
 );

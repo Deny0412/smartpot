@@ -47,12 +47,7 @@ const SCHEMA = {
             max: { type: "number" }
           }
         },
-        water_level: {
-          type: "object",
-          properties: {
-            min: { type: "number" }
-          }
-        }
+
       }
     }
   },
@@ -79,7 +74,7 @@ async function updateFlowerHandler(data: IFlower, reply: FastifyReply) {
       return sendClientError(reply, "Invalid flower ID format");
     }
 
-    if(data.serial_number){
+    if (data.serial_number) {
       const doesSerialNumberExist = await smartpotGetBySerialNumberDao(
         data.serial_number
       );
@@ -107,14 +102,14 @@ async function updateFlowerHandler(data: IFlower, reply: FastifyReply) {
       String(old_serial_number)
     );
 
-    const new_smart_pot = data.serial_number ? 
-      await smartpotGetBySerialNumberDao(String(data.serial_number)) : 
+    const new_smart_pot = data.serial_number ?
+      await smartpotGetBySerialNumberDao(String(data.serial_number)) :
       null;
 
     // Logic for when the flower is moved to a different smartpot
-    if (old_smart_pot && 
-        old_smart_pot.active_flower_id?.toString() === old_flower._id?.toString() &&
-        old_flower.serial_number === old_smart_pot.serial_number
+    if (old_smart_pot &&
+      old_smart_pot.active_flower_id?.toString() === old_flower._id?.toString() &&
+      old_flower.serial_number === old_smart_pot.serial_number
     ) {
       const updateData = {
         serial_number: old_smart_pot.serial_number,
@@ -125,12 +120,12 @@ async function updateFlowerHandler(data: IFlower, reply: FastifyReply) {
     }
 
     // Validate household consistency
-    if(new_smart_pot?.household_id.toString()!==old_flower?.household_id.toString() &&!data.household_id){
+    if (new_smart_pot?.household_id.toString() !== old_flower?.household_id.toString() && !data.household_id) {
       sendClientError(reply, "Flower must be from the same household as the smartpot");
       return;
     }
 
-    if(data.serial_number&&data.household_id&&new_smart_pot?.household_id.toString()!==data.household_id.toString()){
+    if (data.serial_number && data.household_id && new_smart_pot?.household_id.toString() !== data.household_id.toString()) {
       sendClientError(reply, "Flower must be from the same household as the smartpot");
       return;
     }
