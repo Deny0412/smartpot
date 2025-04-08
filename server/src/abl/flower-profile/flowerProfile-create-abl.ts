@@ -40,16 +40,9 @@ const schema = {
       required: ["min", "max"],
       additionalProperties: false,
     },
-    water_level: {
-      type: "object",
-      properties: {
-        min: { type: "number" },
-      },
-      required: ["min"],
-      additionalProperties: false,
-    },
+
   },
-  required: ["temperature", "humidity", "light", "water_level"],
+  required: ["temperature", "humidity", "light"],
   additionalProperties: false,
 };
 
