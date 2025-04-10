@@ -198,7 +198,10 @@ void button_event_handler(twr_button_t *self, twr_button_event_t event, void *ev
     }
     else if (event == TWR_BUTTON_EVENT_HOLD)
     {
-        twr_radio_pub_string("reset", "needed reset household for smartpot");
+        // ✨ Spustit párování
+        twr_radio_pairing_request("smart_pot_test", FW_VERSION);
+        twr_radio_pub_string("log", "Pairing request sent (via button)");
+        twr_log_info("Pairing request sent (via button)");
         twr_led_pulse(&led, 1000);
     }
 }
@@ -366,7 +369,6 @@ void application_init(void)
     twr_radio_init(TWR_RADIO_MODE_NODE_SLEEPING);
     twr_radio_set_rx_timeout_for_sleeping_node(2000);
     twr_radio_set_subs((twr_radio_sub_t *)subs, sizeof(subs) / sizeof(subs[0]));
-    twr_radio_pairing_request("smart_pot_test", FW_VERSION);
 
     twr_module_relay_init(&relay, TWR_MODULE_RELAY_I2C_ADDRESS_DEFAULT);
 
