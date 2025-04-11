@@ -5,6 +5,7 @@
 #define LIGHT_INTERVAL_MS 30000
 #define WATER_INTERVAL_MS 30000
 #define BATTERY_INTERVAL_MS (60 * 60 * 1000)
+//#define BATTERY_INTERVAL_MS 10000
 #define PUMP_ON_TIME_MS 5000
 
 #define MODE_NORMAL_SOIL_INTERVAL 30000
@@ -153,10 +154,11 @@ void battery_event_handler(twr_module_battery_event_t event, void *event_param)
 {
     if (event == TWR_MODULE_BATTERY_EVENT_UPDATE)
     {
-        float voltage;
-        if (twr_module_battery_get_voltage(&voltage))
+         int percent;
+        if (twr_module_battery_get_charge_level(&percent))
         {
-            twr_radio_pub_battery(&voltage);
+            float battery_percent = (float)percent;
+            twr_radio_pub_float("sensor/battery", &battery_percent); // přidáme nový topic
         }
     }
 }
