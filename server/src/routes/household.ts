@@ -15,8 +15,8 @@ export default async function householdRoutes(fastify: FastifyInstance) {
   fastify.delete(
     "/delete",
     {
-      onRequest: [authMiddleware], // Authenticate first
-      preHandler: [householdAuthMidlleware([OWNER_ROLE])], // Then check household auth
+      onRequest: [authMiddleware],
+      preHandler: [householdAuthMidlleware([OWNER_ROLE])],
     },
     householdController.delete
   );

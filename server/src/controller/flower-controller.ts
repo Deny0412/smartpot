@@ -8,7 +8,7 @@ import flowerHistoryAbl from '../abl/flower/flower-history-abl';
 import flowerAddMeasurementAbl from '../abl/flower/flower-measurent-add-abl';
 import { sendSuccess, sendCreated,sendError, sendInternalServerError } from '../middleware/response-handler';
 import { IFlower } from '../models/Flower';
-import { IMeasurement } from '@/models/Measurement';
+import { IMeasurement } from '../models/Measurement';
 import listActiveFlowersHandler from '../abl/flower/flower-list-active-abl';
 
 interface Params {

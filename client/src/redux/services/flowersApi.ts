@@ -17,8 +17,15 @@ export const fetchFlowerDetails = async (flowerId: string): Promise<Flower> => {
 }
 
 export const addFlower = async (flower: Omit<Flower, 'id'>): Promise<Flower> => {
-    const response = await api.post<Flower>('/flowers', flower)
-    return response.data
+    try {
+        const response = await api.post<Flower>('/flower/add', flower)
+        return response.data
+    } catch (error: any) {
+        if (error.response) {
+            throw new Error(error.response.data.message || 'Chyba pri vytváraní kvetiny')
+        }
+        throw new Error('Nepodarilo sa vytvoriť kvetinu')
+    }
 }
 
 export const createFlowerProfile = async (

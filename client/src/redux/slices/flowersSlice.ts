@@ -33,9 +33,16 @@ export const loadFlowerDetails = createAsyncThunk('flowers/loadDetails', async (
     return await fetchFlowerDetails(flowerId)
 })
 
-export const createFlower = createAsyncThunk('flowers/create', async (flower: Omit<Flower, 'id'>) => {
-    return await addFlower(flower)
-})
+export const createFlower = createAsyncThunk(
+    'flowers/create',
+    async (flower: Omit<Flower, 'id'>, { rejectWithValue }) => {
+        try {
+            return await addFlower(flower)
+        } catch (error) {
+            return rejectWithValue(error instanceof Error ? error.message : 'Chyba pri vytváraní kvetiny')
+        }
+    },
+)
 
 export const removeFlower = createAsyncThunk('flowers/delete', async (id: string) => {
     await deleteFlower(id)
@@ -130,8 +137,17 @@ const flowersSlice = createSlice({
                 state.loading = false
                 state.error = action.error.message || 'Chyba pri načítaní detailov kvetináča'
             })
+            .addCase(createFlower.pending, state => {
+                state.loading = true
+                state.error = null
+            })
             .addCase(createFlower.fulfilled, (state, action: PayloadAction<Flower>) => {
                 state.flowers.push(action.payload)
+                state.loading = false
+            })
+            .addCase(createFlower.rejected, (state, action) => {
+                state.loading = false
+                state.error = action.payload as string
             })
             .addCase(removeFlower.fulfilled, (state, action: PayloadAction<string>) => {
                 state.flowers = state.flowers.filter(flower => flower.id !== action.payload)
