@@ -1,0 +1,76 @@
+@import '../../../styles/global.sass'
+
+.house-holds-main-container
+    min-height: 50vh
+    display: flex
+    flex-direction: column
+    align-items: center
+    width: 100%
+    box-sizing: border-box
+    padding: 3rem
+    
+    @media (max-width: 768px)
+        padding: 1rem
+        width: 100%
+
+.main-title
+    text-align: center
+    margin: 0 auto
+    margin-bottom: 2rem
+    @media (max-width: 768px)
+        font-size: 2rem
+
+.create-household-button
+    margin: 0 auto
+    display: block
+    margin-top: 2rem
+    
+
+.create-household-form
+    margin-top: 2rem
+    display: flex
+    flex-direction: column
+    gap: 1rem
+    width: 100%
+    max-width: 400px
+    padding: 1rem
+    
+    border-radius: 12px
+
+    .create-household-input
+        width: 100%
+        padding: 0.75rem
+        border: none
+        border-radius: 6px
+        background: rgba(255, 255, 255, 0.1)
+        color: #ffffff
+        font-size: 1rem
+
+        &::placeholder
+            color: rgba(255, 255, 255, 0.5)
+
+    .create-household-buttons
+        display: flex
+        gap: 1rem
+        justify-content: flex-end
+
+.no-households-text
+    text-align: center
+    margin: 0 auto
+    margin-top: 2rem
+    @media (max-width: 768px)
+        font-size: 1rem
+
+.households-list
+    display: flex
+    flex-direction: column
+    align-items: center
+    gap: 1rem
+    margin-bottom: 2rem
+    width: 100%
+    box-sizing: border-box
+    
+    @media (max-width: 768px)
+        width: 100%
+        padding: 0
+        margin: 0 auto

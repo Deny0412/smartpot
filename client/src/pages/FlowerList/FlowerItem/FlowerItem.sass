@@ -1,0 +1,130 @@
+.flower-item-container
+    display: flex
+    justify-content: space-between
+    align-items: center
+
+    border-radius: 12px
+    padding: 2rem
+   
+    transition: transform 0.2s ease-in-out
+    width: 90%
+    max-width: 800px
+    box-sizing: border-box
+    
+    
+
+    @media (max-width: 768px)
+        flex-direction: column
+        padding: 1.5rem
+        text-align: center
+        margin: 0 auto
+        width: 100%
+        max-width: 100%
+
+    .flower-item-content
+        flex: 1
+        width: 100%
+        box-sizing: border-box
+
+        .flower-header
+            margin-bottom: 1.5rem
+
+            .header-content
+                display: flex
+                align-items: center
+                gap: 1rem
+                flex-wrap: wrap
+
+                @media (max-width: 768px)
+                    justify-content: center
+                    flex-direction: column
+                    align-items: center
+                    gap: 0.5rem
+
+                .flower-name
+                    color: #ffffff
+                    margin: 0
+                    font-size: 1.75rem
+                    line-height: 1.2
+
+                    @media (max-width: 768px)
+                        margin-bottom: 0.5rem
+
+                .profile-label
+                    padding: 0.25rem 1rem
+                    border-radius: 4px
+                    border: 1px solid orange
+                    color: orange
+                    font-size: 0.875rem
+                    white-space: nowrap
+                    display: inline-flex
+                    align-items: center
+                    height: fit-content
+                    line-height: 1.2
+
+                    &.own-settings
+                        color: #999999
+                        border: 1px solid #999999   
+
+        .flower-description
+            margin-bottom: 2rem
+           
+            &.signed-flowerpot
+                color: #da8009 !important
+            &.no-flowerpot
+                color: #999999 !important
+
+            @media (max-width: 768px)
+                margin-bottom: 1.5rem
+
+        .flower-actions
+            display: flex
+            gap: 1rem
+            flex-wrap: wrap
+
+            @media (max-width: 768px)
+                justify-content: center
+                flex-direction: column
+                align-items: center
+                gap: 0.75rem
+
+            .check-button
+                background: none
+                
+                padding: 0.75rem 2rem
+                
+                width: fit-content
+
+                &:hover
+                    background: #444444
+
+            .edit-button, .assign-button
+                color: #999999
+                border: 1px solid #999999
+                background: none
+                padding: 0.5rem 
+                width: fit-content
+
+                &:hover
+                    color: #ffffff
+
+            .assign-button
+                color: green
+                border: 1px solid green
+
+                &:hover
+                    color: green
+                    background: rgba(0, 255, 0, 0.1)
+
+    .flower-image
+        margin-left: 2rem
+        
+        @media (max-width: 768px)
+            margin: 1.5rem 0 0 0
+        
+        img
+            width: 120px
+            height: auto
+            
+            @media (max-width: 768px)
+                width: 100px

@@ -1,0 +1,310 @@
+@import '../../styles/global.sass'
+
+.add-flower-container
+    display: flex
+    flex-direction: column
+    align-items: center
+    min-height: 100vh
+    padding: 2rem
+    background: #000000
+    @media (max-width: 768px)
+        padding-top: 0
+
+    .main-title
+        text-align: center
+        margin-bottom: 1rem
+        color: #ffffff
+        font-size: 1.2rem
+
+    .subtitle
+        text-align: center
+        color: #666666
+        margin-bottom: 2rem
+        font-size: 1rem
+
+    .steps-indicator
+        display: flex
+        justify-content: center
+        gap: 2rem
+        margin-bottom: 2rem
+
+        .step
+            padding: 0.5rem 1rem
+            border-radius: 20px
+            background-color: #333333
+            color: #ffffff
+            transition: all 0.3s ease
+
+.step-container
+    background: transparent
+    padding: 2rem
+    border-radius: 12px
+    width: 100%
+    max-width: 600px
+    text-align: left
+
+    h2
+        color: #ffffff
+        margin-bottom: 0.5rem
+        font-size: 1.5rem
+
+    p
+        color: #666666
+        margin-bottom: 2rem
+
+.form
+    display: flex
+    flex-direction: column
+    gap: 2rem
+
+    .option-section
+        h3
+            color: #ffffff
+            font-size: 1rem
+            margin-bottom: 1rem
+
+    .form-group
+        display: flex
+        flex-direction: column
+        gap: 1rem
+
+        label
+            color: #666666
+            font-size: 0.9rem
+
+        input, select
+            background: transparent
+            border: 1px solid #333333
+            border-radius: 20px
+            padding: 0.8rem 1rem
+            color: #ffffff
+            font-size: 0.9rem
+
+            &::placeholder
+                color: #666666
+
+            &:focus
+                outline: none
+                border-color: #666666
+
+    .divider
+        text-align: center
+        color: #666666
+        position: relative
+        margin: 2rem 0
+        
+        &::before, &::after
+            content: ""
+            position: absolute
+            top: 50%
+            width: 45%
+            height: 1px
+            background: #333333
+
+        &::before
+            left: 0
+
+        &::after
+            right: 0
+
+    .avatar-section
+        margin-top: 2rem
+
+        label
+            color: #666666
+            margin-bottom: 1rem
+            display: block
+
+        .avatar-grid
+            display: grid
+            grid-template-columns: repeat(3, 1fr)
+            gap: 1.5rem
+            margin-top: 1rem
+            padding: 1rem
+            
+            img
+                width: 100%
+                height: auto
+                aspect-ratio: 1
+                border-radius: 12px
+                border: 2px solid #333333
+                padding: 0.5rem
+                transition: all 0.3s ease
+                cursor: pointer
+                
+                &:hover
+                    border-color: #00ff00
+                    transform: scale(1.05)
+                    box-shadow: 0 0 15px rgba(0, 255, 0, 0.2)
+                
+                &.selected
+                    border-color: #00ff00
+                    box-shadow: 0 0 20px rgba(0, 255, 0, 0.3)
+
+            .avatar-button
+                background: transparent
+                border: 1px solid #333333
+                border-radius: 12px
+                padding: 1rem
+                font-size: 1.5rem
+                cursor: pointer
+                transition: all 0.3s ease
+
+                &:hover, &.selected
+                    border-color: #666666
+                    background: rgba(102, 102, 102, 0.1)
+
+    .profile-mode
+        margin-top: 2rem
+
+        label
+            color: #666666
+            margin-bottom: 1rem
+            display: block
+
+        .mode-button
+            background: transparent
+            border: 1px solid #333333
+            border-radius: 20px
+            padding: 0.8rem 2rem
+            color: #ffffff
+            margin-right: 1rem
+            cursor: pointer
+            transition: all 0.3s ease
+
+            &:hover, &.selected
+                border-color: #666666
+                background: rgba(102, 102, 102, 0.1)
+
+    .schedule-section
+        margin-top: 2rem
+
+        label
+            color: #666666
+            margin-bottom: 1rem
+            display: block
+
+        .yes-no-buttons
+            display: flex
+            gap: 1rem
+            margin-bottom: 1rem
+
+            .schedule-button
+                background: transparent
+                border: 1px solid #333333
+                border-radius: 20px
+                padding: 0.5rem 2rem
+                color: #ffffff
+                cursor: pointer
+                transition: all 0.3s ease
+
+                &:hover, &.selected
+                    border-color: #666666
+                    background: rgba(102, 102, 102, 0.1)
+
+        .schedule-days
+            display: flex
+            flex-direction: column
+            gap: 0.8rem
+
+            .schedule-day
+                display: flex
+                justify-content: space-between
+                align-items: center
+
+                span
+                    color: #ffffff
+
+                input[type="time"]
+                    background: transparent
+                    border: 1px solid #333333
+                    border-radius: 20px
+                    padding: 0.5rem
+                    color: #ffffff
+                    width: 120px
+
+                    &::-webkit-calendar-picker-indicator
+                        filter: invert(1)
+
+    .finish-button
+        background: transparent
+        border: 1px solid #00ff00
+        color: #00ff00
+        padding: 1rem
+        border-radius: 20px
+        font-size: 1rem
+        cursor: pointer
+        width: 100%
+        margin-top: 2rem
+        transition: all 0.3s ease
+
+        &:hover
+            background: rgba(0, 255, 0, 0.1)
+
+.connect-button
+    background-color: #007AFF
+    color: white
+    border: none
+    padding: 12px 24px
+    border-radius: 8px
+    font-size: 16px
+    font-weight: 500
+    cursor: pointer
+    transition: background-color 0.3s ease
+
+    &:hover
+        background-color: #0056b3
+
+.help-section
+    background-color: none
+    padding: 1.5rem
+    border-radius: 8px
+    text-align: left
+
+    .help-title
+        font-size: 16px
+        font-weight: 600
+        color: #333
+        margin-bottom: 1rem
+
+    .help-steps
+        list-style-position: inside
+        padding: 0
+        margin: 0
+
+        li
+            color: #666
+            font-size: 14px
+            margin-bottom: 0.5rem
+            line-height: 1.5
+
+.error-message
+    color: #FF3B30
+    font-size: 14px
+    margin-top: 1rem
+
+
+.range-inputs
+    display: flex
+    align-items: center
+    gap: 1rem
+
+    input
+        width: 80px
+
+    span
+        color: #666
+
+.button-group
+    display: flex
+    gap: 1rem
+    justify-content: space-between
+    margin-top: 2rem 
+
+.help-content
+    display: flex
+    
+    align-items: center
+    gap: 1rem
+    
+    

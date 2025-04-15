@@ -1,56 +1,77 @@
-import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
-import { fetchUsers, addUser, deleteUser } from '../services/usersApi';
-import { User } from '../../types/userTypes';
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { User } from '../../types/userTypes'
+import { fetchUsersBatch, updateUser } from '../services/usersApi'
 
 interface UsersState {
-  users: User[];
-  loading: boolean;
-  error: string | null;
+    users: { [key: string]: User }
+    loading: boolean
+    error: string | null
 }
 
 const initialState: UsersState = {
-  users: [],
-  loading: false,
-  error: null,
-};
+    users: {},
+    loading: false,
+    error: null,
+}
 
-export const loadUsers = createAsyncThunk('users/load', async () => {
-  return await fetchUsers();
-});
+export const fetchUsers = createAsyncThunk('users/fetchBatch', async (userIds: string[], { rejectWithValue }) => {
+    try {
+        return await fetchUsersBatch(userIds)
+    } catch (error) {
+        return rejectWithValue(error instanceof Error ? error.message : 'Chyba pri načítaní používateľov')
+    }
+})
 
-export const createUser = createAsyncThunk('users/create', async (user: Omit<User, 'id'>) => {
-  return await addUser(user);
-});
-
-export const removeUser = createAsyncThunk('users/delete', async (id: string) => {
-  await deleteUser(id);
-  return id;
-});
+export const updateUserData = createAsyncThunk(
+    'users/update',
+    async ({ id, data }: { id: string; data: Partial<User> }, { rejectWithValue }) => {
+        try {
+            return await updateUser(id, data)
+        } catch (error) {
+            return rejectWithValue(error instanceof Error ? error.message : 'Chyba pri aktualizácii používateľa')
+        }
+    },
+)
 
 const usersSlice = createSlice({
-  name: 'users',
-  initialState,
-  reducers: {},
-  extraReducers: (builder) => {
-    builder
-      .addCase(loadUsers.pending, (state) => {
-        state.loading = true;
-      })
-      .addCase(loadUsers.fulfilled, (state, action: PayloadAction<User[]>) => {
-        state.users = action.payload;
-        state.loading = false;
-      })
-      .addCase(loadUsers.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message || 'Chyba pri načítaní používateľov';
-      })
-      .addCase(createUser.fulfilled, (state, action: PayloadAction<User>) => {
-        state.users.push(action.payload);
-      })
-      .addCase(removeUser.fulfilled, (state, action: PayloadAction<string>) => {
-        state.users = state.users.filter((user) => user.id !== action.payload);
-      });
-  },
-});
+    name: 'users',
+    initialState,
+    reducers: {
+        clearUsers: state => {
+            state.users = {}
+        },
+        clearError: state => {
+            state.error = null
+        },
+    },
+    extraReducers: builder => {
+        builder
+            .addCase(fetchUsers.pending, state => {
+                state.loading = true
+                state.error = null
+            })
+            .addCase(fetchUsers.fulfilled, (state, action: PayloadAction<{ [key: string]: User }>) => {
+                state.loading = false
+                state.users = { ...state.users, ...action.payload }
+            })
+            .addCase(fetchUsers.rejected, (state, action) => {
+                state.loading = false
+                state.error = action.payload as string
+            })
+            .addCase(updateUserData.pending, state => {
+                state.loading = true
+                state.error = null
+            })
+            .addCase(updateUserData.fulfilled, (state, action: PayloadAction<User>) => {
+                state.loading = false
+                state.users[action.payload.id] = action.payload
+            })
+            .addCase(updateUserData.rejected, (state, action) => {
+                state.loading = false
+                state.error = action.payload as string
+            })
+    },
+})
 
-export default usersSlice.reducer;
+export const { clearUsers, clearError } = usersSlice.actions
+export default usersSlice.reducer

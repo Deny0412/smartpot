@@ -1,0 +1,214 @@
+{
+    "common": {
+        "loading": "Načítání...",
+        "error": "Chyba",
+        "success": "Úspěch",
+        "save": "Uložit",
+        "cancel": "Zrušit",
+        "delete": "Smazat",
+        "edit": "Upravit"
+    },
+    "navigation": {
+        "home": "Domů",
+        "households": "Domácnosti",
+        "notifications": "Oznámení",
+        "logout": "Odhlásit",
+        "register": "Registrace",
+        "login": "Přihlášení"
+    },
+    "manage_household": {
+        "title": "Správa",
+        "loading": "Načítání...",
+        "not_found": "Domácnost nenalezena",
+        "no_permission": "Nemáte oprávnění spravovat tuto domácnost",
+        "sections": {
+            "members": {
+                "title": "Členové",
+                "manage_button": "Spravovat členy",
+                "owner_tag": "Vlastník"
+            },
+            "flowers": {
+                "title": "Květiny",
+                "manage_button": "Spravovat květiny",
+                "no_items": "Žádné květiny"
+            },
+            "profiles": {
+                "title": "Profily květin",
+                "manage_button": "Spravovat profily",
+                "no_items": "Žádné profily"
+            },
+            "flowerpots": {
+                "title": "Květináče",
+                "manage_button": "Spravovat květináče",
+                "no_items": "Žádné květináče",
+                "loading": "Načítání květináčů...",
+                "status": {
+                    "signed": "Přiřazeno ke květině",
+                    "not_signed": "Nepřiřazeno ke květině"
+                }
+            },
+            "danger_zone": {
+                "title": "Nebezpečná zóna",
+                "description": "Smazání domácnosti je nevratná akce. Všechna data včetně květináčů a profilů budou trvale ztracena.",
+                "delete_button": "Smazat domácnost"
+            }
+        },
+        "manage_members": {
+            "title": "Správa členů v",
+            "household_members": "Členové domácnosti",
+            "roles": {
+                "owner": "Vlastník",
+                "member": "Člen"
+            },
+            "actions": {
+                "make_owner": "Učinit vlastníkem",
+                "remove": "Odstranit"
+            },
+            "add_member": {
+                "title": "Přidat člena",
+                "input": "Email nového člena",
+                "button": "Pozvat člena"
+            }
+        },
+        "manage_flowers": {
+            "title": "Správa květin v",
+            "household_flowers": "Květiny v domácnosti",
+            "actions": {
+                "add": "Přidat květinu"
+            }
+        }
+    },
+    "create_household": {
+        "title": "Vytvořit domácnost",
+        "description": "Vytvořte novou domácnost pro správu vašich rostlin.",
+        "input": "Název domácnosti",
+        "button": "Vytvořit domácnost"
+    },
+    "homepage": {
+        "homepage_intro": {
+            "title": "Chytrý květináč",
+            "description": "Květináč je chytré zařízení, které vám pomáhá pečovat o vaše rostliny. Sleduje teplotu, vlhkost, světlo a hladinu vody v květináči a poskytuje vám potřebné informace pro péči o vaše rostliny.",
+            "button": "Zobrazit domácnosti"
+        },
+        "homepage_features": {
+            "title": "Funkce",
+            "features": [
+                {
+                    "title": "Chytrý",
+                    "description": "Květináč je chytré zařízení, které vám pomáhá pečovat o vaše rostliny."
+                },
+                {
+                    "title": "Chytrý",
+                    "description": "Květináč je chytré zařízení, které vám pomáhá pečovat o vaše rostliny."
+                },
+                {
+                    "title": "Chytrý",
+                    "description": "Květináč je chytré zařízení, které vám pomáhá pečovat o vaše rostliny."
+                }
+            ]
+        },
+        "homepage_try_it": {
+            "title": "Vyzkoušejte nyní",
+            "description": "Květináč je chytré zařízení, které vám pomáhá pečovat o vaše rostliny.",
+            "button": "Zobrazit domácnosti"
+        }
+    },
+    "households": {
+        "households_list": {
+            "title": "Seznam domácností",
+            "actions": {
+                "check": "Zobrazit",
+                "manage": "Spravovat",
+                "create_new": "Vytvořit novou"
+            },
+            "no_households": "Žádné registrované domácnosti. Prosím vytvořte jednu."
+        },
+        "role": {
+            "owner": "Vlastník",
+            "member": "Člen"
+        }
+    },
+    "flower_list": {
+        "title": "Květiny v",
+        "actions": {
+            "add": "Přidat květinu",
+            "add_flowerpot": "Přidat květináč",
+            "manage_profiles": "Spravovat profily"
+        },
+        "filters": {
+            "all": "Vše",
+            "active": "Aktivní",
+            "not_active": "Neaktivní",
+            "free_flowerpot_counter": "Volné květináče",
+            "all_profiles": "Všechny profily"
+        },
+        "flower_item": {
+            "details": "Detaily",
+            "edit": "Upravit květinu",
+            "delete": "Smazat",
+            "assign": "Přiřadit ke květináči"
+        }
+    },
+    "flower_measurments": {
+        "status": "Stav",
+        "measurements": "měření",
+        "measurments": {
+            "humidity": "Vlhkost",
+            "temperature": "Teplota",
+            "light": "Světlo",
+            "water_level": "Hladina vody"
+        },
+        "filter_date_range": {
+            "day": "Den",
+            "week": "Posledních 7 dní",
+            "month": "Poslední měsíc",
+            "custom": "Vlastní rozsah",
+            "from": "Od",
+            "to": "Do"
+        },
+        "irrigation": {
+            "title": "Manuální zalévání",
+            "placeholder": "Zadejte hodnotu v ml",
+            "button": "Zalít"
+        }
+    },
+    "add_flower": {
+        "title": "Vytvořit květinu",
+        "description": "Nastavení květináče",
+        "name": "Název květiny",
+        "name_placeholder": "Zadejte název květiny",
+        "profile_type": "Typ profilu",
+        "use_existing_profile": "Použít existující profil",
+        "custom_settings": "Vlastní nastavení",
+        "select_profile": "Vyberte profil",
+        "select_profile_placeholder": "Vyberte existující profil",
+        "temperature": "Teplota (°C)",
+        "humidity": "Vlhkost (%)",
+        "light": "Světlo (%)",
+        "avatar": "Avatar květiny",
+        "schedule_title": "Rozvrh zalévání",
+        "schedule": {
+            "monday": "Pondělí",
+            "tuesday": "Úterý",
+            "wednesday": "Středa",
+            "thursday": "Čtvrtek",
+            "friday": "Pátek",
+            "saturday": "Sobota",
+            "sunday": "Neděle"
+        },
+        "schedule_from": "Od",
+        "schedule_to": "Do",
+        "saving": "Ukládání...",
+        "final_button": "Dokončit"
+    },
+    "add_flowerpot": {
+        "title": "Připojte květináč k vaší domácnosti",
+        "description": "Nastavení květináče",
+        "input": "Název květináče",
+        "button": "Vytvořit květináč",
+        "serial_number": "Sériové číslo květináče",
+        "connect": "Připojit",
+        "help_title": "Jak se připojit?",
+        "help_steps": ["Zapněte květináč", "Stiskněte tlačítko párování", "Zadejte sériové číslo květináče"]
+    }
+}

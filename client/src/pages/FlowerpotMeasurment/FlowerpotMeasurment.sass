@@ -1,0 +1,444 @@
+@import "../../styles/global.sass"
+
+.flowerpot-header
+    display: flex
+    justify-content: space-between
+    align-items: center
+    .flowerpot-avatar
+        width: 100px
+        height: 100px
+
+        object-fit: cover
+
+.flowerpot-detail
+    max-width: 1200px
+    margin: 1rem auto
+    padding: 0 2rem
+    color: $primary-text
+    display: flex
+    flex-direction: column
+    @media (max-width: 768px)
+        padding: 0 1rem
+        width: 90%
+        margin: 0 auto
+
+    @media (max-width: 480px)
+        padding: 0.5rem
+
+.flowerpot-title
+    font-size: 2.5rem
+    margin-bottom: 2rem
+    color: $primary-text
+
+    @media (max-width: 768px)
+        font-size: 2rem
+
+    @media (max-width: 480px)
+        font-size: 1.5rem
+
+.chart-section
+    background: none
+    border-radius: 15px
+    padding: 2rem
+
+    display: flex
+    flex-direction: column
+    align-items: center
+    width: auto
+
+    @media (max-width: 768px)
+        padding: 1rem
+
+    @media (max-width: 480px)
+        padding: 0.5rem
+
+.chart-header
+    display: flex
+    justify-content: space-between
+    align-items: center
+    width: 100%
+    margin-bottom: 1.5rem
+
+    .chart-header-title
+        margin: 0 auto
+        padding: 0
+    
+
+    @media (max-width: 480px)
+        flex-direction: column
+        gap: 0.8rem
+        align-items: flex-start
+
+.time-range-controls
+    display: flex
+    flex-direction: column
+    gap: 1rem
+    align-items: flex-end
+    width: 100%
+
+    @media (max-width: 480px)
+        width: 100%
+        align-items: stretch
+        gap: 0.8rem
+
+.time-range-buttons
+    display: flex
+    gap: 0.5rem
+    width: auto
+
+    @media (max-width: 480px)
+        width: 100%
+        display: grid
+        grid-template-columns: repeat(4, 1fr)
+        gap: 0.2rem
+
+    .time-range-button
+        padding: 0.5rem 1rem
+        font-size: 0.8rem
+
+        @media (max-width: 480px)
+            font-size: 0.65rem
+            padding: 0.25rem 0.1rem
+            min-width: 0
+            white-space: nowrap
+            height: 24px
+            display: flex
+            align-items: center
+            justify-content: center
+            text-align: center
+
+.custom-date-range
+    display: flex
+    gap: 0.5rem
+    background: none
+    padding: 0.5rem
+    border-radius: 8px
+    width: 100%
+    justify-content: flex-end
+
+    .date-input-group
+        display: flex
+        align-items: center
+        gap: 0.3rem
+        background: $secondary-text
+        padding: 0.25rem 0.5rem
+        border-radius: 8px
+        height: 24px
+
+        label
+            font-size: 0.65rem
+            min-width: 20px
+            color: rgba(255, 255, 255, 0.7)
+
+        input[type="date"]
+            font-size: 0.65rem
+            padding: 0
+            height: 24px
+            width: calc(100% - 25px)
+            background: none
+            border: none
+            color: $primary-text
+
+            &::-webkit-calendar-picker-indicator
+                filter: invert(1)
+                cursor: pointer
+                width: 16px
+                height: 16px
+
+    @media (max-width: 480px)
+        flex-direction: row
+        gap: 0.2rem
+        padding: 0.4rem 0
+        justify-content: space-between
+
+        .date-input-group
+            width: 48%
+
+.chart-container
+    border-radius: 10px
+    margin-bottom: 1rem
+    padding: 1rem 0.5rem
+    width: 100%
+    box-sizing: border-box
+    display: flex
+    justify-content: flex-start
+    overflow: hidden
+
+    @media (max-width: 480px)
+        padding: 0.5rem 0
+        margin: 0 auto
+
+    > div
+        width: 100% !important
+        margin-left: -2rem
+
+        @media (max-width: 480px)
+            margin-left: -1.5rem
+
+.measurement-icons
+    display: flex
+    justify-content: center
+    gap: 1rem
+
+    @media (max-width: 480px)
+        gap: 0.5rem
+
+    .icon-button
+        background: none
+        border: 1px solid $primary-text
+        color: $primary-text
+        width: 48px
+        height: 48px
+        border-radius: 50%
+        cursor: pointer
+        transition: all 0.2s
+        font-size: 1.5rem
+        display: flex
+        align-items: center
+        justify-content: center
+
+        @media (max-width: 480px)
+            width: 40px
+            height: 40px
+            font-size: 1.2rem
+
+        &:hover
+            transform: scale(1.1)
+
+        &.active
+            transform: scale(1.1)
+
+            &:hover
+                filter: brightness(1.1)
+
+        &:nth-child(1)
+            &.active
+                background: $watering-color
+
+                &:hover
+                    background: darken($watering-color, 10%)
+
+        &:nth-child(2)
+            &.active
+                background: $temperature-color
+
+                &:hover
+                    background: darken($temperature-color, 10%)
+
+        &:nth-child(3)
+            &.active
+                background: $lighting-color
+
+                &:hover
+                    background: darken($lighting-color, 10%)
+
+        &:nth-child(4)
+            &.active
+                background: $capacity-color
+
+                &:hover
+                    background: darken($capacity-color, 10%)
+
+.irrigation-section
+
+    border-radius: 15px
+
+    margin-bottom: 2rem
+    display: flex
+    flex-direction: column
+    align-items: center
+    width: 100%
+
+    @media (max-width: 768px)
+        padding: 1rem
+
+    @media (max-width: 480px)
+        padding: 0.5rem
+
+    h3
+        color: $watering-color
+        margin-bottom: 1rem
+
+        @media (max-width: 480px)
+            font-size: 1.1rem
+
+.irrigation-controls
+    display: flex
+    gap: 1rem
+    width: auto
+
+    @media (max-width: 480px)
+        flex-direction: row
+        gap: 0.5rem
+        width: auto
+
+    input
+        background: none
+        border: 1px solid white
+        color: white
+        padding: 0.5rem 1rem
+        border-radius: 8px
+        font-size: 1rem
+        width: 150px
+        box-sizing: border-box
+
+        @media (max-width: 480px)
+            width: 120px
+            box-sizing: border-box
+
+        &:focus
+            outline: none
+            border-color: $watering-color
+
+    .irrigate-button
+        background: none
+        color: $watering-color
+        border: 1px solid $watering-color
+        padding: 0.5rem 2rem
+        border-radius: 8px
+        cursor: pointer
+        transition: all 0.2s
+        font-weight: 500
+        white-space: nowrap
+        width: auto
+
+        @media (max-width: 480px)
+            padding: 0.5rem 1.5rem
+
+        &:hover
+            background: $secondary-text
+            transform: translateY(-1px)
+
+.status-section
+    width: 100%
+
+    border-radius: 15px
+
+    margin-bottom: 2rem
+
+    @media (max-width: 768px)
+        padding: 1rem
+        margin: 0 auto
+
+    @media (max-width: 480px)
+        padding: 0.5rem
+
+    h3
+        color: #2ecc71
+        margin-bottom: 1rem
+
+        @media (max-width: 480px)
+            font-size: 1.1rem
+
+    p
+        line-height: 1.5
+        color: rgba(255, 255, 255, 0.8)
+
+        @media (max-width: 480px)
+            font-size: 0.9rem
+
+.measurements-history
+    width: 60%
+    background: none
+    border-radius: 15px
+    padding: 2rem
+    display: flex
+    flex-direction: column
+    margin: 0 auto 2rem auto
+
+    @media (max-width: 768px)
+        padding: 1rem
+        width: 90%
+
+    @media (max-width: 480px)
+        padding: 0.5rem
+        width: 100%
+
+    h3
+        margin-bottom: 1rem
+
+        @media (max-width: 480px)
+            font-size: 1.1rem
+
+    .date-picker
+        margin-bottom: 1rem
+        width: 100%
+
+        input
+            background: none
+            border: 1px solid white
+            color: white
+            padding: 0.5rem 1rem
+            border-radius: 8px
+            font-size: 1rem
+            width: 100%
+            box-sizing: border-box
+
+            &::-webkit-calendar-picker-indicator
+                filter: invert(1)
+                cursor: pointer
+
+            @media (max-width: 480px)
+                width: 100%
+                font-size: 0.9rem
+                box-sizing: border-box
+
+            &:focus
+                outline: none
+                border-color: #3498db
+
+.measurement-list
+    display: flex
+    flex-direction: column
+    gap: 0.5rem
+    max-height: 300px
+    overflow-y: auto
+    padding-right: 1rem
+    width: 100%
+
+    @media (max-width: 480px)
+        max-height: 250px
+        padding-right: 0.5rem
+
+        .measurement-item
+            padding: 0.5rem
+            font-size: 0.8rem
+
+            .timestamp
+                font-size: 0.7rem
+
+            .value
+                font-size: 0.8rem
+
+    &::-webkit-scrollbar
+        width: 8px
+        background: rgba(0, 0, 0, 0.2)
+        border-radius: 4px
+
+    &::-webkit-scrollbar-thumb
+        background: rgba(255, 255, 255, 0.1)
+        border-radius: 4px
+
+        &:hover
+            background: rgba(255, 255, 255, 0.2)
+
+.measurement-item
+    display: flex
+    justify-content: space-between
+    padding: 0.8rem
+    background: rgba(40, 40, 40, 0.8)
+    border-radius: 8px
+    transition: all 0.2s
+
+    @media (max-width: 480px)
+        padding: 0.6rem
+        font-size: 0.9rem
+
+    &:hover
+        background: rgba(50, 50, 50, 0.8)
+
+    .timestamp
+        color: #888
+
+    .value
+        font-weight: 500

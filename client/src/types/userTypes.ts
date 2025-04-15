@@ -1,10 +1,8 @@
 export interface User {
-    id: string;
-    firstname: string;
-    lastname: string;
-    email: string;
-    telnumber: string;
-    passwordHash: string;
-    households: Record<string, 'owner' | 'member'>;
-  }
-  
+    id: string
+    name: string
+    surname: string
+    email: string
+    phone: string
+    password: string
+}

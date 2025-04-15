@@ -1,0 +1,236 @@
+{
+    "common": {
+        "loading": "Loading...",
+        "error": "Error",
+        "success": "Success",
+        "save": "Save",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "edit": "Edit"
+    },
+    "navigation": {
+        "home": "Home",
+        "households": "Households",
+        "notifications": "Notifications",
+        "logout": "Logout",
+        "register": "Register",
+        "login": "Login"
+    },
+    "manage_household": {
+        "title": "Manage",
+        "loading": "Loading...",
+        "not_found": "Household not found",
+        "no_permission": "You don't have permission to manage this household",
+        "sections": {
+            "members": {
+                "title": "Members",
+                "manage_button": "Manage members",
+                "owner_tag": "Owner"
+            },
+            "flowers": {
+                "title": "Flowers",
+                "manage_button": "Manage flowers",
+                "no_items": "No flowers"
+            },
+            "profiles": {
+                "title": "Flower profiles",
+                "manage_button": "Manage profiles",
+                "no_items": "No profiles"
+            },
+            "flowerpots": {
+                "title": "Flowerpots",
+                "manage_button": "Manage flowerpots",
+                "no_items": "No flowerpots",
+                "loading": "Loading flowerpots...",
+                "status": {
+                    "signed": "Signed to flower",
+                    "not_signed": "No flower signed"
+                }
+            },
+            "danger_zone": {
+                "title": "Danger Zone",
+                "description": "Deleting the household is an irreversible action. All data including flowerpots and profiles will be permanently lost.",
+                "delete_button": "Delete household"
+            }
+        },
+        "manage_members": {
+            "title": "Manage members in",
+            "household_members": "Household members",
+            "roles": {
+                "owner": "Owner",
+                "member": "Member"
+            },
+            "actions": {
+                "make_owner": "Make owner",
+                "remove": "Remove"
+            },
+            "add_member": {
+                "title": "Add member",
+                "input": "Email new member",
+                "button": "Invite member"
+            }
+        },
+        "manage_flowers": {
+            "title": "Manage flowers in",
+            "household_flowers": "Household flowers",
+            "actions": {
+                "add": "Add flower"
+            }
+        }
+    },
+    "create_household": {
+        "title": "Create household",
+        "description": "Create a new household to start managing your plants.",
+        "input": "Household name",
+        "button": "Create household"
+    },
+    "homepage": {
+        "homepage_intro": {
+            "title": "Smart planter",
+            "description": "The Flowerpot is a smart device that helps you take care of your plants. It monitors the temperature, humidity, light and water level in your plant pot and provides you with the necessary information to take care of your plants.",
+            "button": "Check households"
+        },
+        "homepage_features": {
+            "title": "Features",
+            "features": [
+                {
+                    "title": "Smart",
+                    "description": "The Flowerpot is a smart device that helps you take care of your plants."
+                },
+                {
+                    "title": "Smart",
+                    "description": "The Flowerpot is a smart device that helps you take care of your plants."
+                },
+                {
+                    "title": "Smart",
+                    "description": "The Flowerpot is a smart device that helps you take care of your plants."
+                }
+            ]
+        },
+        "homepage_try_it": {
+            "title": "Try it now",
+            "description": "The Flowerpot is a smart device that helps you take care of your plants.",
+            "button": "Check households"
+        }
+    },
+    "households": {
+        "households_list": {
+            "title": "Household list",
+            "actions": {
+                "check": "Check",
+                "manage": "Manage",
+                "create_new": "Create new"
+            },
+            "no_households": "No households registered. Please create one."
+        },
+        "role": {
+            "owner": "Owner",
+            "member": "Member"
+        }
+    },
+    "flower_list": {
+        "title": "Flowers in",
+        "actions": {
+            "add": "Add flower",
+            "add_flowerpot": "Add flowerpot",
+            "manage_profiles": "Manage profiles"
+        },
+        "filters": {
+            "all": "All",
+            "active": "Active",
+            "not_active": "Not active",
+            "free_flowerpot_counter": "Free flowerpots",
+            "all_profiles": "All profiles"
+        },
+        "flower_item": {
+            "details": "Details",
+            "edit": "Edit your flower",
+            "delete": "Delete",
+            "assign": "Assign to flowerpot"
+        }
+    },
+    "flower_measurments": {
+        "status": "Status",
+        "measurements": "measurements",
+        "measurments": {
+            "humidity": "Humidity",
+            "temperature": "Temperature",
+            "light": "Light",
+            "water_level": "Water level"
+        },
+        "filter_date_range": {
+            "day": "Day",
+            "week": "Last 7 days",
+            "month": "Last month",
+            "custom": "Custom range",
+            "from": "From",
+            "to": "To"
+        },
+        "irrigation": {
+            "title": "Manual irrigation",
+            "placeholder": "Enter value in ml",
+            "button": "Irrigate"
+        }
+    },
+    "add_flower": {
+        "title": "Create flower",
+        "description": "Flowerpot Settings",
+        "name": "Flower name",
+        "name_placeholder": "Enter flower name",
+        "profile_type": "Profile type",
+        "use_existing_profile": "Use existing profile",
+        "custom_settings": "Custom settings",
+        "select_profile": "Select profile",
+        "select_profile_placeholder": "Select existing profile",
+        "temperature": "Temperature (°C)",
+        "humidity": "Humidity (%)",
+        "light": "Light (%)",
+        "avatar": "Flower avatar",
+        "schedule_title": "Watering schedule",
+        "schedule": {
+            "monday": "Monday",
+            "tuesday": "Tuesday",
+            "wednesday": "Wednesday",
+            "thursday": "Thursday",
+            "friday": "Friday",
+            "saturday": "Saturday",
+            "sunday": "Sunday"
+        },
+        "schedule_from": "From",
+        "schedule_to": "To",
+        "saving": "Saving...",
+        "final_button": "Finish"
+    },
+    "add_flowerpot": {
+        "title": "Connect your flowerpot to your household",
+        "description": "Flowerpot Settings",
+        "input": "Flowerpot name",
+        "button": "Create flowerpot",
+        "serial_number": "Flowerpot serial number",
+        "connect": "Connect",
+        "help_title": "How to connect?",
+        "help_steps": ["Turn on the flowerpot", "Press the pairing button", "Enter the flowerpot serial number"]
+    },
+    "login_page": {
+        "title": "Login",
+        "input": "Email",
+        "button": "Login",
+        "loading": "Logining in",
+        "register": "Register",
+        "password": "Password"
+    },
+    "register_page": {
+        "title": "Register",
+        "input": "Email",
+        "button": "Register",
+        "loading": "Registering",
+        "password": "Password",
+        "confirm_password": "Confirm password"
+    },
+    "edit_flower": {
+        "title": "Edit flower",
+        "input": "Flower name",
+        "button": "Edit flower",
+        "schedule_title": "Schedule"
+    }
+}

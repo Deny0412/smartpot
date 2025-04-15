@@ -1,0 +1,173 @@
+.manage-household-container
+    display: flex
+    flex-direction: column
+    min-height: 100vh
+    padding: 20px
+    background: #000000
+    color: #ffffff
+    max-width: 1200px
+    margin: 0 auto
+
+    .manage-household-header
+        text-align: center
+        margin-bottom: 3rem
+    .manage-household-title
+        text-align: center
+        margin-bottom: 30px
+
+    .manage-sections
+        display: flex
+        flex-direction: column
+        gap: 20px
+        max-width: 800px
+        margin: 0 auto
+        width: 100%
+    
+    .manage-section-title
+        margin-bottom: 10px
+        color: #ffffff
+        font-size: 1.5rem
+        font-weight: 600
+
+        &.danger-zone-title
+            color: #ff0000
+    .manage-section
+        background: none
+        border-radius: 10px
+        padding: 20px
+        display: flex
+        align-items: flex-start
+        border: 1px solid rgba(255, 255, 255, 0.1)
+
+        .section-content
+            flex: 1
+            display: flex
+            flex-direction: column
+            gap: 15px
+
+        .section-header
+            h3
+                font-size: 1.5rem
+                font-weight: 600
+                margin: 0
+
+        .members-list, .flowerpots-list, .profiles-list , .flowers-list
+            display: flex
+            flex-direction: column
+            gap: 10px
+
+            .member-item, .flowerpot-item, .profile-item , .flower-item
+                display: flex
+                align-items: center
+                gap: 10px
+                padding: 10px
+                background: none
+                
+                border-bottom: 1px solid rgba(255, 255, 255, 0.2)
+            .flower-item
+                display: flex
+                justify-content: space-between
+                .flower-avatar
+                    width: 50px
+                    height: 50px
+                    
+                    object-fit: cover
+
+        .member-name
+            flex: 1
+            font-size: 16px
+            color: #ffffff
+
+        .owner-tag
+            padding: 2px 6px
+            border-radius: 4px
+            font-size: 1.2rem 
+            align-self: center
+            line-height: 1.2
+            background-color: none
+            color: #FFEF45
+            border: 1px solid #FFEF45
+
+            @media (max-width: 768px)
+                font-size: 1rem
+            @media (max-width: 500px)
+                align-self: flex-start
+
+        .manage-button
+            align-self: flex-end
+            cursor: pointer
+            transition: background 0.3s
+
+        .no-items
+            color: rgba(255, 255, 255, 0.5)
+            text-align: center
+            padding: 10px
+            background: rgba(255, 255, 255, 0.05)
+            border-radius: 5px
+            border: 1px dashed rgba(255, 255, 255, 0.2)
+    
+    .members-section, .flowerpots-section, .profiles-section , .flowers-section
+        width: 100%
+        transition: transform 0.3s ease, box-shadow 0.3s ease
+
+        
+
+    @media (max-width: 768px)
+        .manage-section
+            flex-direction: column
+            align-items: stretch
+            padding: 15px
+
+            .section-content
+                width: 100%
+
+        .manage-section-title
+            font-size: 1.2rem
+
+        .member-name
+            font-size: 14px
+
+.danger-zone-title
+    color: #ff0000
+.danger-zone-section
+    width: 100%
+    
+    background-color: none
+    
+    border: none
+
+    border-radius: 20px
+
+    display: flex
+    justify-content: center
+    align-items: center
+
+
+    margin: 0 auto
+
+    backdrop-filter: blur(2px)
+  
+    &::before
+        content: ''
+        position: absolute
+        z-index: -1
+        inset: 0
+        border-radius: inherit
+        padding: 4px
+        background: linear-gradient(135deg, rgba(255, 0, 0, 0.8) 0%, rgba(255, 255, 255, 0.2) 40%, rgba(255, 255, 255, 0.2) 60%, rgba(255, 0, 0, 0.8) 100%)
+        -webkit-mask: linear-gradient(#ff0000 0 0) content-box, linear-gradient(#ff0000 0 0)
+        mask: linear-gradient(#ff0000 0 0) content-box, linear-gradient(#ff0000 0 0)
+        -webkit-mask-composite: xor
+        mask-composite: exclude
+
+    .danger-zone-content
+        .danger-zone-description
+            color: #ff0000
+            margin-bottom: 15px
+            
+
+        .delete-household-button
+            
+            color: #ff0000
+            border: 1px solid #ff0000
+           
