@@ -5,7 +5,6 @@ import flowerDeleteAbl from "../abl/flower/flower-delete-abl";
 import flowerListAbl from "../abl/flower/flower-list-abl";
 import flowerGetAbl from "../abl/flower/flower-get-abl";
 import flowerHistoryAbl from "../abl/flower/flower-history-abl";
-import flowerGetSerialAbl from "../abl/flower/flower-getSerial-abl";
 
 import flowerAddMeasurementAbl from "../abl/flower/flower-measurent-add-abl";
 import {
@@ -60,14 +59,7 @@ export const flowerController = {
       sendError(reply, error);
     }
   },
-  getSerial: async (request: FastifyRequest, reply: FastifyReply) => {
-    try {
-      const serial_number = (request.params as Params).serial_number as string;
-      await flowerGetSerialAbl(serial_number, reply);
-    } catch (error) {
-      sendError(reply, error);
-    }
-  },
+
   list: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const response = await flowerListAbl(request, reply);

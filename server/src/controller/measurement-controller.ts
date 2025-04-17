@@ -1,6 +1,7 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import measurementCreateAbl from "../abl/measurement/measurement-create-abl";
 import measurementHistoryAbl from "../abl/measurement/measurement-history-abl";
+
 import {
   sendCreated,
   sendError,
@@ -18,8 +19,7 @@ export const measurementController = {
   create: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const data = request.body as IMeasurement;
-      const response = await measurementCreateAbl(data, reply);
-      sendCreated(reply, response, "Measurement created successfully");
+      await measurementCreateAbl(data, reply);
     } catch (error) {
       sendInternalServerError(reply);
     }
