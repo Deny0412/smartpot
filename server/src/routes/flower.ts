@@ -35,6 +35,14 @@ export default async function flowerRoutes(fastify: FastifyInstance) {
     flowerController.get
   );
   fastify.get(
+    "/getSerial/:serial_number",
+    {
+      onRequest: [authMiddleware], // Authenticate first
+      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
+    },
+    flowerController.getSerial
+  );
+  fastify.get(
     "/list",
     {
       onRequest: [authMiddleware], // Authenticate first
