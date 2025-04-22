@@ -2,13 +2,13 @@ import { Schema, model, Document, Types } from "mongoose";
 
 export interface IWaterMeasurement extends Document {
     flower_id: Types.ObjectId;
-    water_level: string;
+    value: string;
 }
 
 const WATER_SCHEMA = new Schema<IWaterMeasurement>(
     {
         flower_id: { type: Schema.Types.ObjectId, ref: "Flower", required: true },
-        water_level: {
+        value: {
             type: String,
             required: false,
             enum: ["low", "medium", "high"],

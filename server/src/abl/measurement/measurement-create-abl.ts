@@ -18,19 +18,15 @@ const schema = {
       type: "string",
       enum: ["humidity", "water", "temperature", "light"]
     },
-    humidity: { type: "number" },
-    water_level: { type: "string" },
-    temperature: { type: "number" },
-    light: { type: "number" },
+    value: {
+      anyOf: [
+        { type: "number" },
+        { type: "string" }
+      ]
+    }
   },
-  required: ["smartpot_serial", "typeOfData"],
-  additionalProperties: false,
-  anyOf: [
-    { required: ["humidity"] },
-    { required: ["water_level"] },
-    { required: ["temperature"] },
-    { required: ["light"] },
-  ],
+  required: ["smartpot_serial", "typeOfData", "value"],
+
 };
 
 
@@ -50,23 +46,15 @@ async function createMeasurementHandler(
       );
       return;
     }
-    const typeFieldMap: Record<string, string> = {
-      humidity: "humidity",
-      water: "water_level",
-      temperature: "temperature",
-      light: "light",
-    };
-
-    const expectedField = typeFieldMap[data.typeOfData as string];
-
-    if (!expectedField || !(expectedField in data)) {
-      sendClientError(
-        reply,
-        `Field "${expectedField}" must be provided for typeOfData "${data.typeOfData}"`
-      );
-      return;
+    if (data.typeOfData === "water") {
+      if (typeof data.value !== "string") {
+        return sendClientError(reply, `value must be a string for typeOfData water`);
+      }
+    } else {
+      if (typeof data.value !== "number") {
+        return sendClientError(reply, `value must be a number for typeOfData ${data.typeOfData}`);
+      }
     }
-
     const smartpot = await getSmartpot(data.smartpot_serial as string);
 
     if (!smartpot) {

@@ -2,13 +2,13 @@ import { Schema, model, Document, Types } from "mongoose";
 
 export interface ITemperatureMeasurement extends Document {
     flower_id: Types.ObjectId;
-    temperature: number;
+    value: number;
 }
 
 const TEMPERATURE_SCHEMA = new Schema<ITemperatureMeasurement>(
     {
         flower_id: { type: Schema.Types.ObjectId, ref: "Flower", required: true },
-        temperature: { type: Number, required: false },
+        value: { type: Number, required: false },
 
     },
     { timestamps: true }

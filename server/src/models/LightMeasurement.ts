@@ -2,13 +2,13 @@ import { Schema, model, Document, Types } from "mongoose";
 
 export interface ILightMeasurement extends Document {
     flower_id: Types.ObjectId;
-    light: number;
+    value: number;
 }
 
 const LIGHT_SCHEMA = new Schema<ILightMeasurement>(
     {
         flower_id: { type: Schema.Types.ObjectId, ref: "Flower", required: true },
-        light: { type: Number, required: false },
+        value: { type: Number, required: false },
 
     },
     { timestamps: true }
