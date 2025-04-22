@@ -2,13 +2,13 @@ import { Schema, model, Document, Types } from "mongoose";
 
 export interface IHumidityMeasurement extends Document {
     flower_id: Types.ObjectId;
-    humidity: number;
+    value: number;
 }
 
 const HUMIDITY_SCHEMA = new Schema<IHumidityMeasurement>(
     {
         flower_id: { type: Schema.Types.ObjectId, ref: "Flower", required: true },
-        humidity: { type: Number, required: false },
+        value: { type: Number, required: false },
 
     },
     { timestamps: true }
