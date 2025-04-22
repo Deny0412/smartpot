@@ -16,7 +16,7 @@ const schema = {
     smartpot_serial: { type: "string" },
     typeOfData: {
       type: "string",
-      enum: ["humidity", "water", "temperature", "light"]
+      enum: ["soil", "water", "temperature", "light", "battery"]
     },
     value: {
       anyOf: [
@@ -50,6 +50,7 @@ async function createMeasurementHandler(
       if (typeof data.value !== "string") {
         return sendClientError(reply, `value must be a string for typeOfData water`);
       }
+      data.value = (data.value as string).toLowerCase();
     } else {
       if (typeof data.value !== "number") {
         return sendClientError(reply, `value must be a number for typeOfData ${data.typeOfData}`);
