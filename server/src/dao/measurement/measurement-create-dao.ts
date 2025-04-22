@@ -1,8 +1,23 @@
-import { IMeasurement } from '../../models/Measurement'; 
-import MeasurementModel from '../../models/Measurement';
+import WaterMeasurementModel from '../../models/WaterMeasurement';
+import HumidityMeasurementModel from '../../models/HumidityMeasurement';
+import LightMeasurementModel from '../../models/LightMeasurement';
+import TemperatureMeasurementModel from '../../models/TemperatureMeasurement';
+const measurementModelMap: Record<string, any> = {
+    water: WaterMeasurementModel,
+    light: LightMeasurementModel,
+    humidity: HumidityMeasurementModel,
+    temperature: TemperatureMeasurementModel,
+};
 
-async function createMeasurement(data: IMeasurement) {
-    return await MeasurementModel.create(data); 
+
+async function createMeasurement(data: any) {
+    const Model = measurementModelMap[data.typeOfData];
+
+    if (!Model) {
+        throw new Error(`Unsupported measurement type: ${data.typeOfData}`);
+    }
+
+    return await Model.create(data);
 }
 
 

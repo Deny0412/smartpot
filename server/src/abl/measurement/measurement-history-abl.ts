@@ -16,10 +16,14 @@ const schema = {
   type: "object",
   properties: {
     id: { type: "string" },
+    typeOfData: {
+      type: "string",
+      enum: ["humidity", "water", "temperature", "light"]
+    },
     dateFrom: { type: "string", format: "date" },
     dateTo: { type: "string", format: "date" },
   },
-  required: ["id", "dateFrom", "dateTo"],
+  required: ["id", "typeOfData"],
   additionalProperties: false,
 };
 
@@ -36,11 +40,7 @@ async function measurementHistoryAbl(data: Object, reply: FastifyReply) {
       );
       return;
     }
-    const history = await measurementHistoryDao(
-      data.id as string,
-      data.dateFrom as Date,
-      data.dateTo as Date
-    );
+    const history = await measurementHistoryDao(data);
     if (!history) {
       sendNotFound(reply, "History does not exist");
     }

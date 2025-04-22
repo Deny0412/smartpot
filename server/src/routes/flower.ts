@@ -50,7 +50,6 @@ export default async function flowerRoutes(fastify: FastifyInstance) {
     },
     flowerController.update
   );
-  fastify.post("/measurement/add", flowerController.addMeasurement);
   fastify.post(
     "/history",
     {
@@ -67,7 +66,5 @@ export default async function flowerRoutes(fastify: FastifyInstance) {
     },
     flowerController.listActive
   );
-  //fastify.get('/flower/history/humidity', /* handler for humidity history */);
-  //fastify.get('/flower/history/temperature', /* handler for temperature history */);
-  //fastify.get('/flower/history/waterlevel', /* handler for water level history */);
+
 }
