@@ -7,7 +7,7 @@ import BatteryMeasurementModel from '../../models/BatteryMeasurement';
 const measurementModelMap: Record<string, any> = {
     water: WaterMeasurementModel,
     light: LightMeasurementModel,
-    humidity: HumidityMeasurementModel,
+    soil: HumidityMeasurementModel,
     temperature: TemperatureMeasurementModel,
     battery: BatteryMeasurementModel
 };
