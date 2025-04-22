@@ -7,7 +7,6 @@ import {
   sendError,
   sendInternalServerError,
 } from "../middleware/response-handler";
-import { IMeasurement } from "../models/Measurement";
 
 interface Params {
   id: string;
@@ -18,7 +17,7 @@ interface Params {
 export const measurementController = {
   create: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const data = request.body as IMeasurement;
+      const data = request.body as Object;
       await measurementCreateAbl(data, reply);
     } catch (error) {
       sendInternalServerError(reply);

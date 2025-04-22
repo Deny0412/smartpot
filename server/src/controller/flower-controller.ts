@@ -4,9 +4,7 @@ import flowerUpdateAbl from "../abl/flower/flower-update-abl";
 import flowerDeleteAbl from "../abl/flower/flower-delete-abl";
 import flowerListAbl from "../abl/flower/flower-list-abl";
 import flowerGetAbl from "../abl/flower/flower-get-abl";
-import flowerHistoryAbl from "../abl/flower/flower-history-abl";
 
-import flowerAddMeasurementAbl from "../abl/flower/flower-measurent-add-abl";
 import {
   sendSuccess,
   sendCreated,
@@ -14,7 +12,6 @@ import {
   sendInternalServerError,
 } from "../middleware/response-handler";
 import { IFlower } from "../models/Flower";
-import { IMeasurement } from "@/models/Measurement";
 import listActiveFlowersHandler from "../abl/flower/flower-list-active-abl";
 
 interface Params {
@@ -78,26 +75,7 @@ export const flowerController = {
       sendError(reply, error);
     }
   },
-  history: async (request: FastifyRequest, reply: FastifyReply) => {
-    try {
-      const { flower_id } = request.query as HistoryQuery;
-      if (!flower_id) {
-        return sendError(reply, "Flower ID is required");
-      }
-      const measurementData = { flower_id } as unknown as IMeasurement;
-      await flowerHistoryAbl(measurementData, reply);
-    } catch (error) {
-      sendError(reply, error);
-    }
-  },
-  addMeasurement: async (request: FastifyRequest, reply: FastifyReply) => {
-    try {
-      const measurementData = request.body as IMeasurement;
-      await flowerAddMeasurementAbl(measurementData, reply);
-    } catch (error) {
-      sendError(reply, error);
-    }
-  },
+
   listActive: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const data = request.query as QueryParams;

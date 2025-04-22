@@ -1,8 +1,6 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import createMeasurement from "../../dao/measurement/measurement-create-dao";
-import getSmartpot from "../../dao/smartpot/smart-pot-get-dao";
-
-import { IMeasurement } from "../../models/Measurement";
+import getSmartpot from "../../dao/smartpot/smart-pot-get-by-serial-number";
 import { Types } from "mongoose";
 
 import {
@@ -15,13 +13,17 @@ import Ajv from "ajv";
 const schema = {
   type: "object",
   properties: {
-    smartpot_id: { type: "string" },
+    smartpot_serial: { type: "string" },
+    typeOfData: {
+      type: "string",
+      enum: ["humidity", "water", "temperature", "light"]
+    },
     humidity: { type: "number" },
     water_level: { type: "string" },
     temperature: { type: "number" },
     light: { type: "number" },
   },
-  required: ["smartpot_id"],
+  required: ["smartpot_serial", "typeOfData"],
   additionalProperties: false,
   anyOf: [
     { required: ["humidity"] },
@@ -31,10 +33,11 @@ const schema = {
   ],
 };
 
+
 const ajv = new Ajv();
 
 async function createMeasurementHandler(
-  data: IMeasurement,
+  data: Object,
   reply: FastifyReply
 ) {
   try {
@@ -47,12 +50,36 @@ async function createMeasurementHandler(
       );
       return;
     }
-    const smartpot = await getSmartpot(data.smartpot_id as string);
+    const typeFieldMap: Record<string, string> = {
+      humidity: "humidity",
+      water: "water_level",
+      temperature: "temperature",
+      light: "light",
+    };
+
+    const expectedField = typeFieldMap[data.typeOfData as string];
+
+    if (!expectedField || !(expectedField in data)) {
+      sendClientError(
+        reply,
+        `Field "${expectedField}" must be provided for typeOfData "${data.typeOfData}"`
+      );
+      return;
+    }
+
+    const smartpot = await getSmartpot(data.smartpot_serial as string);
+
+    if (!smartpot) {
+      sendClientError(reply, "Smart pot does not exist");
+    }
+
     const flower = smartpot?.active_flower_id;
+
     if (!flower) {
-      sendClientError(reply, "Flower does not exist");
+      sendClientError(reply, "Smart pot does not have active flower");
     }
     data.flower_id = new Types.ObjectId(String(flower));
+
     const createdMeasurement = await createMeasurement(data);
 
     sendCreated(reply, createdMeasurement, "Measurement created successfully");
