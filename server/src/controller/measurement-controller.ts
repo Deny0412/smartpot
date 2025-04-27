@@ -18,7 +18,8 @@ export const measurementController = {
   create: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const data = request.body as Object;
-      await measurementCreateAbl(data, reply);
+      const user = request.user as Object;
+      await measurementCreateAbl(data, reply, user);
     } catch (error) {
       sendInternalServerError(reply);
     }
