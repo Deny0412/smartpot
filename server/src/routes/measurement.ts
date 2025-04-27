@@ -12,18 +12,14 @@ export default async function measurementRoutes(fastify: FastifyInstance) {
     "/history",
     {
       onRequest: [authMiddleware], // Authenticate first
-      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
     },
     measurementController.history
   );
   fastify.post(
     "/create",
-    /*
     {
       onRequest: [authMiddleware], // Authenticate first
-      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
     },
-    */
     measurementController.create
   );
 
