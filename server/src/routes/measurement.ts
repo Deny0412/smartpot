@@ -15,13 +15,7 @@ export default async function measurementRoutes(fastify: FastifyInstance) {
     },
     measurementController.history
   );
-  fastify.post(
-    "/create",
-    {
-      onRequest: [authMiddleware], // Authenticate first
-    },
-    measurementController.create
-  );
+  fastify.post("/create", measurementController.create);
 
   /*
   fastify.post(
