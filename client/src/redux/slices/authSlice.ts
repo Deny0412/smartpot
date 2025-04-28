@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { checkAuth, loginUser, logoutUser, UserData } from '../services/authApi'
+import { checkAuth, loginUser, logoutUser, registerUser, UserData } from '../services/authApi'
 
 interface AuthState {
     isAuthenticated: boolean
@@ -17,19 +17,22 @@ const initialState: AuthState = {
 
 interface LoginCredentials {
     email: string
-    password?: string
+    password: string
 }
 
+interface RegisterCredentials {
+    email: string
+    password: string
+    name: string
+    surname: string
+}
+
+export const register = createAsyncThunk('auth/register', async (credentials: RegisterCredentials) => {
+    await registerUser(credentials.email, credentials.password, credentials.name, credentials.surname)
+})
+
 export const login = createAsyncThunk('auth/login', async (credentials: LoginCredentials) => {
-    if (credentials.password) {
-        return await loginUser(credentials.email, credentials.password)
-    } else {
-        const user = await checkAuth()
-        if (!user) {
-            throw new Error('Nie ste prihlásený')
-        }
-        return user
-    }
+    return await loginUser(credentials.email, credentials.password)
 })
 
 export const logout = createAsyncThunk('auth/logout', async () => {
@@ -37,7 +40,11 @@ export const logout = createAsyncThunk('auth/logout', async () => {
 })
 
 export const checkAuthStatus = createAsyncThunk('auth/check', async () => {
-    return await checkAuth()
+    const user = await checkAuth()
+    if (!user) {
+        throw new Error('Not authenticated')
+    }
+    return user
 })
 
 const authSlice = createSlice({
@@ -46,6 +53,17 @@ const authSlice = createSlice({
     reducers: {},
     extraReducers: builder => {
         builder
+            .addCase(register.pending, state => {
+                state.loading = true
+                state.error = null
+            })
+            .addCase(register.fulfilled, state => {
+                state.loading = false
+            })
+            .addCase(register.rejected, (state, action) => {
+                state.loading = false
+                state.error = action.error.message || 'Registrácia zlyhala'
+            })
             .addCase(login.pending, state => {
                 state.loading = true
                 state.error = null
@@ -64,13 +82,12 @@ const authSlice = createSlice({
                 state.user = null
             })
             .addCase(checkAuthStatus.fulfilled, (state, action) => {
-                if (action.payload) {
-                    state.isAuthenticated = true
-                    state.user = action.payload
-                } else {
-                    state.isAuthenticated = false
-                    state.user = null
-                }
+                state.isAuthenticated = true
+                state.user = action.payload
+            })
+            .addCase(checkAuthStatus.rejected, state => {
+                state.isAuthenticated = false
+                state.user = null
             })
     },
 })

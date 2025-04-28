@@ -1,0 +1,30 @@
+@import '../../styles/global.sass'
+
+.household-layout__navigation
+    display: flex
+    justify-content: space-between
+    align-items: center
+    padding: 1rem
+    width: 300px
+    margin: 0 auto
+    & > *
+        cursor: pointer
+        border-radius: 50%
+        border: 2px solid #bfbfbf
+        padding: 0.5rem
+        transition: border-color 0.3s ease
+        &:hover
+            border-color: green
+        &.active
+            border-color: green
+
+@media screen and (min-width: 768px)
+    .household-layout__navigation
+        position: fixed
+        left: 20px
+        top: 50%
+        transform: translateY(-50%)
+        flex-direction: column
+        width: auto
+        gap: 1rem
+        margin: 0

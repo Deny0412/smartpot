@@ -14,7 +14,8 @@
         "notifications": "Notifications",
         "logout": "Logout",
         "register": "Register",
-        "login": "Login"
+        "login": "Login",
+        "user_profile": "User Profile"
     },
     "manage_household": {
         "title": "Manage",
@@ -82,7 +83,13 @@
         "title": "Create household",
         "description": "Create a new household to start managing your plants.",
         "input": "Household name",
-        "button": "Create household"
+        "button": "Create household",
+        "error": {
+            "empty_name": "Household name cannot be empty",
+            "general": "Failed to create household. Please try again.",
+            "unauthorized": "You need to be logged in to create a household",
+            "server": "Server error occurred. Please try again later."
+        }
     },
     "homepage": {
         "homepage_intro": {
@@ -133,15 +140,18 @@
         "actions": {
             "add": "Add flower",
             "add_flowerpot": "Add flowerpot",
-            "manage_profiles": "Manage profiles"
+            "manage_profiles": "Manage profiles",
+            "transplant": "Transplant"
         },
         "filters": {
             "all": "All",
             "active": "Active",
             "not_active": "Not active",
             "free_flowerpot_counter": "Free flowerpots",
-            "all_profiles": "All profiles"
+            "all_profiles": "All profiles",
+            "own_settings": "Own settings"
         },
+        "no_flowers": "No flowers",
         "flower_item": {
             "details": "Details",
             "edit": "Edit your flower",
@@ -170,7 +180,15 @@
             "title": "Manual irrigation",
             "placeholder": "Enter value in ml",
             "button": "Irrigate"
-        }
+        },
+        "status_low_temperature": "Low temperature",
+        "status_high_temperature": "High temperature",
+        "status_low_humidity": "Low humidity",
+        "status_high_humidity": "High humidity",
+        "status_low_light": "Low light",
+        "status_high_light": "High light",
+        "status_ok": "All values normal",
+        "status_unknown": "Unknown value"
     },
     "add_flower": {
         "title": "Create flower",
@@ -232,5 +250,70 @@
         "input": "Flower name",
         "button": "Edit flower",
         "schedule_title": "Schedule"
+    },
+    "smart_pot_list": {
+        "title": "Smart pots in",
+        "filters": {
+            "all": "All",
+            "active": "Active",
+            "not_active": "Not active"
+        },
+        "no_smart_pots": "No smart pots",
+        "actions": {
+            "add": "Add smart pot"
+        },
+        "flower_item": {
+            "assigned": "Assigned to flower",
+            "not_assigned": "Not assigned to flower",
+            "details": "Details"
+        }
+    },
+    "userProfile": {
+        "title": "User Profile",
+        "name": "Name",
+        "surname": "Surname",
+        "email": "Email",
+        "editProfile": "Edit Profile",
+        "changePassword": "Change Password",
+        "saveChanges": "Save Changes",
+        "cancel": "Cancel",
+        "success": "Profile has been successfully updated",
+        "error": "Failed to update profile",
+        "password": {
+            "current": "Current Password",
+            "new": "New Password",
+            "confirm": "Confirm New Password",
+            "success": "Password has been successfully changed",
+            "error": "Failed to change password"
+        }
+    },
+    "flower_detail": {
+        "schedule": "Watering Schedule",
+        "no_schedule": "No schedule",
+        "edit_schedule": "Edit Watering Schedule",
+        "edit_name_avatar": "Edit name and avatar",
+        "save": "Save",
+        "saving": "Saving...",
+        "days": {
+            "monday": "Monday",
+            "tuesday": "Tuesday",
+            "wednesday": "Wednesday",
+            "thursday": "Thursday",
+            "friday": "Friday",
+            "saturday": "Saturday",
+            "sunday": "Sunday"
+        }
+    },
+    "edit_flower_profile": {
+        "title": "Edit Flower Profile",
+        "profile_type": "Profile Type",
+        "use_existing_profile": "Use Existing Profile",
+        "custom_settings": "Custom Settings",
+        "select_profile": "Select Profile",
+        "select_profile_placeholder": "Select existing profile",
+        "temperature": "Temperature (°C)",
+        "humidity": "Humidity (%)",
+        "light": "Light (%)",
+        "save": "Save"
     }
 }

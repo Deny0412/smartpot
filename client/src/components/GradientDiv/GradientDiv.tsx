@@ -4,10 +4,15 @@ import './GradientDiv.sass'
 interface GradientDivProps {
     children: ReactNode
     className?: string
+    onClick?: () => void
 }
 
-const GradientDiv: React.FC<GradientDivProps> = ({ children, className = '' }) => {
-    return <div className={`gradient-container ${className}`}>{children}</div>
+const GradientDiv: React.FC<GradientDivProps> = ({ children, className = '', onClick }) => {
+    return (
+        <div className={`gradient-container ${className}`} onClick={onClick}>
+            {children}
+        </div>
+    )
 }
 
 export default GradientDiv

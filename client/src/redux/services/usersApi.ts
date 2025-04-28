@@ -6,8 +6,8 @@ export const fetchUsers = async (): Promise<User[]> => {
     return response.data.users
 }
 
-export const fetchUsersBatch = async (userIds: string[]): Promise<{ [key: string]: User }> => {
-    const response = await api.get<{ [key: string]: User }>(`/users/batch?ids=${userIds.join(',')}`)
+export const fetchUsersBatch = async (householdId: string): Promise<{ [key: string]: User }> => {
+    const response = await api.get<{ [key: string]: User }>(`/household/members/${householdId}`)
     return response.data
 }
 

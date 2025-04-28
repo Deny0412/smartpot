@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, useParams } from 'react-router-dom'
 import Button from '../../components/Button/Button'
 import Loader from '../../components/Loader/Loader'
-import { H2 } from '../../components/Text/Heading/Heading'
+import { H3 } from '../../components/Text/Heading/Heading'
 import { Paragraph } from '../../components/Text/Paragraph/Paragraph'
 import { TranslationFunction } from '../../i18n'
 import { loadFlowerProfiles } from '../../redux/slices/flowerProfilesSlice'
@@ -13,6 +13,7 @@ import { loadFlowers } from '../../redux/slices/flowersSlice'
 import { loadHouseholds } from '../../redux/slices/householdsSlice'
 import { AppDispatch, RootState } from '../../redux/store/store'
 import { Household } from '../../types/householdTypes'
+import AddFlower from '../AddFlower/AddFlower'
 import FlowerItem from './FlowerItem/FlowerItem'
 import './FlowerList.sass'
 
@@ -27,7 +28,7 @@ const FlowerList: React.FC = () => {
     const { user } = useSelector((state: RootState) => state.auth)
     const { flowers, loading: flowersLoading, error: flowersError } = useSelector((state: RootState) => state.flowers)
     const {
-        profiles,
+        profiles = [],
         loading: profilesLoading,
         error: profilesError,
     } = useSelector((state: RootState) => state.flowerProfiles)
@@ -37,24 +38,32 @@ const FlowerList: React.FC = () => {
         error: flowerpotsError,
     } = useSelector((state: RootState) => state.flowerpots)
     const { households } = useSelector((state: RootState) => state.households)
+    const householdName = households.find((h: Household) => h.id === householdId)?.name
 
     const [filterType, setFilterType] = useState<FilterType>('all')
     const [profileFilter, setProfileFilter] = useState<ProfileFilter>('all')
     const [isOwner, setIsOwner] = useState(false)
+    const [isAddFlowerModalOpen, setIsAddFlowerModalOpen] = useState(false)
 
-    const householdFlowers = Array.isArray(flowers)
-        ? flowers.filter(flower => flower && flower.household_id === householdId)
-        : []
+    const householdFlowers = Array.isArray(flowers) ? flowers : []
     const emptyFlowers = householdFlowers.length === 0
+
+    useEffect(() => {
+        if (!householdId) {
+            navigate('/')
+            return
+        }
+        dispatch(loadFlowers(householdId))
+        dispatch(loadFlowerProfiles())
+        dispatch(loadInactiveFlowerpots(householdId))
+        dispatch(loadHouseholds())
+    }, [dispatch, householdId, navigate])
 
     useEffect(() => {
         if (householdId) {
             dispatch(loadFlowers(householdId))
-            dispatch(loadFlowerProfiles())
-            dispatch(loadInactiveFlowerpots(householdId))
-            dispatch(loadHouseholds())
         }
-    }, [dispatch, householdId])
+    }, [flowers.length, householdId, dispatch])
 
     useEffect(() => {
         if (user && householdId && households.length > 0) {
@@ -63,14 +72,22 @@ const FlowerList: React.FC = () => {
         }
     }, [households, householdId, user])
 
+    if (!householdId) {
+        return null
+    }
+
     const getProfileName = (profileId: string | null | undefined): string => {
         if (!profileId) return ''
-        const profile = profiles.find(p => p.id === profileId)
+        const profile = Array.isArray(profiles) ? profiles.find(p => p._id === profileId) : null
         return profile ? profile.name : ''
     }
 
     const handleAddFlower = () => {
-        navigate(`/household/${householdId}/flowers/add`)
+        setIsAddFlowerModalOpen(true)
+    }
+
+    const handleCloseAddFlowerModal = () => {
+        setIsAddFlowerModalOpen(false)
     }
 
     const handleAddFlowerPot = () => {
@@ -83,7 +100,9 @@ const FlowerList: React.FC = () => {
 
     const filteredFlowers = householdFlowers.filter(flower => {
         const hasSmartPot = flower.serial_number !== ''
-        const matchesProfile = profileFilter === 'all' || flower.profile_id === profileFilter
+        const matchesProfile =
+            profileFilter === 'all' ||
+            (profileFilter === 'own_settings' ? !flower.profile_id : flower.profile_id === profileFilter)
 
         switch (filterType) {
             case 'active':
@@ -95,21 +114,27 @@ const FlowerList: React.FC = () => {
         }
     })
 
+    if (flowersLoading || profilesLoading || flowerpotsLoading) {
+        return <Loader />
+    }
+
+    if (flowersError || profilesError || flowerpotsError) {
+        return (
+            <div className="error-container">
+                <Paragraph variant="primary" size="md">
+                    {flowersError || profilesError || flowerpotsError}
+                </Paragraph>
+            </div>
+        )
+    }
+
     return (
         <div className="flower-list-container">
-            <H2 variant="secondary" className="main-title">
-                {t('flower_list.title')} {householdId}
-            </H2>
-
-            {(flowersLoading || profilesLoading || flowerpotsLoading) && <Loader />}
-            {(flowersError || profilesError || flowerpotsError) && (
-                <p className="error-message">{flowersError || profilesError || flowerpotsError}</p>
-            )}
+            <H3 variant="secondary" className="main-title">
+                {t('flower_list.title')} {householdName}
+            </H3>
 
             <div className="filter-buttons">
-                <Button variant="default" onClick={() => {}}>
-                    {t('flower_list.filters.free_flowerpot_counter')} {inactiveFlowerpots.length}
-                </Button>
                 <Button variant="default" onClick={() => setFilterType('all')}>
                     {t('flower_list.filters.all')}
                 </Button>
@@ -124,29 +149,33 @@ const FlowerList: React.FC = () => {
                     value={profileFilter}
                     onChange={e => setProfileFilter(e.target.value)}>
                     <option value="all">{t('flower_list.filters.all_profiles')}</option>
-                    {profiles.map(profile => (
-                        <option key={profile.id} value={profile.id}>
-                            {profile.name}
-                        </option>
-                    ))}
+                    <option value="own_settings">{t('flower_list.filters.own_settings')}</option>
+                    {Array.isArray(profiles) &&
+                        profiles.map(profile => (
+                            <option key={profile._id} value={profile._id}>
+                                {profile.name}
+                            </option>
+                        ))}
                 </select>
             </div>
+
             <div className="flowers-list">
                 {!emptyFlowers
                     ? filteredFlowers.map(flower => (
                           <FlowerItem
-                              key={flower.id}
+                              key={flower._id}
                               name={flower.name}
                               flowerpot={flower.serial_number ? flower.serial_number : ''}
-                              id={flower.id}
+                              id={flower._id}
                               profileId={flower.profile_id || undefined}
                               profileName={getProfileName(flower.profile_id)}
                               avatar={flower.avatar}
+                              householdId={householdId}
                           />
                       ))
                     : !flowersLoading && (
                           <Paragraph variant="primary" size="md" className="no-flowers-text">
-                              No flowers registered in this household.
+                              {t('flower_list.no_flowers')}
                           </Paragraph>
                       )}
             </div>
@@ -155,15 +184,8 @@ const FlowerList: React.FC = () => {
                 <Button variant="default" className="add-flower-button" onClick={handleAddFlower}>
                     {t('flower_list.actions.add')}
                 </Button>
-                <Button variant="default" onClick={handleAddFlowerPot}>
-                    {t('flower_list.actions.add_flowerpot')}
-                </Button>
-                {isOwner && (
-                    <Button variant="default" onClick={handleTransplantFlower}>
-                        Presunut kvetinu z domacnosti
-                    </Button>
-                )}
             </div>
+            {isAddFlowerModalOpen ? <AddFlower onClose={handleCloseAddFlowerModal} /> : null}
         </div>
     )
 }

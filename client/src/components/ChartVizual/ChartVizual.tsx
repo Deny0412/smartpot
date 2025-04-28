@@ -16,6 +16,7 @@ interface ChartVizualProps {
 const ChartVizual: React.FC<ChartVizualProps> = ({ data, dataKey, color = '#3498db', minValue, maxValue }) => {
     const [windowWidth, setWindowWidth] = useState(window.innerWidth)
 
+
     useEffect(() => {
         const handleResize = () => {
             setWindowWidth(window.innerWidth)
@@ -26,9 +27,22 @@ const ChartVizual: React.FC<ChartVizualProps> = ({ data, dataKey, color = '#3498
     }, [])
 
     const aggregatedData = useMemo(() => {
+    
+
+        if (!data || data.length === 0) {
+            
+            return []
+        }
+
         const now = new Date()
         const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
         const thirtyDaysAgo = new Date(now.getTime() - 31 * 24 * 60 * 60 * 1000)
+
+        // Ak sú všetky dáta z posledných 7 dní, vrátime ich bez agregácie
+        if (data.every(item => new Date(item.timestamp) >= sevenDaysAgo)) {
+        
+            return data.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+        }
 
         const groupedData = new Map<string, Map<number, { sum: number; count: number }>>()
 
@@ -96,8 +110,10 @@ const ChartVizual: React.FC<ChartVizualProps> = ({ data, dataKey, color = '#3498
             })
         })
 
-        // Zoradíme dáta podľa času
-        return result.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+        
+        const sortedResult = result.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+     
+        return sortedResult
     }, [data])
 
     const values = aggregatedData.map(item => item.value)

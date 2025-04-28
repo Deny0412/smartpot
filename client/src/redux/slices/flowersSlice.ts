@@ -29,13 +29,21 @@ export const loadFlowers = createAsyncThunk('flowers/load', async (householdId: 
     return await fetchFlowersByHousehold(householdId)
 })
 
-export const loadFlowerDetails = createAsyncThunk('flowers/loadDetails', async (flowerId: string) => {
-    return await fetchFlowerDetails(flowerId)
-})
+export const loadFlowerDetails = createAsyncThunk<{ status: string; data: Flower }, string>(
+    'flowers/loadDetails',
+    async (flowerId, { rejectWithValue }) => {
+        try {
+            const response = await fetchFlowerDetails(flowerId)
+            return response
+        } catch (error) {
+            return rejectWithValue(error instanceof Error ? error.message : 'Chyba pri načítaní detailov kvetiny')
+        }
+    },
+)
 
 export const createFlower = createAsyncThunk(
     'flowers/create',
-    async (flower: Omit<Flower, 'id'>, { rejectWithValue }) => {
+    async (flower: Omit<Flower, '_id'>, { rejectWithValue }) => {
         try {
             return await addFlower(flower)
         } catch (error) {
@@ -49,13 +57,14 @@ export const removeFlower = createAsyncThunk('flowers/delete', async (id: string
     return id
 })
 
-export const updateFlowerData = createAsyncThunk(
+export const updateFlowerData = createAsyncThunk<Flower, { id: string; flower: Partial<Flower> }>(
     'flowers/update',
-    async ({ id, flower }: { id: string; flower: Partial<Flower> }, { rejectWithValue }) => {
+    async ({ id, flower }, { rejectWithValue }) => {
         try {
-            return await updateFlower(id, flower)
+            const response = await updateFlower(id, flower)
+            return response
         } catch (error) {
-            return rejectWithValue(error instanceof Error ? error.message : 'Chyba pri aktualizácii kvetináča')
+            return rejectWithValue(error instanceof Error ? error.message : 'Chyba pri aktualizácii kvetiny')
         }
     },
 )
@@ -118,7 +127,10 @@ const flowersSlice = createSlice({
                 state.error = null
             })
             .addCase(loadFlowers.fulfilled, (state, action: PayloadAction<Flower[]>) => {
-                state.flowers = action.payload
+            
+                state.flowers = action.payload.map(flower => ({
+                    ...flower,
+                }))
                 state.loading = false
             })
             .addCase(loadFlowers.rejected, (state, action) => {
@@ -129,13 +141,14 @@ const flowersSlice = createSlice({
                 state.loading = true
                 state.error = null
             })
-            .addCase(loadFlowerDetails.fulfilled, (state, action: PayloadAction<Flower>) => {
-                state.selectedFlower = action.payload
+            .addCase(loadFlowerDetails.fulfilled, (state, action: PayloadAction<{ status: string; data: Flower }>) => {
                 state.loading = false
+                state.selectedFlower = action.payload.data // Uložíme len data z odpovede
             })
             .addCase(loadFlowerDetails.rejected, (state, action) => {
                 state.loading = false
-                state.error = action.error.message || 'Chyba pri načítaní detailov kvetináča'
+                state.error = action.payload as string
+                state.selectedFlower = null
             })
             .addCase(createFlower.pending, state => {
                 state.loading = true
@@ -150,8 +163,8 @@ const flowersSlice = createSlice({
                 state.error = action.payload as string
             })
             .addCase(removeFlower.fulfilled, (state, action: PayloadAction<string>) => {
-                state.flowers = state.flowers.filter(flower => flower.id !== action.payload)
-                if (state.selectedFlower?.id === action.payload) {
+                state.flowers = state.flowers.filter(flower => flower._id !== action.payload)
+                if (state.selectedFlower?._id === action.payload) {
                     state.selectedFlower = null
                 }
             })
@@ -160,11 +173,11 @@ const flowersSlice = createSlice({
                 state.error = null
             })
             .addCase(updateFlowerData.fulfilled, (state, action: PayloadAction<Flower>) => {
-                const index = state.flowers.findIndex(flower => flower.id === action.payload.id)
+                const index = state.flowers.findIndex(flower => flower._id === action.payload._id)
                 if (index !== -1) {
                     state.flowers[index] = action.payload
                 }
-                if (state.selectedFlower?.id === action.payload.id) {
+                if (state.selectedFlower?._id === action.payload._id) {
                     state.selectedFlower = action.payload
                 }
                 state.loading = false
@@ -179,7 +192,7 @@ const flowersSlice = createSlice({
             })
             .addCase(transplantFlowersToHousehold.fulfilled, (state, action: PayloadAction<Flower[]>) => {
                 action.payload.forEach(updatedFlower => {
-                    const index = state.flowers.findIndex(flower => flower.id === updatedFlower.id)
+                    const index = state.flowers.findIndex(flower => flower._id === updatedFlower._id)
                     if (index !== -1) {
                         state.flowers[index] = updatedFlower
                     }
@@ -195,11 +208,11 @@ const flowersSlice = createSlice({
                 state.error = null
             })
             .addCase(detachFlowerFromPot.fulfilled, (state, action: PayloadAction<string>) => {
-                const index = state.flowers.findIndex(flower => flower.id === action.payload)
+                const index = state.flowers.findIndex(flower => flower._id === action.payload)
                 if (index !== -1) {
                     state.flowers[index] = { ...state.flowers[index], serial_number: null }
                 }
-                if (state.selectedFlower?.id === action.payload) {
+                if (state.selectedFlower?._id === action.payload) {
                     state.selectedFlower = { ...state.selectedFlower, serial_number: null }
                 }
                 state.loading = false
@@ -213,11 +226,11 @@ const flowersSlice = createSlice({
                 state.error = null
             })
             .addCase(updateFlowerSmartPot.fulfilled, (state, action: PayloadAction<Flower>) => {
-                const index = state.flowers.findIndex(flower => flower.id === action.payload.id)
+                const index = state.flowers.findIndex(flower => flower._id === action.payload._id)
                 if (index !== -1) {
                     state.flowers[index] = action.payload
                 }
-                if (state.selectedFlower?.id === action.payload.id) {
+                if (state.selectedFlower?._id === action.payload._id) {
                     state.selectedFlower = action.payload
                 }
                 state.loading = false

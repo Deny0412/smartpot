@@ -14,9 +14,9 @@ const initialState: UsersState = {
     error: null,
 }
 
-export const fetchUsers = createAsyncThunk('users/fetchBatch', async (userIds: string[], { rejectWithValue }) => {
+export const fetchUsers = createAsyncThunk('users/fetchBatch', async (householdId: string, { rejectWithValue }) => {
     try {
-        return await fetchUsersBatch(userIds)
+        return await fetchUsersBatch(householdId)
     } catch (error) {
         return rejectWithValue(error instanceof Error ? error.message : 'Chyba pri načítaní používateľov')
     }
@@ -52,7 +52,7 @@ const usersSlice = createSlice({
             })
             .addCase(fetchUsers.fulfilled, (state, action: PayloadAction<{ [key: string]: User }>) => {
                 state.loading = false
-                state.users = { ...state.users, ...action.payload }
+                state.users = action.payload
             })
             .addCase(fetchUsers.rejected, (state, action) => {
                 state.loading = false

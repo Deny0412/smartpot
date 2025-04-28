@@ -1,30 +1,45 @@
-import { Drop, PaintBucket, Sun, Thermometer } from 'phosphor-react'
-import React, { useEffect, useMemo, useState } from 'react'
+import { Drop, Sun, Thermometer } from '@phosphor-icons/react'
+import React, { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDispatch, useSelector } from 'react-redux'
 import Button from '../../components/Button/Button'
 import ChartVizual from '../../components/ChartVizual/ChartVizual'
 import { H5 } from '../../components/Text/Heading/Heading'
 import { TranslationFunction } from '../../i18n'
-import { fetchMeasurementsForFlower } from '../../redux/slices/measurementsSlice'
 import { AppDispatch, RootState } from '../../redux/store/store'
-import { Flower, FlowerProfile, Measurement } from '../../types/flowerTypes'
+import { Flower, FlowerProfile, MeasurementValue } from '../../types/flowerTypes'
 import './FlowerpotMeasurment.sass'
-
 
 interface FlowerpotMeasurmentProps {
     flowerId: string
+    householdId: string
     flowerpotData: {
         name: string
         status: string
-        status_description: string
+
         flower_avatar: string
+        humidity_measurement: Array<{
+            timestamp: string
+            humidity: number
+        }>
+        temperature_measurement: Array<{
+            timestamp: string
+            temperature: number
+        }>
+        light_measurement: Array<{
+            timestamp: string
+            light: number
+        }>
     }
     flowerProfile?: FlowerProfile
+    timeRange: 'day' | 'week' | 'month' | 'custom'
+    customDateRange: { from: string; to: string }
+    onTimeRangeChange: (range: 'day' | 'week' | 'month' | 'custom') => void
+    onCustomDateRangeChange: (range: { from: string; to: string }) => void
 }
 
 type TimeRange = 'day' | 'week' | 'month' | 'custom'
-type MeasurementType = 'humidity' | 'temperature' | 'light' | 'water_level'
+type MeasurementType = 'humidity' | 'temperature' | 'light'
 
 interface MeasurementLimits {
     min: number
@@ -50,40 +65,75 @@ interface FlowerProfileWithSettings {
     light?: FlowerMeasurementSettings
 }
 
-const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({ flowerId, flowerpotData, flowerProfile }) => {
+const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
+    flowerId,
+    householdId,
+    flowerpotData,
+    flowerProfile,
+    timeRange,
+    customDateRange,
+    onTimeRangeChange,
+    onCustomDateRangeChange,
+}) => {
     const dispatch = useDispatch<AppDispatch>()
-    const measurements = useSelector((state: RootState) => state.measurements.measurements[flowerId] || [])
+    const measurements = useSelector(
+        (state: RootState) =>
+            state.measurements.measurements[flowerId] || {
+                humidity: [],
+                light: [],
+                temperature: [],
+            },
+    )
     const loading = useSelector((state: RootState) => state.measurements.loading)
+    const error = useSelector((state: RootState) => state.measurements.error)
     const flower = useSelector((state: RootState) => state.flowers.selectedFlower) as Flower | null
     const { t } = useTranslation() as { t: TranslationFunction }
 
-    useEffect(() => {
-        dispatch(fetchMeasurementsForFlower(flowerId))
-        setMeasurementLabel(t('flower_measurments.measurments.humidity'))
-    }, [dispatch, flowerId, t])
-
-    const [timeRange, setTimeRange] = useState<TimeRange>('day')
     const [measurementType, setMeasurementType] = useState<MeasurementType>('humidity')
-    const [irrigationValue, setIrrigationValue] = useState<string>('')
     const [measurementLabel, setMeasurementLabel] = useState<string>(t('flower_measurments.measurments.humidity'))
     const [selectedDate, setSelectedDate] = useState<string>('')
-    const [customDateRange, setCustomDateRange] = useState<{ from: string; to: string }>({
-        from: '',
-        to: '',
-    })
+
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+
+    const processedMeasurements = useMemo(() => {
+        if (!measurements || Object.keys(measurements).length === 0) {
+         
+            return {
+                humidity: [],
+                temperature: [],
+                light: [],
+            }
+        }
+
+        return {
+            humidity: measurements.humidity.map(m => ({
+                timestamp: m.createdAt,
+                humidity: Number(m.value),
+            })),
+            temperature: measurements.temperature.map(m => ({
+                timestamp: m.createdAt,
+                temperature: Number(m.value),
+            })),
+            light: measurements.light.map(m => ({
+                timestamp: m.createdAt,
+                light: Number(m.value),
+            })),
+        }
+    }, [measurements])
 
     const handleIrrigation = () => {
-        setIrrigationValue('')
+        setSelectedDate('')
     }
 
     const filterDataByTimeRange = (data: Array<{ timestamp: string; value: number }>) => {
         if (!data || data.length === 0) return data
 
+        const now = new Date()
+        let startDate = new Date(now)
+
         if (timeRange === 'custom' && customDateRange.from && customDateRange.to) {
             const fromDate = new Date(customDateRange.from)
             const toDate = new Date(customDateRange.to)
-
-            fromDate.setHours(0, 0, 0, 0)
             toDate.setHours(23, 59, 59, 999)
 
             return data
@@ -94,25 +144,23 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({ flowerId, flo
                 .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
         }
 
-        const latestDate = new Date(Math.max(...data.map(item => new Date(item.timestamp).getTime())))
-
-        let startDate = new Date(latestDate)
         switch (timeRange) {
             case 'day':
-                startDate.setHours(0, 0, 0, 0)
+                startDate.setDate(now.getDate() - 1)
                 break
             case 'week':
-                startDate.setDate(startDate.getDate() - 7)
+                startDate.setDate(now.getDate() - 7)
                 break
             case 'month':
-                startDate.setMonth(startDate.getMonth() - 1)
+                startDate.setMonth(now.getMonth() - 1)
                 break
         }
+        startDate.setHours(0, 0, 0, 0)
 
         return data
             .filter(item => {
                 const itemDate = new Date(item.timestamp)
-                return itemDate >= startDate && itemDate <= latestDate
+                return itemDate >= startDate && itemDate <= now
             })
             .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
     }
@@ -140,8 +188,6 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({ flowerId, flo
                 return t('flower_measurments.measurments.temperature')
             case 'light':
                 return t('flower_measurments.measurments.light')
-            case 'water_level':
-                return t('flower_measurments.measurments.water_level')
             default:
                 return ''
         }
@@ -155,76 +201,60 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({ flowerId, flo
                 return '°C'
             case 'light':
                 return '%'
-            case 'water_level':
-                return '%'
             default:
                 return ''
         }
     }
 
-    const getMeasurementValue = (measurement: Measurement) => {
-        let value: number
-        switch (measurementType) {
-            case 'humidity':
-                value = measurement.humidity
-                break
-            case 'temperature':
-                value = measurement.temperature
-                break
-            case 'light':
-                value = measurement.light
-                break
-            case 'water_level':
-                value = measurement.water_level
-                break
-            default:
-                value = 0
-        }
-        return Number(value.toFixed(2))
+    const getMeasurementValue = (measurement: MeasurementValue) => {
+        return Number(measurement.value).toFixed(2)
     }
 
     const getLimits = (type: MeasurementType): MeasurementLimits => {
-        if (type === 'water_level') {
-            return { min: 0, max: 100 }
-        }
-
-        if (flowerProfile?.[type]) {
+        if (flower?.profile_id && flowerProfile?.[type]) {
             return {
                 min: flowerProfile[type].min,
                 max: flowerProfile[type].max,
             }
         }
 
-        if (flower?.[type]) {
+        if (flower?.profile?.[type]) {
             return {
-                min: flower[type]!.min,
-                max: flower[type]!.max,
+                min: flower.profile[type].min,
+                max: flower.profile[type].max,
             }
         }
 
         const defaults: Record<MeasurementType, MeasurementLimits> = {
             humidity: { min: 0, max: 100 },
-            temperature: { min: 0, max: 50 },
+            temperature: { min: -20, max: 50 },
             light: { min: 0, max: 100 },
-            water_level: { min: 0, max: 100 },
         }
 
         return defaults[type]
     }
 
     const chartData = useMemo(() => {
-        const data = measurements.map((m: Measurement) => ({
-            timestamp: m.created_at,
-            value: getMeasurementValue(m),
-        }))
+        if (!measurements || !measurements[measurementType]) {
+            return []
+        }
+
+        const data = measurements[measurementType]
+            .map((m: MeasurementValue) => ({
+                timestamp: m.createdAt,
+                value: Number(m.value),
+            }))
+            .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+
         return filterDataByTimeRange(data)
     }, [measurements, measurementType, timeRange, customDateRange])
 
     const filteredMeasurements = useMemo(() => {
         if (!selectedDate || selectedDate === '') {
-            if (measurements.length === 0) return []
-            const sortedMeasurements = [...measurements].sort(
-                (a: Measurement, b: Measurement) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+            if (measurements[measurementType].length === 0) return []
+            const sortedMeasurements = [...measurements[measurementType]].sort(
+                (a: MeasurementValue, b: MeasurementValue) =>
+                    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
             )
             return sortedMeasurements.slice(0, 15)
         }
@@ -234,13 +264,14 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({ flowerId, flo
         const nextDay = new Date(selectedDateObj)
         nextDay.setDate(nextDay.getDate() + 1)
 
-        const filtered = measurements.filter((measurement: Measurement) => {
-            const measurementDate = new Date(measurement.created_at)
+        const filtered = measurements[measurementType].filter((measurement: MeasurementValue) => {
+            const measurementDate = new Date(measurement.createdAt)
             return measurementDate >= selectedDateObj && measurementDate < nextDay
         })
 
         return [...filtered].sort(
-            (a: Measurement, b: Measurement) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+            (a: MeasurementValue, b: MeasurementValue) =>
+                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
         )
     }, [selectedDate, measurementType, measurements])
 
@@ -263,171 +294,203 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({ flowerId, flo
                 return '#e74c3c'
             case 'light':
                 return '#f1c40f'
-            case 'water_level':
-                return 'green'
             default:
                 return '#000'
         }
     }
 
+    // Funkcia na získanie poslednej hodnoty
+    const getLastValue = (arr: any[], key: string) => {
+        if (!arr || arr.length === 0) return null
+        return arr[arr.length - 1][key]
+    }
+
+    // Funkcia na generovanie statusu pre daný typ merania
+    const getStatusText = (type: MeasurementType, value: number | null) => {
+        const limits = getLimits(type)
+        if (value === null || value === undefined)
+            return { text: t('flower_measurments.status_unknown'), className: '' }
+        if (value < limits.min) return { text: t(`flower_measurments.status_low_${type}`), className: 'low' }
+        if (value > limits.max) return { text: t(`flower_measurments.status_high_${type}`), className: 'high' }
+        return { text: t('flower_measurments.status_ok'), className: 'good' }
+    }
+
+    const lastHumidity = getLastValue(processedMeasurements.humidity, 'humidity')
+    const lastTemperature = getLastValue(processedMeasurements.temperature, 'temperature')
+    const lastLight = getLastValue(processedMeasurements.light, 'light')
+
     if (loading) {
         return <div>{t('common.loading')}</div>
     }
 
+    if (error) {
+        return <div>Chyba pri načítaní meraní: {error}</div>
+    }
+
+    if (!flowerpotData) {
+        return <div>Načítavam dáta kvetiny...</div>
+    }
+
+    const measurementIcons = [
+        {
+            type: 'humidity',
+            icon: <Drop size={24} />,
+            label: t('flower_measurments.measurments.humidity'),
+        },
+        {
+            type: 'temperature',
+            icon: <Thermometer size={24} />,
+            label: t('flower_measurments.measurments.temperature'),
+        },
+        {
+            type: 'light',
+            icon: <Sun size={24} />,
+            label: t('flower_measurments.measurments.light'),
+        },
+    ]
+
     return (
-        <div className="flowerpot-detail">
-            <div className="flowerpot-header">
-                <h1 className="flowerpot-title">{flowerpotData.name}</h1>
-                <img src={flowerpotData.flower_avatar} alt="Flowerpot Avatar" className="flowerpot-avatar" />
-            </div>
+        <>
+            <div className="flowerpot-detail">
+                <div className="status-section">
+                    <h3>{t('flower_measurments.status')}</h3>
 
-            <div className="status-section">
-                <h3>{t('flower_measurments.status')}</h3>
-                <p>{flowerpotData.status_description}</p>
-            </div>
-
-            <div className="chart-section">
-                <div className="chart-header">
-                    <H5 variant="secondary" className="chart-header-title">
-                        {getTimeRangeLabel()}
-                    </H5>
-                    <div className="time-range-controls">
-                        <div className="time-range-buttons">
-                            <Button
-                                className={`time-range-button ${timeRange === 'day' ? 'active' : ''}`}
-                                onClick={() => setTimeRange('day')}>
-                                {t('flower_measurments.filter_date_range.day')}
-                            </Button>
-                            <Button
-                                className={`time-range-button ${timeRange === 'week' ? 'active' : ''}`}
-                                onClick={() => setTimeRange('week')}>
-                                {t('flower_measurments.filter_date_range.week')}
-                            </Button>
-                            <Button
-                                className={`time-range-button ${timeRange === 'month' ? 'active' : ''}`}
-                                onClick={() => setTimeRange('month')}>
-                                {t('flower_measurments.filter_date_range.month')}
-                            </Button>
-                            <Button
-                                className={`time-range-button ${timeRange === 'custom' ? 'active' : ''}`}
-                                onClick={() => setTimeRange('custom')}>
-                                {t('flower_measurments.filter_date_range.custom')}
-                            </Button>
-                        </div>
-
-                        {timeRange === 'custom' && (
-                            <div className="custom-date-range">
-                                <div className="date-input-group">
-                                    <label>{t('flower_measurments.filter_date_range.from')}</label>
-                                    <input
-                                        type="date"
-                                        value={customDateRange.from}
-                                        onChange={e => setCustomDateRange(prev => ({ ...prev, from: e.target.value }))}
-                                        max={customDateRange.to || new Date().toISOString().split('T')[0]}
-                                    />
-                                </div>
-                                <div className="date-input-group">
-                                    <label>{t('flower_measurments.filter_date_range.to')}</label>
-                                    <input
-                                        type="date"
-                                        value={customDateRange.to}
-                                        onChange={e => setCustomDateRange(prev => ({ ...prev, to: e.target.value }))}
-                                        min={customDateRange.from}
-                                        max={new Date().toISOString().split('T')[0]}
-                                    />
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-                <H5 className="chart-header-title">{measurementLabel}</H5>
-
-                <div className="chart-container">
-                    <ChartVizual
-                        data={chartData}
-                        dataKey={measurementType}
-                        color={getChartColor()}
-                        minValue={getLimits(measurementType).min}
-                        maxValue={getLimits(measurementType).max}
-                    />
-                </div>
-
-                <div className="measurement-icons">
-                    <button
-                        className={`icon-button ${measurementType === 'humidity' ? 'active' : ''}`}
-                        onClick={() => {
-                            setMeasurementType('humidity')
-                            setMeasurementLabel(t('flower_measurments.measurments.humidity'))
-                        }}>
-                        <Drop size={24} />
-                    </button>
-                    <button
-                        className={`icon-button ${measurementType === 'temperature' ? 'active' : ''}`}
-                        onClick={() => {
-                            setMeasurementType('temperature')
-                            setMeasurementLabel(t('flower_measurments.measurments.temperature'))
-                        }}>
-                        <Thermometer size={24} />
-                    </button>
-                    <button
-                        className={`icon-button ${measurementType === 'light' ? 'active' : ''}`}
-                        onClick={() => {
-                            setMeasurementType('light')
-                            setMeasurementLabel(t('flower_measurments.measurments.light'))
-                        }}>
-                        <Sun size={24} />
-                    </button>
-                    <button
-                        className={`icon-button ${measurementType === 'water_level' ? 'active' : ''}`}
-                        onClick={() => {
-                            setMeasurementType('water_level')
-                            setMeasurementLabel(t('flower_measurments.measurments.water_level'))
-                        }}>
-                        <PaintBucket size={32} color="#fafafa" />
-                    </button>
-                </div>
-            </div>
-
-            <div className="irrigation-section">
-                <h3>{t('flower_measurments.irrigation.title')}</h3>
-                <div className="irrigation-controls">
-                    <input
-                        type="text"
-                        placeholder={t('flower_measurments.irrigation.placeholder')}
-                        value={irrigationValue}
-                        onChange={e => setIrrigationValue(e.target.value)}
-                    />
-                    <button className="irrigate-button" onClick={handleIrrigation}>
-                        {t('flower_measurments.irrigation.button')}
-                    </button>
-                </div>
-            </div>
-
-            <div className="measurements-history">
-                <h3>
-                    {getMeasurementLabel()} {t('flower_measurments.measurements')}
-                </h3>
-                <div className="date-picker">
-                    <input
-                        type="date"
-                        value={selectedDate}
-                        onChange={e => setSelectedDate(e.target.value)}
-                        max={new Date().toISOString().split('T')[0]}
-                    />
-                </div>
-                <div className="measurement-list">
-                    {filteredMeasurements.map((measurement: Measurement, index: number) => (
-                        <div key={index} className="measurement-item">
-                            <span className="timestamp">{formatDate(measurement.created_at)}</span>
-                            <span className="value">
-                                {getMeasurementLabel()} {getMeasurementValue(measurement)}
-                                {getMeasurementUnit()}
+                    <div className="status-measurements">
+                        <div className="status-item temperature">
+                            <span>{t('flower_measurments.measurments.temperature')}: </span>
+                            <b>{lastTemperature !== null ? `${lastTemperature} °C` : '-'}</b>
+                            <span className={`status-text ${getStatusText('temperature', lastTemperature).className}`}>
+                                {getStatusText('temperature', lastTemperature).text}
                             </span>
                         </div>
-                    ))}
+                        <div className="status-item humidity">
+                            <span>{t('flower_measurments.measurments.humidity')}: </span>
+                            <b>{lastHumidity !== null ? `${lastHumidity} %` : '-'}</b>
+                            <span className={`status-text ${getStatusText('humidity', lastHumidity).className}`}>
+                                {getStatusText('humidity', lastHumidity).text}
+                            </span>
+                        </div>
+                        <div className="status-item light">
+                            <span>{t('flower_measurments.measurments.light')}: </span>
+                            <b>{lastLight !== null ? `${lastLight} %` : '-'}</b>
+                            <span className={`status-text ${getStatusText('light', lastLight).className}`}>
+                                {getStatusText('light', lastLight).text}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="chart-section">
+                    <div className="chart-header">
+                        <H5 variant="secondary" className="chart-header-title">
+                            {getTimeRangeLabel()}
+                        </H5>
+                        <div className="time-range-controls">
+                            <div className="time-range-buttons">
+                                <Button
+                                    className={`time-range-button ${timeRange === 'day' ? 'active' : ''}`}
+                                    onClick={() => onTimeRangeChange('day')}>
+                                    {t('flower_measurments.filter_date_range.day')}
+                                </Button>
+                                <Button
+                                    className={`time-range-button ${timeRange === 'week' ? 'active' : ''}`}
+                                    onClick={() => onTimeRangeChange('week')}>
+                                    {t('flower_measurments.filter_date_range.week')}
+                                </Button>
+                                <Button
+                                    className={`time-range-button ${timeRange === 'month' ? 'active' : ''}`}
+                                    onClick={() => onTimeRangeChange('month')}>
+                                    {t('flower_measurments.filter_date_range.month')}
+                                </Button>
+                                <Button
+                                    className={`time-range-button ${timeRange === 'custom' ? 'active' : ''}`}
+                                    onClick={() => onTimeRangeChange('custom')}>
+                                    {t('flower_measurments.filter_date_range.custom')}
+                                </Button>
+                            </div>
+
+                            {timeRange === 'custom' && (
+                                <div className="custom-date-range">
+                                    <div className="date-input-group">
+                                        <label>{t('flower_measurments.filter_date_range.from')}</label>
+                                        <input
+                                            type="date"
+                                            value={customDateRange.from}
+                                            onChange={e =>
+                                                onCustomDateRangeChange({ ...customDateRange, from: e.target.value })
+                                            }
+                                            max={customDateRange.to || new Date().toISOString().split('T')[0]}
+                                        />
+                                    </div>
+                                    <div className="date-input-group">
+                                        <label>{t('flower_measurments.filter_date_range.to')}</label>
+                                        <input
+                                            type="date"
+                                            value={customDateRange.to}
+                                            onChange={e =>
+                                                onCustomDateRangeChange({ ...customDateRange, to: e.target.value })
+                                            }
+                                            min={customDateRange.from}
+                                            max={new Date().toISOString().split('T')[0]}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                    <H5 className="chart-header-title">{measurementLabel}</H5>
+
+                    <div className="chart-container">
+                        <ChartVizual
+                            data={chartData}
+                            dataKey={measurementType}
+                            color={getChartColor()}
+                            minValue={getLimits(measurementType).min}
+                            maxValue={getLimits(measurementType).max}
+                        />
+                    </div>
+
+                    <div className="measurement-icons">
+                        {measurementIcons.map(({ type, icon, label }) => (
+                            <button
+                                key={type}
+                                className={`icon-button ${measurementType === type ? 'active' : ''}`}
+                                onClick={() => {
+                                    setMeasurementType(type as MeasurementType)
+                                    setMeasurementLabel(label)
+                                }}>
+                                {icon}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="measurements-history">
+                    <h3>
+                        {getMeasurementLabel()} {t('flower_measurments.measurements')}
+                    </h3>
+                    <div className="date-picker">
+                        <input
+                            type="date"
+                            value={selectedDate}
+                            onChange={e => setSelectedDate(e.target.value)}
+                            max={new Date().toISOString().split('T')[0]}
+                        />
+                    </div>
+                    <div className="measurement-list">
+                        {filteredMeasurements.map((measurement: MeasurementValue, index: number) => (
+                            <div key={index} className="measurement-item">
+                                <span className="timestamp">{formatDate(measurement.createdAt)}</span>
+                                <span className="value">
+                                    {getMeasurementLabel()} {getMeasurementValue(measurement)}
+                                    {getMeasurementUnit()}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
-        </div>
+        </>
     )
 }
 

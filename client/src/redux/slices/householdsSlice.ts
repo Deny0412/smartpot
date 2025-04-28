@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { Household } from '../../types/householdTypes'
+import { CreateHouseholdData, Household } from '../../types/householdTypes'
 import { addHousehold, deleteHousehold, fetchHouseholds, updateHousehold } from '../services/householdsApi'
 
 interface HouseholdsState {
@@ -14,6 +14,11 @@ const initialState: HouseholdsState = {
     error: null,
 }
 
+interface HouseholdResponse {
+    status: string
+    data: Household[]
+}
+
 export const loadHouseholds = createAsyncThunk('households/load', async (_, { rejectWithValue }) => {
     try {
         return await fetchHouseholds()
@@ -24,9 +29,9 @@ export const loadHouseholds = createAsyncThunk('households/load', async (_, { re
 
 export const createHousehold = createAsyncThunk(
     'households/create',
-    async (household: Omit<Household, 'id'>, { rejectWithValue }) => {
+    async (data: CreateHouseholdData, { rejectWithValue }) => {
         try {
-            return await addHousehold(household)
+            return await addHousehold(data)
         } catch (error) {
             return rejectWithValue(error instanceof Error ? error.message : 'Chyba pri vytváraní domácnosti')
         }
@@ -67,8 +72,8 @@ const householdsSlice = createSlice({
                 state.loading = true
                 state.error = null
             })
-            .addCase(loadHouseholds.fulfilled, (state, action: PayloadAction<Household[]>) => {
-                state.households = action.payload
+            .addCase(loadHouseholds.fulfilled, (state, action: PayloadAction<HouseholdResponse>) => {
+                state.households = action.payload.data
                 state.loading = false
             })
             .addCase(loadHouseholds.rejected, (state, action) => {

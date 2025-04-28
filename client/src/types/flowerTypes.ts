@@ -1,12 +1,33 @@
-export interface Measurement {
-    id: string
+export interface BaseMeasurement {
+    _id: string
     flower_id: string
-    humidity: number
-    temperature: number
-    light: number
-    water_level: number
-    created_at: string
+    createdAt: string
+    updatedAt: string
+    type: MeasurementType
 }
+
+export interface WaterMeasurement extends BaseMeasurement {
+    value: string
+    type: 'water'
+}
+
+export interface TemperatureMeasurement extends BaseMeasurement {
+    value: number
+    type: 'temperature'
+}
+
+export interface LightMeasurement extends BaseMeasurement {
+    value: number
+    type: 'light'
+}
+
+export interface HumidityMeasurement extends BaseMeasurement {
+    value: number
+    type: 'humidity'
+}
+
+export type MeasurementType = 'water' | 'temperature' | 'light' | 'humidity'
+export type MeasurementValue = WaterMeasurement | TemperatureMeasurement | LightMeasurement | HumidityMeasurement
 
 interface MeasurementSettings {
     min: number
@@ -14,19 +35,21 @@ interface MeasurementSettings {
 }
 
 export interface Flower {
-    id: string
+    _id: string
     name: string
     avatar: string
     household_id: string
     profile_id: string | null
     serial_number: string | null
-    temperature?: { min: number; max: number }
-    humidity?: { min: number; max: number }
-    light?: { min: number; max: number }
+    profile?: {
+        temperature: { min: number; max: number }
+        humidity: { min: number; max: number }
+        light: { min: number; max: number }
+    }
 }
 
 export interface FlowerProfile {
-    id: string
+    _id: string
     name: string
 
     temperature: {
@@ -46,7 +69,7 @@ export interface FlowerProfile {
 }
 
 export interface Gateway {
-    id: string
+    _id: string
     serialNumber: string
     idHousehold: string
     status: 'online' | 'offline'
@@ -59,7 +82,7 @@ export interface Gateway {
 }
 
 export interface Schedule {
-    id: string
+    _id?: string
     flower_id: string
     active: boolean
     monday: { from: string | null; to: string | null }
@@ -69,11 +92,20 @@ export interface Schedule {
     friday: { from: string | null; to: string | null }
     saturday: { from: string | null; to: string | null }
     sunday: { from: string | null; to: string | null }
+    createdAt?: string
+    updatedAt?: string
+}
+
+export interface ScheduleResponse {
+    status: string
+    data: Schedule
 }
 
 export interface SmartPot {
-    id: string
+    _id: string
     serial_number: string
     household_id: string | null
     active_flower_id: string | null
+    createdAt?: string
+    updatedAt?: string
 }

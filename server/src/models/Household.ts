@@ -1,10 +1,10 @@
-import { Schema, model, Document, Types } from "mongoose";
+import { Document, Schema, Types, model } from 'mongoose'
 
 export interface IHousehold extends Document {
-  name: string;
-  owner: Types.ObjectId;
-  members: Types.ObjectId[];
-  invites: Types.ObjectId[];
+  name: string
+  owner: Types.ObjectId
+  members: Types.ObjectId[]
+  invites: Types.ObjectId[]
 }
 
 const HOUSEHOLD_SCHEMA = new Schema<IHousehold>(
@@ -15,8 +15,8 @@ const HOUSEHOLD_SCHEMA = new Schema<IHousehold>(
     invites: { type: [Schema.Types.ObjectId], required: true },
   },
   { timestamps: true }
-); // Adds `createdAt` & `updatedAt` fields
+) // Adds `createdAt` & `updatedAt` fields
 
-const HOUSEHOLD_MODEL = model<IHousehold>("Household", HOUSEHOLD_SCHEMA);
+const HOUSEHOLD_MODEL = model<IHousehold>('Household', HOUSEHOLD_SCHEMA)
 
-export default HOUSEHOLD_MODEL;
+export default HOUSEHOLD_MODEL

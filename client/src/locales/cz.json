@@ -14,7 +14,8 @@
         "notifications": "Oznámení",
         "logout": "Odhlásit",
         "register": "Registrace",
-        "login": "Přihlášení"
+        "login": "Přihlášení",
+        "user_profile": "Uživatelský profil"
     },
     "manage_household": {
         "title": "Správa",
@@ -82,7 +83,13 @@
         "title": "Vytvořit domácnost",
         "description": "Vytvořte novou domácnost pro správu vašich rostlin.",
         "input": "Název domácnosti",
-        "button": "Vytvořit domácnost"
+        "button": "Vytvořit domácnost",
+        "error": {
+            "empty_name": "Název domácnosti nemůže být prázdný",
+            "general": "Nepodařilo se vytvořit domácnost. Prosím zkuste to znovu.",
+            "unauthorized": "Pro vytvoření domácnosti musíte být přihlášeni",
+            "server": "Došlo k chybě serveru. Prosím zkuste to později."
+        }
     },
     "homepage": {
         "homepage_intro": {
@@ -133,15 +140,18 @@
         "actions": {
             "add": "Přidat květinu",
             "add_flowerpot": "Přidat květináč",
-            "manage_profiles": "Spravovat profily"
+            "manage_profiles": "Spravovat profily",
+            "transplant": "Přesadit"
         },
         "filters": {
             "all": "Vše",
             "active": "Aktivní",
             "not_active": "Neaktivní",
             "free_flowerpot_counter": "Volné květináče",
-            "all_profiles": "Všechny profily"
+            "all_profiles": "Všechny profily",
+            "own_settings": "Vlastní nastavení"
         },
+        "no_flowers": "Žádné květiny",
         "flower_item": {
             "details": "Detaily",
             "edit": "Upravit květinu",
@@ -170,7 +180,15 @@
             "title": "Manuální zalévání",
             "placeholder": "Zadejte hodnotu v ml",
             "button": "Zalít"
-        }
+        },
+        "status_low_temperature": "Nízká teplota",
+        "status_high_temperature": "Vysoká teplota",
+        "status_low_humidity": "Nízká vlhkost",
+        "status_high_humidity": "Vysoká vlhkost",
+        "status_low_light": "Málo světla",
+        "status_high_light": "Moc světla",
+        "status_ok": "Vše v normě",
+        "status_unknown": "Neznámá hodnota"
     },
     "add_flower": {
         "title": "Vytvořit květinu",
@@ -210,5 +228,92 @@
         "connect": "Připojit",
         "help_title": "Jak se připojit?",
         "help_steps": ["Zapněte květináč", "Stiskněte tlačítko párování", "Zadejte sériové číslo květináče"]
+    },
+    "login_page": {
+        "title": "Přihlášení",
+        "input": "Email",
+        "button": "Přihlásit se",
+        "loading": "Přihlašování",
+        "register": "Registrace",
+        "password": "Heslo"
+    },
+    "register_page": {
+        "title": "Registrace",
+        "input": "Email",
+        "button": "Registrovat se",
+        "loading": "Registrace",
+        "password": "Heslo",
+        "confirm_password": "Potvrďte heslo"
+    },
+    "edit_flower": {
+        "title": "Upravit květinu",
+        "input": "Název květiny",
+        "button": "Upravit květinu",
+        "schedule_title": "Rozvrh"
+    },
+    "smart_pot_list": {
+        "title": "Chytré květináče v",
+        "filters": {
+            "all": "Vše",
+            "active": "Aktivní",
+            "not_active": "Neaktivní"
+        },
+        "no_smart_pots": "Žádné chytré květináče",
+        "actions": {
+            "add": "Přidat květináč"
+        },
+        "flower_item": {
+            "assigned": "Přiřazeno ke květině",
+            "not_assigned": "Nepřiřazeno ke květině",
+            "details": "Detaily"
+        }
+    },
+    "userProfile": {
+        "title": "Uživatelský profil",
+        "name": "Jméno",
+        "surname": "Příjmení",
+        "email": "Email",
+        "editProfile": "Upravit profil",
+        "changePassword": "Změnit heslo",
+        "saveChanges": "Uložit změny",
+        "cancel": "Zrušit",
+        "success": "Profil byl úspěšně aktualizován",
+        "error": "Nepodařilo se aktualizovat profil",
+        "password": {
+            "current": "Současné heslo",
+            "new": "Nové heslo",
+            "confirm": "Potvrďte nové heslo",
+            "success": "Heslo bylo úspěšně změněno",
+            "error": "Nepodařilo se změnit heslo"
+        }
+    },
+    "flower_detail": {
+        "schedule": "Rozvrh zalévání",
+        "no_schedule": "Žádný rozvrh",
+        "edit_schedule": "Upravit rozvrh zalévání",
+        "edit_name_avatar": "Upravit jméno a avatar",
+        "save": "Uložit",
+        "saving": "Ukládání...",
+        "days": {
+            "monday": "Pondělí",
+            "tuesday": "Úterý",
+            "wednesday": "Středa",
+            "thursday": "Čtvrtek",
+            "friday": "Pátek",
+            "saturday": "Sobota",
+            "sunday": "Neděle"
+        }
+    },
+    "edit_flower_profile": {
+        "title": "Upravit profil kvetiny",
+        "profile_type": "Typ profilu",
+        "use_existing_profile": "Použít existující profil",
+        "custom_settings": "Vlastní nastavení",
+        "select_profile": "Vyberte profil",
+        "select_profile_placeholder": "Vyberte existující profil",
+        "temperature": "Teplota (°C)",
+        "humidity": "Vlhkost (%)",
+        "light": "Světlo (%)",
+        "save": "Uložit"
     }
 }

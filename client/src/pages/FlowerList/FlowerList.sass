@@ -1,11 +1,14 @@
 .flower-list-container
-    padding: 3rem
+    padding: 20px
     max-width: 1200px
     margin: 0 auto
     background: #000000
-    min-height: 100vh
+    min-height: calc(100vh - 200px)
     width: 100%
     box-sizing: border-box
+
+    .main-title
+        text-align: center
 
     .filter-buttons
         display: flex
@@ -43,18 +46,23 @@
             background: transparent
             border: 1px solid #ffffff
             border-radius: 8px
-            padding: 0.8rem 2rem
+            padding: 0.8rem 2.5rem 0.8rem 1rem
             font-size: 1rem
             color: #ffffff
             font-size: 0.9rem
             cursor: pointer
+            appearance: none
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e")
+            background-repeat: no-repeat
+            background-position: right 1rem center
+            background-size: 1.5em
 
             @media (max-width: 768px)
-                padding: 0.5rem 1rem
+                padding: 0.5rem 2rem 0.5rem 0.8rem
                 font-size: 0.8rem
 
             @media (max-width: 480px)
-                padding: 0.25rem 0.5rem
+                padding: 0.25rem 1.5rem 0.25rem 0.5rem
                 font-size: 0.65rem
                 width: 100%
                 grid-column: 1 / -1
@@ -81,12 +89,6 @@
         padding: 1rem
         width: 100%
 
-    .main-title
-        margin-bottom: 3rem
-        text-align: center
-        color: #ffffff
-        font-size: 2.5rem
-
         @media (max-width: 768px)
             font-size: 2rem
             margin-bottom: 2rem
@@ -110,6 +112,9 @@
             width: 100%
             padding: 0
             margin: 0 auto
+            display: flex
+            flex-direction: column
+            align-items: center
 
     .no-flowers-text
         text-align: center
@@ -133,13 +138,16 @@
             gap: 0.2rem
 
         .add-flower-button
+            margin: 0 auto
 
             cursor: pointer
             transition: all 0.3s ease
+            width: 200px
 
             @media (max-width: 768px)
                 padding: 0.75rem 2rem
                 font-size: 1rem
+
 
             @media (max-width: 480px)
                 padding: 0.25rem 0.5rem

@@ -1,12 +1,10 @@
 import ReactDOM from 'react-dom/client'
 import { Provider } from 'react-redux'
-import { makeServer } from './__mocks__/server'
+
 import App from './App'
-import './i18n' 
+import './i18n'
 import { store } from './redux/store/store'
 import './styles/global.sass'
-
-makeServer()
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
 root.render(

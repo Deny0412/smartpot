@@ -1,0 +1,121 @@
+.smart-pot-list-item
+    display: flex
+    justify-content: space-between
+    align-items: center
+    border-radius: 12px
+    padding: 2rem
+    transition: transform 0.2s ease-in-out
+    width: 90%
+    max-width: 800px
+    box-sizing: border-box
+    cursor: pointer
+
+    @media (max-width: 768px)
+        flex-direction: row
+        padding: 1.5rem
+        width: 100%
+        max-width: 100%
+        margin: 0 auto
+
+    .smart-pot-list-content
+        flex: 1
+        width: 100%
+        box-sizing: border-box
+        display: flex
+        flex-direction: column
+        justify-content: center
+        align-items: flex-start
+        height: 100%
+
+        .smart-pot-list-header
+            margin-bottom: 0
+
+            .smart-pot-list-header-content
+                display: flex
+                align-items: center
+                gap: 1rem
+                flex-wrap: wrap
+
+                @media (max-width: 768px)
+                    justify-content: flex-start
+                    flex-direction: row
+                    align-items: center
+                    gap: 1rem
+
+                .smart-pot-list-name
+                    color: #ffffff
+                    margin: 0
+                    font-size: 1.75rem
+                    line-height: 1.2
+
+                    @media (max-width: 768px)
+                        margin-bottom: 0.5rem
+
+                .smart-pot-list-status
+                    padding: 0.25rem 1rem
+                    border-radius: 4px
+                    border: 1px solid #2196F3
+                    color: #2196F3
+                    font-size: 0.875rem
+                    white-space: nowrap
+                    display: inline-flex
+                    align-items: center
+                    height: fit-content
+                    line-height: 1.2
+
+                    &.smart-pot-list-active
+                        color: #4CAF50
+                        border: 1px solid #4CAF50
+
+                    &.smart-pot-list-inactive
+                        color: #999999
+                        border: 1px solid #999999
+
+        .smart-pot-list-description
+            margin-bottom: 0
+
+            &.signed-flowerpot
+                color: #4CAF50 !important
+            &.no-flowerpot
+                color: #999999 !important
+
+            @media (max-width: 768px)
+                margin-bottom: 0
+
+        .smart-pot-list-actions
+            display: flex
+            gap: 1rem
+            flex-wrap: wrap
+
+            @media (max-width: 768px)
+                justify-content: center
+                flex-direction: column
+                align-items: center
+                gap: 0.75rem
+
+            .check-button
+                background: none
+                padding: 0.75rem 2rem
+                width: fit-content
+
+                &:hover
+                    background: #444444
+
+    .smart-pot-list-image
+        margin-left: 2rem
+        display: flex
+        align-items: center
+        justify-content: center
+        width: 80px
+        height: 80px
+
+        @media (max-width: 768px)
+            margin-left: 1rem
+            width: 60px
+            height: 60px
+
+        .smart-pot-list-image-img
+            width: 100%
+            height: 100%
+            object-fit: cover
+            border-radius: 50%

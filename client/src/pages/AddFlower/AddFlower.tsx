@@ -1,12 +1,11 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDispatch, useSelector } from 'react-redux'
-import { useNavigate, useParams } from 'react-router-dom'
-import { H2, H4 } from '../../components/Text/Heading/Heading'
-import { TranslationFunction } from '../../i18n'
+import { useParams } from 'react-router-dom'
+import GradientDiv from '../../components/GradientDiv/GradientDiv'
+import { H5 } from '../../components/Text/Heading/Heading'
 import { createSchedule } from '../../redux/services/flowersApi'
-import { loadFlowerProfiles } from '../../redux/slices/flowerProfilesSlice'
-import { createFlower } from '../../redux/slices/flowersSlice'
+import { createFlower, loadFlowers } from '../../redux/slices/flowersSlice'
 import { AppDispatch, RootState } from '../../redux/store/store'
 import { FlowerProfile } from '../../types/flowerTypes'
 import './AddFlower.sass'
@@ -20,24 +19,27 @@ const avatars = [
     'https://res.cloudinary.com/dse3l4lly/image/upload/v1742308825/flowerpots_avatars/emgeoupoglpwkuknuvsi.png',
 ]
 
+interface AddFlowerProps {
+    onClose: () => void
+}
+
 interface ScheduleData {
-    monday: { from: string; to: string }
-    tuesday: { from: string; to: string }
-    wednesday: { from: string; to: string }
-    thursday: { from: string; to: string }
-    friday: { from: string; to: string }
-    saturday: { from: string; to: string }
-    sunday: { from: string; to: string }
+    monday: { from: string | null; to: string | null }
+    tuesday: { from: string | null; to: string | null }
+    wednesday: { from: string | null; to: string | null }
+    thursday: { from: string | null; to: string | null }
+    friday: { from: string | null; to: string | null }
+    saturday: { from: string | null; to: string | null }
+    sunday: { from: string | null; to: string | null }
     active: boolean
 }
 
-const AddFlower: React.FC = () => {
-    const navigate = useNavigate()
+const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
     const dispatch = useDispatch<AppDispatch>()
     const { householdId } = useParams<{ householdId: string }>()
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null)
+    const [selectedAvatar, setSelectedAvatar] = useState<string>(avatars[0])
     const [name, setName] = useState('')
     const [profileType, setProfileType] = useState<'global' | 'custom'>('global')
     const [customProfile, setCustomProfile] = useState<Partial<FlowerProfile>>({
@@ -57,7 +59,7 @@ const AddFlower: React.FC = () => {
     })
     const { profiles } = useSelector((state: RootState) => state.flowerProfiles)
     const [selectedProfileId, setSelectedProfileId] = useState<string>('')
-    const { t } = useTranslation() as { t: TranslationFunction }
+    const { t } = useTranslation()
 
     const dayTranslations: Record<string, string> = {
         monday: t('add_flower.schedule.monday'),
@@ -68,16 +70,6 @@ const AddFlower: React.FC = () => {
         saturday: t('add_flower.schedule.saturday'),
         sunday: t('add_flower.schedule.sunday'),
     }
-
-    useEffect(() => {
-        if (householdId) {
-            dispatch(loadFlowerProfiles())
-        }
-    }, [dispatch, householdId])
-
-    useEffect(() => {
-        window.scrollTo(0, 0)
-    }, [])
 
     const handleCustomProfileChange = (
         type: 'temperature' | 'humidity' | 'light',
@@ -107,33 +99,54 @@ const AddFlower: React.FC = () => {
         e.preventDefault()
         setLoading(true)
         setError(null)
-
         try {
             let profileId = null
-
             if (profileType === 'global' && selectedProfileId) {
                 profileId = selectedProfileId
             }
+       
 
-            const flowerResponse = await dispatch(
+            const newFlower = await dispatch(
                 createFlower({
                     name: name || 'Nový kvetináč',
                     household_id: householdId || '',
-                    profile_id: profileId || '',
+                    profile_id: profileId || null,
                     avatar: selectedAvatar || '',
                     serial_number: '',
-                    humidity: profileId ? undefined : customProfile.humidity,
-                    temperature: profileId ? undefined : customProfile.temperature,
-                    light: profileId ? undefined : customProfile.light,
+                    profile: profileId
+                        ? undefined
+                        : {
+                              humidity: customProfile.humidity || { min: 40, max: 60 },
+                              temperature: customProfile.temperature || { min: 18, max: 25 },
+                              light: customProfile.light || { min: 30, max: 70 },
+                          },
                 }),
             ).unwrap()
 
-            await createSchedule({
-                flower_id: flowerResponse.id,
-                ...scheduleData,
+    
+            if (!newFlower._id) {
+                throw new Error('ID kvetiny nebolo vrátené zo servera')
+            }
+
+            const scheduleResponse = await createSchedule({
+                flower_id: newFlower._id,
+                active: scheduleData.active,
+                monday: scheduleData.monday,
+                tuesday: scheduleData.tuesday,
+                wednesday: scheduleData.wednesday,
+                thursday: scheduleData.thursday,
+                friday: scheduleData.friday,
+                saturday: scheduleData.saturday,
+                sunday: scheduleData.sunday,
             })
 
-            navigate(`/household/${householdId}/flowers`)
+            if (!scheduleResponse) {
+                throw new Error('Nepodarilo sa vytvoriť rozvrh')
+            }
+
+            await dispatch(loadFlowers(householdId || ''))
+
+            onClose()
         } catch (err) {
             setError('Chyba pri vytváraní kvetináča. Skúste to prosím znova.')
             console.error('Error creating flower:', err)
@@ -142,27 +155,28 @@ const AddFlower: React.FC = () => {
         }
     }
 
-    const householdProfiles = profiles
-
     return (
         <div className="add-flower-container">
-            <div className="step-container">
-                <H2 variant="primary">{t('add_flower.title')}</H2>
+            <div className="add-flower-step-container">
+                <button className="add-flower-close-button" onClick={onClose}>
+                    ×
+                </button>
+                <H5 variant="primary">{t('add_flower.title')}</H5>
 
-                <form onSubmit={handleSubmit} className="form">
-                    <div className="form-group">
-                        <label>{t('add_flower.name')}</label>
+                <form onSubmit={handleSubmit} className="add-flower-form">
+                    <div className="add-flower-form-group">
+                        <label className="add-flower-input-label">{t('add_flower.name')}</label>
                         <input
                             type="text"
+                            className="add-flower-input"
                             placeholder={t('add_flower.name_placeholder')}
                             value={name}
                             onChange={e => setName(e.target.value)}
                         />
                     </div>
 
-                    <div className="option-section">
-                        <h3>{t('add_flower.profile_type')}</h3>
-                        <div className="profile-type-selection">
+                    <div className="add-flower-option-section">
+                        <div className="add-flower-profile-type-selection">
                             <label>
                                 <input
                                     type="radio"
@@ -184,28 +198,28 @@ const AddFlower: React.FC = () => {
                         </div>
 
                         {profileType === 'global' ? (
-                            <div className="form-group">
-                                <label>{t('add_flower.select_profile')}</label>
+                            <div className="add-flower-form-group">
+                                <label className="add-flower-input-label">{t('add_flower.select_profile')}</label>
                                 <select
-                                    className="profile-select"
+                                    className="add-flower-input"
                                     value={selectedProfileId}
                                     onChange={e => setSelectedProfileId(e.target.value)}>
                                     <option value="">{t('add_flower.select_profile_placeholder')}</option>
-                                    {householdProfiles.map(profile => (
-                                        <option key={profile.id} value={profile.id}>
-                                            {profile.name || `Profil ${profile.id}`}
+                                    {profiles.map(profile => (
+                                        <option key={profile._id} value={profile._id}>
+                                            {profile.name}
                                         </option>
                                     ))}
                                 </select>
                             </div>
                         ) : (
-                            <div className="profile-settings">
-                                <H4 variant="secondary">{t('add_flower.custom_settings')}</H4>
-                                <div className="form-group">
-                                    <label>{t('add_flower.temperature')}</label>
-                                    <div className="range-inputs">
+                            <div className="add-flower-profile-settings">
+                                <div className="add-flower-form-group">
+                                    <label className="add-flower-input-label">{t('add_flower.temperature')}</label>
+                                    <div className="add-flower-range-inputs">
                                         <input
                                             type="number"
+                                            className="add-flower-input"
                                             value={customProfile.temperature?.min}
                                             onChange={e =>
                                                 handleCustomProfileChange(
@@ -219,6 +233,7 @@ const AddFlower: React.FC = () => {
                                         <span>až</span>
                                         <input
                                             type="number"
+                                            className="add-flower-input"
                                             value={customProfile.temperature?.max}
                                             onChange={e =>
                                                 handleCustomProfileChange(
@@ -232,11 +247,12 @@ const AddFlower: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="form-group">
-                                    <label>{t('add_flower.humidity')}</label>
-                                    <div className="range-inputs">
+                                <div className="add-flower-form-group">
+                                    <label className="add-flower-input-label">{t('add_flower.humidity')}</label>
+                                    <div className="add-flower-range-inputs">
                                         <input
                                             type="number"
+                                            className="add-flower-input"
                                             value={customProfile.humidity?.min}
                                             onChange={e =>
                                                 handleCustomProfileChange('humidity', 'min', parseInt(e.target.value))
@@ -246,6 +262,7 @@ const AddFlower: React.FC = () => {
                                         <span>až</span>
                                         <input
                                             type="number"
+                                            className="add-flower-input"
                                             value={customProfile.humidity?.max}
                                             onChange={e =>
                                                 handleCustomProfileChange('humidity', 'max', parseInt(e.target.value))
@@ -255,11 +272,12 @@ const AddFlower: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="form-group">
-                                    <label>{t('add_flower.light')}</label>
-                                    <div className="range-inputs">
+                                <div className="add-flower-form-group">
+                                    <label className="add-flower-input-label">{t('add_flower.light')}</label>
+                                    <div className="add-flower-range-inputs">
                                         <input
                                             type="number"
+                                            className="add-flower-input"
                                             value={customProfile.light?.min}
                                             onChange={e =>
                                                 handleCustomProfileChange('light', 'min', parseInt(e.target.value))
@@ -269,6 +287,7 @@ const AddFlower: React.FC = () => {
                                         <span>až</span>
                                         <input
                                             type="number"
+                                            className="add-flower-input"
                                             value={customProfile.light?.max}
                                             onChange={e =>
                                                 handleCustomProfileChange('light', 'max', parseInt(e.target.value))
@@ -281,32 +300,34 @@ const AddFlower: React.FC = () => {
                         )}
                     </div>
 
-                    <div className="avatar-section">
-                        <label>{t('add_flower.avatar')}</label>
-                        <div className="avatar-grid">
+                    <div className="add-flower-avatar-section">
+                        <label className="add-flower-input-label">{t('add_flower.avatar')}</label>
+                        <div className="add-flower-avatar-grid">
                             {avatars.map((avatar, index) => (
                                 <img
                                     src={avatar}
                                     alt={`Flower avatar ${index + 1}`}
                                     key={index}
-                                    className={selectedAvatar === avatar ? 'selected' : ''}
+                                    className={`add-flower-avatar-image ${
+                                        selectedAvatar === avatar ? 'add-flower-avatar-image--selected' : ''
+                                    }`}
                                     onClick={() => setSelectedAvatar(avatar)}
                                 />
                             ))}
                         </div>
                     </div>
 
-                    <div className="schedule-section">
-                        <h3>{t('add_flower.schedule_title')}</h3>
-                        <div className="schedule-days">
+                    <div className="add-flower-schedule-section">
+                        <div className="add-flower-schedule-days">
                             {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(day => (
-                                <div key={day} className="schedule-day">
+                                <div key={day} className="add-flower-schedule-day">
                                     <span>{dayTranslations[day]}</span>
-                                    <div className="time-inputs">
+                                    <div className="add-flower-time-inputs">
                                         <label>{t('add_flower.schedule_from')}</label>
                                         <input
                                             type="time"
-                                            value={scheduleData[day as keyof Omit<ScheduleData, 'active'>].from}
+                                            className="add-flower-input"
+                                            value={scheduleData[day as keyof Omit<ScheduleData, 'active'>].from || ''}
                                             onChange={e =>
                                                 handleTimeChange(
                                                     day as keyof Omit<ScheduleData, 'active'>,
@@ -318,7 +339,8 @@ const AddFlower: React.FC = () => {
                                         <label>{t('add_flower.schedule_to')}</label>
                                         <input
                                             type="time"
-                                            value={scheduleData[day as keyof Omit<ScheduleData, 'active'>].to}
+                                            className="add-flower-input"
+                                            value={scheduleData[day as keyof Omit<ScheduleData, 'active'>].to || ''}
                                             onChange={e =>
                                                 handleTimeChange(
                                                     day as keyof Omit<ScheduleData, 'active'>,
@@ -333,9 +355,9 @@ const AddFlower: React.FC = () => {
                         </div>
                     </div>
 
-                    {error && <div className="error-message">{error}</div>}
+                    {error && <div className="add-flower-error-message">{error}</div>}
 
-                    <button type="submit" className="button default" disabled={loading}>
+                    <button type="submit" className="add-flower-button add-flower-button--default" disabled={loading}>
                         {loading ? t('add_flower.saving') : t('add_flower.final_button')}
                     </button>
                 </form>

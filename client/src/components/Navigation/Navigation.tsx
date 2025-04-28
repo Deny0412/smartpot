@@ -62,8 +62,9 @@ const Navigation: React.FC = () => {
     const menuItems = isAuthenticated
         ? [
               { path: '/', label: t('navigation.home') },
-              { path: '/households-list', label: t('navigation.households') },
+              { path: '/households', label: t('navigation.households') },
               { path: '/notifications', label: t('navigation.notifications') },
+              { path: '/userProfile', label: t('navigation.user_profile') },
               { path: '#', label: t('navigation.logout'), onClick: handleLogout },
           ]
         : [
@@ -84,21 +85,9 @@ const Navigation: React.FC = () => {
             <div className="navbar__actions">
                 {isAuthenticated && user && (
                     <div className="navbar__user-info">
-                        {user.firstname} {user.lastname}
+                        {user.name} {user.surname}
                     </div>
                 )}
-                <div className="navbar__languages-desktop">
-                    <button
-                        className={`language-btn ${i18n.language === 'cz' ? 'active' : ''}`}
-                        onClick={() => changeLanguage('cz')}>
-                        CZ
-                    </button>
-                    <button
-                        className={`language-btn ${i18n.language === 'en' ? 'active' : ''}`}
-                        onClick={() => changeLanguage('en')}>
-                        EN
-                    </button>
-                </div>
                 <button
                     className="navbar__menu-btn"
                     onClick={() => setIsMenuOpen(!isMenuOpen)}

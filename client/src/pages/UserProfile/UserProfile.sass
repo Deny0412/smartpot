@@ -1,0 +1,86 @@
+.user-profile-main-container
+    max-width: 800px
+    margin: 0 auto
+    padding: 2rem
+    display: flex
+    flex-direction: column
+    align-items: center
+
+    .user-icon
+        width: 100px
+        height: 100px
+        border-radius: 50%
+        border: 2px solid #888
+        padding: 10px
+        margin-bottom: 2rem
+
+    .main-title
+        margin-bottom: 2rem
+        text-align: center
+
+    .user-profile-content
+        border-radius: 8px
+        padding: 2rem
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1)
+        color: white
+        display: flex
+        flex-direction: column
+        margin: 0 auto
+
+        .user-info
+            display: flex
+            flex-direction: column
+            gap: 1rem
+            width: 100%
+            margin: 0 auto
+            .info-item
+                display: flex
+                align-items: center
+                justify-content: space-between
+                gap: 1rem
+                width: 350px
+                max-width: 100%
+                padding: 1rem
+                text-align: center
+
+                .label
+                    font-weight: 600
+                    min-width: 100px
+                    color: white
+                    text-align: left
+
+                .value
+                    color: white
+@media (max-width: 758px)
+    .user-profile-main-container
+        padding: 1rem
+
+        .user-profile-content
+            padding: 1rem
+
+            .user-info
+                .info-item
+                    width: 100%
+                    max-width: 100%
+                    font-size: 0.98rem
+
+@media (max-width: 480px)
+    .user-profile-main-container
+        padding: 0.5rem
+
+        .user-profile-content
+            padding: 0.5rem
+
+            .user-info
+                .info-item
+                    width: 100%
+                    flex-direction: column
+                    align-items: flex-start
+                    text-align: left
+                    padding: 0.5rem
+
+                    .label, .value
+                        min-width: unset
+                        width: 100%
+                        text-align: left
+                        font-size: 0.95rem

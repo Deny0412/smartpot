@@ -5,6 +5,7 @@ import flowerProfilesReducer from '../slices/flowerProfilesSlice'
 import flowersReducer from '../slices/flowersSlice'
 import householdsReducer from '../slices/householdsSlice'
 import measurementsReducer from '../slices/measurementsSlice'
+import scheduleReducer from '../slices/scheduleSlice'
 import usersReducer from '../slices/usersSlice'
 
 export const store = configureStore({
@@ -15,6 +16,7 @@ export const store = configureStore({
         flowerpots: flowerpotsReducer,
         households: householdsReducer,
         measurements: measurementsReducer,
+        schedule: scheduleReducer,
         users: usersReducer,
     },
     middleware: getDefaultMiddleware =>

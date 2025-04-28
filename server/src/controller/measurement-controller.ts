@@ -1,36 +1,34 @@
-import { FastifyRequest, FastifyReply } from "fastify";
-import measurementCreateAbl from "../abl/measurement/measurement-create-abl";
-import measurementHistoryAbl from "../abl/measurement/measurement-history-abl";
-import {
-  sendCreated,
-  sendError,
-  sendInternalServerError,
-} from "../middleware/response-handler";
-import { IMeasurement } from "../models/Measurement";
+import { FastifyReply, FastifyRequest } from 'fastify'
+import measurementHistoryAbl from '../abl/measurement/measurement-history-abl'
+import { sendError } from '../middleware/response-handler'
 
-interface Params {
-  id: string;
-  dateFrom: Date;
-  dateTo: Date;
+interface RequestBody {
+  id: string
+  householdId: string
+  dateFrom?: string
+  dateTo?: string
 }
 
 export const measurementController = {
-  create: async (request: FastifyRequest, reply: FastifyReply) => {
-    try {
-      const data = request.body as IMeasurement;
-      const response = await measurementCreateAbl(data, reply);
-      sendCreated(reply, response, "Measurement created successfully");
-    } catch (error) {
-      sendInternalServerError(reply);
-    }
-  },
   history: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const data = request.body as Params;
-      console.log(data);
-      await measurementHistoryAbl(data, reply);
+      const body = request.body as RequestBody
+
+      if (!body.householdId) {
+        throw new Error('Chýba householdId v tele požiadavky')
+      }
+
+      await measurementHistoryAbl(
+        {
+          id: body.id,
+          householdId: body.householdId,
+          dateFrom: body.dateFrom,
+          dateTo: body.dateTo,
+        },
+        reply
+      )
     } catch (error) {
-      sendError(reply, error);
+      sendError(reply, error)
     }
   },
-};
+}

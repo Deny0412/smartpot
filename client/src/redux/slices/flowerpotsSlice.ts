@@ -19,6 +19,7 @@ const initialState: FlowerpotsState = {
 export const loadFlowerpots = createAsyncThunk('flowerpots/load', async (householdId: string, { rejectWithValue }) => {
     try {
         const flowerpots = await flowerpotsApi.getHouseholdSmartPots(householdId)
+     
         return flowerpots
     } catch (error) {
         return rejectWithValue(error instanceof Error ? error.message : 'Chyba pri načítaní kvetináčov')

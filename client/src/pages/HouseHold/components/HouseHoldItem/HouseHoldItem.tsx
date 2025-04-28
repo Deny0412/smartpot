@@ -1,14 +1,13 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
-import Button from '../../../../components/Button/Button'
 import GradientDiv from '../../../../components/GradientDiv/GradientDiv'
 import { H4 } from '../../../../components/Text/Heading/Heading'
 import { Paragraph } from '../../../../components/Text/Paragraph/Paragraph'
+import { TranslationFunction } from '../../../../i18n'
 import { RootState } from '../../../../redux/store/store'
 import './HouseHoldItem.sass'
-import { TranslationFunction } from '../../../../i18n'
-import { useTranslation } from 'react-i18next'
 
 interface HouseHoldItemProps {
     name?: string
@@ -20,7 +19,7 @@ interface HouseHoldItemProps {
 
 const HouseHoldItem: React.FC<HouseHoldItemProps> = ({
     name,
-    description = 'V tychto props budeme posielat nejake data z backendu v ramci kazdeho household itemu. Napriklad : Vas household obsahuje kvetiny ktore treba zaliat',
+    description = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
     id,
     owner,
     members = [],
@@ -33,18 +32,12 @@ const HouseHoldItem: React.FC<HouseHoldItemProps> = ({
     const { t } = useTranslation() as { t: TranslationFunction }
     const handleCheckClick = () => {
         if (id) {
-            navigate(`/household/${id}/flowers`)
-        }
-    }
-
-    const handleManageClick = () => {
-        if (id && isOwner) {
-            navigate(`/household/${id}/manage`)
+            navigate(`/households/${id}/flowers`)
         }
     }
 
     return (
-        <GradientDiv className="household-item-container">
+        <GradientDiv className="household-item-container" onClick={handleCheckClick}>
             <div className="household-item-content">
                 <div className="household-header">
                     <div className="header-title-wrapper">
@@ -52,23 +45,14 @@ const HouseHoldItem: React.FC<HouseHoldItemProps> = ({
                             {name}
                         </H4>
                         {isOwner && <div className="owner-tag owner-tag-owner">{t('households.role.owner')}</div>}
-                        {!isOwner && isMember && <div className="owner-tag owner-tag-member">{t('households.role.member')}</div>}
+                        {!isOwner && isMember && (
+                            <div className="owner-tag owner-tag-member">{t('households.role.member')}</div>
+                        )}
                     </div>
                 </div>
                 <Paragraph variant="secondary" size="md" className="household-description">
                     {description}
                 </Paragraph>
-
-                <div className="household-actions">
-                    <Button variant="default" className="small-button" onClick={handleCheckClick}>
-                        {t('households.households_list.actions.check')}
-                    </Button>
-                    {isOwner && (
-                        <Button variant="default" className="small-button" onClick={handleManageClick}>
-                           {t('households.households_list.actions.manage')}
-                        </Button>
-                    )}
-                </div>
             </div>
         </GradientDiv>
     )

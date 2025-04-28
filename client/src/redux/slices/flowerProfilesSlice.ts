@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { FlowerProfile } from '../../types/flowerTypes'
-import { createFlowerProfile, fetchFlowerProfiles} from '../services/flowersApi'
+import { flowerProfilesApi } from '../services/flowerProfilesApi'
 
 interface FlowerProfilesState {
     profiles: FlowerProfile[]
@@ -14,15 +14,16 @@ const initialState: FlowerProfilesState = {
     error: null,
 }
 
-export const loadFlowerProfiles = createAsyncThunk('flowerProfiles/load', async () => {
-    return await fetchFlowerProfiles()
+export const loadFlowerProfiles = createAsyncThunk('flowerProfiles/loadFlowerProfiles', async () => {
+    const profiles = await flowerProfilesApi.getFlowerProfiles()
+    return profiles
 })
 
 export const createProfile = createAsyncThunk(
     'flowerProfiles/create',
-    async (profile: Omit<FlowerProfile, 'id'>, { rejectWithValue }) => {
+    async (profile: Omit<FlowerProfile, 'id' | 'created_at' | 'updated_at'>, { rejectWithValue }) => {
         try {
-            return await createFlowerProfile(profile)
+            return await flowerProfilesApi.createFlowerProfile(profile)
         } catch (error) {
             return rejectWithValue(error instanceof Error ? error.message : 'Chyba pri vytváraní profilu')
         }
@@ -44,12 +45,12 @@ const flowerProfilesSlice = createSlice({
                 state.error = null
             })
             .addCase(loadFlowerProfiles.fulfilled, (state, action: PayloadAction<FlowerProfile[]>) => {
-                state.profiles = action.payload
                 state.loading = false
+                state.profiles = action.payload
             })
             .addCase(loadFlowerProfiles.rejected, (state, action) => {
                 state.loading = false
-                state.error = action.error.message || 'Chyba pri načítaní profilov'
+                state.error = action.error.message || 'Failed to load flower profiles'
             })
             .addCase(createProfile.pending, state => {
                 state.loading = true

@@ -5,10 +5,8 @@ import { FastifyPluginAsync } from 'fastify'
 import jwt from 'jsonwebtoken'
 import { appConfig } from '../config/config'
 import { authMiddleware } from '../middleware/auth-middleware'
-import { ForgotPasswordSchema, LoginSchema, User, UserSchema } from '../types/auth'
-
-// Simulate a simple user database (replace with real database in production)
-const users = new Map<string, User>()
+import { User as UserModel } from '../models/User'
+import { ForgotPasswordSchema, LoginSchema, UserSchema } from '../types/auth'
 
 function hashPassword(password: string): string {
   return crypto.createHash('sha256').update(password).digest('hex')
@@ -31,19 +29,22 @@ const auth: FastifyPluginAsync = async (fastify) => {
       },
     },
     async (request: any, reply: any) => {
-      const { email, password } = request.body
+      const { email, password, name, surname } = request.body
 
-      if (users.has(email)) {
+      // Check if user already exists
+      const existingUser = await UserModel.findOne({ email })
+      if (existingUser) {
         return reply.code(400).send({ error: 'User already exists' })
       }
 
       const hashedPassword = hashPassword(password)
-      const id = crypto.randomUUID()
 
-      users.set(email, {
-        id,
+      // Create new user
+      await UserModel.create({
         email,
         password: hashedPassword,
+        name,
+        surname,
       })
 
       return { message: 'User registered successfully' }
@@ -62,6 +63,8 @@ const auth: FastifyPluginAsync = async (fastify) => {
             user: Type.Object({
               id: Type.String(),
               email: Type.String(),
+              name: Type.String(),
+              surname: Type.String(),
             }),
           }),
         },
@@ -69,18 +72,26 @@ const auth: FastifyPluginAsync = async (fastify) => {
     },
     async (request: any, reply: any) => {
       const { email, password } = request.body
-      const user = users.get(email)
+      const user = await UserModel.findOne({ email })
 
       if (!user || user.password !== hashPassword(password)) {
         return reply.code(401).send({ error: 'Invalid credentials' })
       }
 
-      const token = jwt.sign({ email: user.email }, appConfig.JWT_SECRET)
+      const token = jwt.sign(
+        {
+          email: user.email,
+          user_id: user._id.toString(),
+        },
+        appConfig.JWT_SECRET
+      )
       return {
         token,
         user: {
-          id: user.id,
+          id: user._id.toString(),
           email: user.email,
+          name: user.name || '',
+          surname: user.surname || '',
         },
       }
     }
@@ -102,7 +113,8 @@ const auth: FastifyPluginAsync = async (fastify) => {
     async (request: any, reply: any) => {
       const { email } = request.body
 
-      if (!users.has(email)) {
+      const user = await UserModel.findOne({ email })
+      if (!user) {
         return reply.code(404).send({ error: 'User not found' })
       }
 
@@ -120,18 +132,74 @@ const auth: FastifyPluginAsync = async (fastify) => {
         response: {
           200: Type.Object({
             email: Type.String(),
+            name: Type.String(),
+            surname: Type.String(),
           }),
         },
       },
     },
     async (request: any) => {
-      const user = users.get(request.user.email)
+      const user = await UserModel.findOne({ email: request.user.email })
       if (!user) {
         throw new Error('User not found')
       }
 
       return {
         email: user.email,
+        name: user.name,
+        surname: user.surname,
+      }
+    }
+  )
+
+  // Check token endpoint
+  server.get(
+    '/check',
+    {
+      schema: {
+        response: {
+          200: Type.Object({
+            authorized: Type.Boolean(),
+            user: Type.Object({
+              id: Type.String(),
+              email: Type.String(),
+              name: Type.String(),
+              surname: Type.String(),
+            }),
+          }),
+        },
+      },
+    },
+    async (request: any, reply: any) => {
+      const authHeader = request.headers.authorization
+      if (!authHeader) {
+        return reply.code(401).send({ error: 'Missing Authorization header' })
+      }
+
+      const token = authHeader.split(' ')[1]
+      if (!token) {
+        return reply.code(401).send({ error: 'Invalid Authorization header format' })
+      }
+
+      try {
+        const decoded = jwt.verify(token, appConfig.JWT_SECRET) as { email: string }
+        const user = await UserModel.findOne({ email: decoded.email })
+
+        if (!user) {
+          return reply.code(401).send({ error: 'User not found' })
+        }
+
+        return {
+          authorized: true,
+          user: {
+            id: user._id.toString(),
+            email: user.email,
+            name: user.name || '',
+            surname: user.surname || '',
+          },
+        }
+      } catch (error) {
+        return reply.code(401).send({ error: 'Invalid token' })
       }
     }
   )

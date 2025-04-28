@@ -2,46 +2,47 @@
     display: flex
     justify-content: space-between
     align-items: center
-
     border-radius: 12px
     padding: 2rem
-   
     transition: transform 0.2s ease-in-out
     width: 90%
     max-width: 800px
     box-sizing: border-box
-    
-    
+    cursor: pointer
 
     @media (max-width: 768px)
-        flex-direction: column
+        flex-direction: row
         padding: 1.5rem
-        text-align: center
-        margin: 0 auto
         width: 100%
         max-width: 100%
+        margin: 0 auto
 
     .flower-item-content
         flex: 1
         width: 100%
         box-sizing: border-box
+        display: flex
+        flex-direction: column
+        justify-content: center
+        align-items: flex-start
+        height: 100%
 
-        .flower-header
-            margin-bottom: 1.5rem
+        .flower-item-header
+            margin-bottom: 0
 
-            .header-content
+            .flower-item-header-content
                 display: flex
                 align-items: center
                 gap: 1rem
                 flex-wrap: wrap
 
                 @media (max-width: 768px)
-                    justify-content: center
-                    flex-direction: column
+                    justify-content: flex-start
+                    flex-direction: row
                     align-items: center
-                    gap: 0.5rem
+                    gap: 1rem
 
-                .flower-name
+                .flower-item-name
                     color: #ffffff
                     margin: 0
                     font-size: 1.75rem
@@ -50,11 +51,11 @@
                     @media (max-width: 768px)
                         margin-bottom: 0.5rem
 
-                .profile-label
+                .flower-item-profile-label
                     padding: 0.25rem 1rem
                     border-radius: 4px
-                    border: 1px solid orange
-                    color: orange
+                    border: 1px solid #4CAF50
+                    color: #4CAF50
                     font-size: 0.875rem
                     white-space: nowrap
                     display: inline-flex
@@ -62,22 +63,22 @@
                     height: fit-content
                     line-height: 1.2
 
-                    &.own-settings
+                    &.flower-item-own-settings
                         color: #999999
-                        border: 1px solid #999999   
+                        border: 1px solid #999999
 
-        .flower-description
-            margin-bottom: 2rem
-           
-            &.signed-flowerpot
+        .flower-item-description
+            margin-bottom: 0
+
+            &.flower-item-signed-flowerpot
                 color: #da8009 !important
-            &.no-flowerpot
+            &.flower-item-no-flowerpot
                 color: #999999 !important
 
             @media (max-width: 768px)
-                margin-bottom: 1.5rem
+                margin-bottom: 0
 
-        .flower-actions
+        .flower-item-actions
             display: flex
             gap: 1rem
             flex-wrap: wrap
@@ -88,27 +89,25 @@
                 align-items: center
                 gap: 0.75rem
 
-            .check-button
+            .flower-item-check-button
                 background: none
-                
                 padding: 0.75rem 2rem
-                
                 width: fit-content
 
                 &:hover
                     background: #444444
 
-            .edit-button, .assign-button
+            .flower-item-edit-button, .flower-item-assign-button
                 color: #999999
                 border: 1px solid #999999
                 background: none
-                padding: 0.5rem 
+                padding: 0.5rem
                 width: fit-content
 
                 &:hover
                     color: #ffffff
 
-            .assign-button
+            .flower-item-assign-button
                 color: green
                 border: 1px solid green
 
@@ -116,15 +115,37 @@
                     color: green
                     background: rgba(0, 255, 0, 0.1)
 
-    .flower-image
+    .flower-item-image
         margin-left: 2rem
-        
+        display: flex
+        align-items: center
+        justify-content: center
+        width: 80px
+        height: 80px
+
         @media (max-width: 768px)
-            margin: 1.5rem 0 0 0
-        
-        img
-            width: 120px
-            height: auto
-            
-            @media (max-width: 768px)
-                width: 100px
+            margin-left: 1rem
+            width: 60px
+            height: 60px
+
+        .flower-item-image-img
+            width: 100%
+            height: 100%
+            object-fit: cover
+            border-radius: 50%
+
+.flower-item-flowerpot-label
+    padding: 0.25rem 1rem
+    border-radius: 4px
+    border: 1px solid #2196F3
+    color: #2196F3
+    font-size: 0.875rem
+    white-space: nowrap
+    display: inline-flex
+    align-items: center
+    height: fit-content
+    line-height: 1.2
+
+    &.flower-item-no-flowerpot
+        color: #999999
+        border: 1px solid #999999

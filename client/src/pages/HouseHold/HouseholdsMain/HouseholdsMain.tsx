@@ -9,6 +9,7 @@ import { Paragraph } from '../../../components/Text/Paragraph/Paragraph'
 import { TranslationFunction } from '../../../i18n'
 import { clearError, loadHouseholds } from '../../../redux/slices/householdsSlice'
 import { AppDispatch, RootState } from '../../../redux/store/store'
+import CreateHousehold from '../CreateHousehold/CreateHousehold'
 import HouseHoldItem from '../components/HouseHoldItem/HouseHoldItem'
 import './HouseholdsMain.sass'
 
@@ -19,16 +20,30 @@ const HouseholdsMain: React.FC = () => {
     const emptyHousehold = !Array.isArray(households) || households.length === 0
     const navigate = useNavigate()
     const { t } = useTranslation() as { t: TranslationFunction }
-    const [newHouseholdName, setNewHouseholdName] = useState('')
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
     useEffect(() => {
-        if (emptyHousehold && token) {
+        if (token) {
+            console.log('Loading households...')
             dispatch(loadHouseholds())
         }
-    }, [dispatch, emptyHousehold, token])
+    }, [dispatch, token])
 
     const handleCloseError = () => {
         dispatch(clearError())
+    }
+
+    const handleCreateHousehold = () => {
+        setIsCreateModalOpen(true)
+    }
+
+    const handleCloseModal = () => {
+        setIsCreateModalOpen(false)
+    }
+
+    const handleCreateSuccess = () => {
+        setIsCreateModalOpen(false)
+        dispatch(loadHouseholds())
     }
 
     return (
@@ -41,34 +56,26 @@ const HouseholdsMain: React.FC = () => {
 
             <div className="households-list">
                 {Array.isArray(households) && !emptyHousehold
-                    ? households.map(
-                          household =>
-                              household && (
-                                  <>
-                                      <HouseHoldItem
-                                          key={household.id}
-                                          name={household.name}
-                                          id={household.id}
-                                          owner={household.owner}
-                                          members={household.members}
-                                      />
-                                  </>
-                              ),
-                      )
+                    ? households.map(household => (
+                          <HouseHoldItem
+                              key={household.id}
+                              name={household.name}
+                              id={household.id}
+                              owner={household.owner}
+                              members={household.members}
+                          />
+                      ))
                     : !loading && (
-                          <>
-                              <Paragraph variant="primary" size="md" className="no-households-text">
-                                  {t('households.households_list.no_households')}
-                              </Paragraph>
-                          </>
+                          <Paragraph variant="primary" size="md" className="no-households-text">
+                              {t('households.households_list.no_households')}
+                          </Paragraph>
                       )}
-                <Button
-                    variant="default"
-                    className="create-household-button"
-                    onClick={() => navigate('/create-household')}>
+                <Button variant="default" className="create-household-button" onClick={handleCreateHousehold}>
                     {t('households.households_list.actions.create_new')}
                 </Button>
             </div>
+
+            <CreateHousehold isOpen={isCreateModalOpen} onClose={handleCloseModal} onSuccess={handleCreateSuccess} />
         </div>
     )
 }

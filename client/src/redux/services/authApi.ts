@@ -3,36 +3,42 @@ import { api } from './api'
 export interface UserData {
     id: string
     email: string
-    firstname: string
-    lastname: string
+    name: string
+    surname: string
+}
+
+export const registerUser = async (email: string, password: string, name: string, surname: string): Promise<void> => {
+    try {
+        await api.post('/auth/register', { email, password, name, surname })
+    } catch (error: any) {
+        throw new Error(error.response?.data?.error || 'Registrácia zlyhala')
+    }
 }
 
 export const loginUser = async (email: string, password: string): Promise<UserData> => {
-    const response = await api.get<{ users: any[] }>('/users')
-    const users = response.data.users || []
-    const user = users.find(u => u.email === email)
+    try {
+        const response = await api.post('/auth/login', { email, password })
+        const { token, user } = response.data
 
-    if (!user || user.password !== password) {
-        throw new Error('Neplatné prihlasovacie údaje')
-    }
+        localStorage.setItem('token', token)
+        localStorage.setItem(
+            'user',
+            JSON.stringify({
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                surname: user.surname,
+            }),
+        )
 
-    const token = 'mock-token-' + Date.now()
-    localStorage.setItem('token', token)
-    localStorage.setItem(
-        'user',
-        JSON.stringify({
+        return {
             id: user.id,
             email: user.email,
-            firstname: user.name,
-            lastname: user.surname,
-        }),
-    )
-
-    return {
-        id: user.id,
-        email: user.email,
-        firstname: user.name,
-        lastname: user.surname,
+            name: user.name,
+            surname: user.surname,
+        }
+    } catch (error: any) {
+        throw new Error(error.response?.data?.error || 'Neplatné prihlasovacie údaje')
     }
 }
 
@@ -51,13 +57,12 @@ export const checkAuth = async (): Promise<UserData | null> => {
     }
 
     try {
-        await api.get('/users')
-        const user = JSON.parse(userStr)
+        const response = await api.get('/auth/get')
         return {
-            id: user.id,
-            email: user.email,
-            firstname: user.firstname,
-            lastname: user.lastname,
+            id: JSON.parse(userStr).id,
+            email: response.data.email,
+            name: response.data.name,
+            surname: response.data.surname,
         }
     } catch (error) {
         localStorage.removeItem('token')

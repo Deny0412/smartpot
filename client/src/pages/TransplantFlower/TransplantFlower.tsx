@@ -68,7 +68,7 @@ const TransplantFlower: React.FC = () => {
         if (selectedFlowerIds.length === householdFlowers.length) {
             setSelectedFlowerIds([])
         } else {
-            setSelectedFlowerIds(householdFlowers.map(flower => flower.id))
+            setSelectedFlowerIds(householdFlowers.map(flower => flower._id || ''))
         }
         setErrorMessage('')
         setSuccessMessage('')
@@ -145,11 +145,11 @@ const TransplantFlower: React.FC = () => {
                     </div>
                     <div className="flowers-list">
                         {householdFlowers.map((flower: Flower) => (
-                            <label key={flower.id} className="flower-item">
+                            <label key={flower._id} className="flower-item">
                                 <input
                                     type="checkbox"
-                                    checked={selectedFlowerIds.includes(flower.id)}
-                                    onChange={() => handleFlowerSelect(flower.id)}
+                                    checked={selectedFlowerIds.includes(flower._id || '')}
+                                    onChange={() => handleFlowerSelect(flower._id || '')}
                                     disabled={isProcessing}
                                 />
                                 <span>{flower.name}</span>

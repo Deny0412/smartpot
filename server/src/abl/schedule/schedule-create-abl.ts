@@ -1,54 +1,48 @@
-import { FastifyReply } from "fastify";
-import { createSchedule, hasActiveSchedule } from "../../dao/schedule/schedule-create-dao";
-import { ISchedule } from "../../models/Schedule";
-import { sendClientError, sendCreated, sendError } from "../../middleware/response-handler";
-import checkFlowerExists from "../../dao/flower/flower-exists-dao";
-import { validateCreateSchedule, formatValidationErrors } from "../../validation/schedule-validation";
-import Ajv from "ajv";
-const ajv = new Ajv();
-const schema = {
-    type: "object",
-    properties: {
-        flower_id: { type: "string" },
-        active: { type: "boolean" },
-        monday: { type: "object", properties: { from: { type: ["string", "null"] }, to: { type: ["string", "null"] }  }},
-        tuesday: { type: "object", properties: { from: { type: ["string", "null"] }, to: { type: ["string", "null"] }  }},
-        wednesday: { type: "object", properties: { from: { type: ["string", "null"] }, to: { type: ["string", "null"] }  }},
-        thursday: { type: "object", properties: { from: { type: ["string", "null"] }, to: { type: ["string", "null"] }  }},
-        friday: { type: "object", properties: { from: { type: ["string", "null"] }, to: { type: ["string", "null"] }  }},
-        saturday: { type: "object", properties: { from: { type: ["string", "null"] }, to: { type: ["string", "null"] }  }},
-        sunday: { type: "object", properties: { from: { type: ["string", "null"] }, to: { type: ["string", "null"] }  }},
-    },
-    required: ["flower_id"],
-};
+import { FastifyReply } from 'fastify'
+import { getFlower } from '../../dao/flower/flower-get-dao'
+import { createSchedule } from '../../dao/schedule/schedule-create-dao'
+import { sendClientError, sendCreated, sendError } from '../../middleware/response-handler'
+import { ISchedule } from '../../models/Schedule'
+import { MongoValidator } from '../../validation/mongo-validator'
+import { validateCreateSchedule } from '../../validation/schedule-validation'
 
-async function createScheduleHandler(data: ISchedule, reply: FastifyReply) {
-    try {
-        const validate = ajv.compile(schema);
-        const valid = validate(data);
-        if(!valid){
-            sendClientError(reply, JSON.stringify(validate.errors?.map(error => error.message)));
-            return;
-        }
-
-        const flower = await checkFlowerExists(data.flower_id.toString());
-        if (!flower) {
-            return sendClientError(reply, "Flower not found");
-        }
-
-        // If trying to create an active schedule, check if one already exists
-        if (data.active) {
-            const hasActive = await hasActiveSchedule(data.flower_id.toString());
-            if (hasActive) {
-                return sendClientError(reply, "This flower already has an active schedule. Please deactivate it first.");
-            }
-        }
-
-        const createdSchedule = await createSchedule(data);
-        return sendCreated(reply, createdSchedule, "Schedule created successfully");
-    } catch (error) {
-        return sendError(reply, error);
+export default async function scheduleCreateAbl(data: ISchedule, reply: FastifyReply) {
+  try {
+    // Validácia dát
+    const isValid = validateCreateSchedule(data)
+    if (!isValid) {
+      return sendClientError(reply, JSON.stringify(validateCreateSchedule.errors?.map((error) => error.message)))
     }
-}
 
-export default createScheduleHandler;
+    if (!data.flower_id) {
+      return sendError(reply, { message: 'Chýbajúce ID kvetiny' }, 400)
+    }
+
+    // Validácia formátu ID
+    if (!MongoValidator.validateId(data.flower_id)) {
+      return sendClientError(reply, 'Neplatný formát ID kvetiny')
+    }
+
+    const flower = await getFlower(data.flower_id)
+    if (!flower) {
+      return sendError(reply, { message: 'Kvetina nebola nájdená' }, 404)
+    }
+
+    const schedule = await createSchedule({
+      ...data,
+      active: data.active || false,
+      monday: data.monday || { from: '', to: '' },
+      tuesday: data.tuesday || { from: '', to: '' },
+      wednesday: data.wednesday || { from: '', to: '' },
+      thursday: data.thursday || { from: '', to: '' },
+      friday: data.friday || { from: '', to: '' },
+      saturday: data.saturday || { from: '', to: '' },
+      sunday: data.sunday || { from: '', to: '' },
+    })
+
+    return sendCreated(reply, schedule, 'Rozvrh bol úspešne vytvorený')
+  } catch (error) {
+    console.error('Chyba pri vytváraní rozvrhu:', error)
+    return sendError(reply, error)
+  }
+}
