@@ -12,7 +12,7 @@ const oAuth2Client = new google.auth.OAuth2(
 );
 oAuth2Client.setCredentials({ refresh_token: process.env.REFRESH_TOKEN });
 
-async function sendEmailNotification(userMail: string, message: string) {
+async function sendEmailNotification(users: Array<any>, message: string) {
   try {
     const { token } = await oAuth2Client.getAccessToken();
 
@@ -30,15 +30,17 @@ async function sendEmailNotification(userMail: string, message: string) {
         accessToken: token,
       },
     });
-
-    const notification = await transporter.sendMail({
-      from: "Smartpot alert 🌼 <smartpot84@gmail.com>",
-      to: userMail,
-      subject: "Smartpot notification",
-      text: message,
-    });
-
-    console.log("Message sent: %s", notification.messageId);
+    for (let index = 0; index < users.length; index++) {
+      const user = users[index];
+      const userMail = user.email;
+      const notification = await transporter.sendMail({
+        from: "Smartpot alert 🌼 <smartpot84@gmail.com>",
+        to: userMail,
+        subject: "Smartpot notification",
+        text: message,
+      });
+      console.log("Message sent: %s", notification.messageId);
+    }
   } catch (error) {
     console.error(error);
     throw error;

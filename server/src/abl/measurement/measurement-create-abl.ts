@@ -5,7 +5,8 @@ import getFlower from "../../dao/flower/flower-get-dao";
 import { Types } from "mongoose";
 import { isValueOutOfRange } from "../../utils/flower/flower-range-util";
 import notificationService from "../../services/notification-service";
-
+import getHousehold from "../../dao/household/household-get-dao";
+import getUser from "../../dao/user/user-get-dao";
 import {
   sendClientError,
   sendCreated,
@@ -57,7 +58,7 @@ async function createMeasurementHandler(
     }
 
     const flower = await getFlower(String(activeFlowerId));
-
+    const household = await getHousehold(String(smartpot?.household_id));
     if (data.typeOfData === "water") {
       if (typeof data.value !== "string") {
         return sendClientError(
@@ -81,10 +82,21 @@ async function createMeasurementHandler(
       data.value as number,
       flower?.profile
     );
+    const householdOwner = await getUser(String(household?.owner));
+
+    const memberIds = household?.members || [];
+    const members = (
+      await Promise.all(memberIds.map((id) => getUser(String(id))))
+    ).filter((user) => user?.email); //GETS ALL MEMBERS WITH EMAIL
+
+    const usersToNotify = [...members];
+    if (householdOwner) {
+      usersToNotify.push(householdOwner); //ADDS OWNER TO THE MEMBERS_TO_NOTIFY ARRAY
+    }
 
     if (rangeCheckResult && rangeCheckResult.outOfRange) {
       notificationService.sendEmailNotification(
-        user.user.email, //ZDE ZADAT EMAIL NA UKAZKU
+        members,
         rangeCheckResult.message
       );
       notificationService.sendDiscordNotification(rangeCheckResult.message);
