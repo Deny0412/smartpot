@@ -80,7 +80,8 @@ async function createMeasurementHandler(
     const rangeCheckResult = isValueOutOfRange(
       data.typeOfData as string,
       data.value as number,
-      flower?.profile
+      flower?.profile,
+      flower?.name as string
     );
     const householdOwner = await getUser(String(household?.owner));
 
@@ -96,10 +97,11 @@ async function createMeasurementHandler(
 
     if (rangeCheckResult && rangeCheckResult.outOfRange) {
       notificationService.sendEmailNotification(
-        members,
-        rangeCheckResult.message
+        usersToNotify,
+        rangeCheckResult.message,
+        rangeCheckResult.flower_name
       );
-      notificationService.sendDiscordNotification(rangeCheckResult.message);
+      notificationService.sendDiscordNotification(rangeCheckResult.message, rangeCheckResult.flower_name);
       console.log(`Sending notification: ${rangeCheckResult.message}`);
     }
 

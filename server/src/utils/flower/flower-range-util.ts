@@ -1,14 +1,15 @@
 export function isValueOutOfRange(
   typeOfData: string,
   value: number,
-  profile: any
-): { outOfRange: boolean; message: string } | null {
+  profile: any,
+  flowerName: string
+): { outOfRange: boolean; message: string; flower_name: string; } | null {
   // Mapping typeOfData -> how to check
   const checks: {
     [key: string]: (
       value: number,
       profile: any
-    ) => { outOfRange: boolean; message: string } | null;
+    ) => { outOfRange: boolean; message: string; flower_name: string; } | null;
   } = {
     soil: (value, profile) => {
       const humidityProfile = profile?.humidity;
@@ -18,9 +19,10 @@ export function isValueOutOfRange(
         return {
           outOfRange: true,
           message: `Soil humidity out of range! Measured ${value}%, expected between ${min}% - ${max}%`,
+          flower_name: flowerName
         };
       }
-      return { outOfRange: false, message: "" };
+      return { outOfRange: false, message: "", flower_name: ""};
     },
     temperature: (value, profile) => {
       const tempProfile = profile?.temperature;
@@ -30,9 +32,11 @@ export function isValueOutOfRange(
         return {
           outOfRange: true,
           message: `Temperature out of range! Measured ${value}°C, expected between ${min}°C - ${max}°C`,
+          flower_name: flowerName
+
         };
       }
-      return { outOfRange: false, message: "" };
+      return { outOfRange: false, message: "", flower_name: "" };
     },
     light: (value, profile) => {
       const lightProfile = profile?.light;
@@ -42,9 +46,11 @@ export function isValueOutOfRange(
         return {
           outOfRange: true,
           message: `Light intensity out of range! Measured ${value}lux, expected between ${min}lux - ${max}lux`,
+          flower_name: flowerName
+
         };
       }
-      return { outOfRange: false, message: "" };
+      return { outOfRange: false, message: "", flower_name: "" };
     },
     battery: (value, _profile) => {
       // Battery threshold is hardcoded, not in profile
@@ -53,9 +59,11 @@ export function isValueOutOfRange(
         return {
           outOfRange: true,
           message: `Battery low! Measured ${value}%, should be at least ${batteryThreshold}%`,
+          flower_name: flowerName
+
         };
       }
-      return { outOfRange: false, message: "" };
+      return { outOfRange: false, message: "", flower_name: "" };
     },
   };
 
