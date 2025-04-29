@@ -22,13 +22,14 @@
         margin: 0 auto
         width: 100%
         padding: 2rem
+
     .section-title
         margin-bottom: 20px
         color: #ffffff
         font-size: 1.5rem
         font-weight: 600
 
-    .members-section, .add-member-section
+    .members-section
         background: none
         border-radius: 10px
         padding: 20px
@@ -103,30 +104,17 @@
                     border: 1px solid rgba(255, 0, 0, 0.5)
                     color: #ff4444
 
-    .add-member-form
+    .add-member-icon
         display: flex
-        gap: 10px
+        justify-content: center
         align-items: center
+        padding: 1rem
+        cursor: pointer
+        transition: all 0.3s ease
 
-        .email-input
-            flex: 1
-            padding: 8px 12px
-            border: 1px solid rgba(255, 255, 255, 0.2)
-            border-radius: 4px
-            background: rgba(255, 255, 255, 0.1)
-            color: #ffffff
-            font-size: 1rem
-
-            &::placeholder
-                color: rgba(255, 255, 255, 0.5)
-
-            &:focus
-                outline: none
-                border-color: #2196F3
-
-        .add-button
-            padding: 8px 16px
-            white-space: nowrap
+        &:hover
+            transform: scale(1.1)
+            color: #2196F3
 
     @media (max-width: 768px)
         .manage-members-container
@@ -140,11 +128,4 @@
             width: 100%
 
             .make-owner-button, .remove-button
-                width: 100%
-
-        .add-member-form
-            flex-direction: column
-            align-items: stretch
-
-            .add-button
                 width: 100%

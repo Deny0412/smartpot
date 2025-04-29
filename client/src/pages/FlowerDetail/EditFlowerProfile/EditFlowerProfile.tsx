@@ -171,7 +171,7 @@ const EditFlowerProfile: React.FC<EditFlowerProfileProps> = ({ isOpen, onClose, 
                                                 <span className="edit-flower-profile-readonly-value">
                                                     {profiles.find(p => p._id === selectedProfileId)?.temperature.min}
                                                 </span>
-                                                <span>až</span>
+                                                <span> - </span>
                                                 <span className="edit-flower-profile-readonly-value">
                                                     {profiles.find(p => p._id === selectedProfileId)?.temperature.max}
                                                 </span>
@@ -183,7 +183,7 @@ const EditFlowerProfile: React.FC<EditFlowerProfileProps> = ({ isOpen, onClose, 
                                                 <span className="edit-flower-profile-readonly-value">
                                                     {profiles.find(p => p._id === selectedProfileId)?.humidity.min}
                                                 </span>
-                                                <span>až</span>
+                                                <span> - </span>
                                                 <span className="edit-flower-profile-readonly-value">
                                                     {profiles.find(p => p._id === selectedProfileId)?.humidity.max}
                                                 </span>
@@ -195,7 +195,7 @@ const EditFlowerProfile: React.FC<EditFlowerProfileProps> = ({ isOpen, onClose, 
                                                 <span className="edit-flower-profile-readonly-value">
                                                     {profiles.find(p => p._id === selectedProfileId)?.light.min}
                                                 </span>
-                                                <span>až</span>
+                                                <span> - </span>
                                                 <span className="edit-flower-profile-readonly-value">
                                                     {profiles.find(p => p._id === selectedProfileId)?.light.max}
                                                 </span>
@@ -222,7 +222,7 @@ const EditFlowerProfile: React.FC<EditFlowerProfileProps> = ({ isOpen, onClose, 
                                             }
                                             placeholder="Min"
                                         />
-                                        <span>až</span>
+                                        <span> - </span>
                                         <input
                                             type="number"
                                             value={customProfile.temperature?.max}
@@ -249,7 +249,7 @@ const EditFlowerProfile: React.FC<EditFlowerProfileProps> = ({ isOpen, onClose, 
                                             }
                                             placeholder="Min"
                                         />
-                                        <span>až</span>
+                                        <span> - </span>
                                         <input
                                             type="number"
                                             value={customProfile.humidity?.max}
@@ -272,7 +272,7 @@ const EditFlowerProfile: React.FC<EditFlowerProfileProps> = ({ isOpen, onClose, 
                                             }
                                             placeholder="Min"
                                         />
-                                        <span>až</span>
+                                        <span> - </span>
                                         <input
                                             type="number"
                                             value={customProfile.light?.max}

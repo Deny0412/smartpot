@@ -1,4 +1,4 @@
-@import "../../styles/global.sass"
+@import "../../../styles/global.sass"
 
 .flowerpot-header
     display: flex
@@ -51,10 +51,11 @@
 
     @media (max-width: 768px)
         padding: 1rem
+        margin-top: 1rem
 
     @media (max-width: 480px)
         padding: 0.5rem
-
+        margin-top: 0.5rem
 .chart-header
     display: flex
     justify-content: space-between
@@ -65,6 +66,10 @@
     .chart-header-title
         margin: 0 auto
         padding: 0
+        @media screen and (max-width: 768px)
+            margin: 1rem auto
+        @media screen and (max-width: 480px)
+            margin: 0.5rem auto
 
     @media (max-width: 480px)
         flex-direction: column
@@ -215,24 +220,21 @@
 
         &:nth-child(1)
             &.active
-                background: $watering-color
-
+                background: #6bb9ff
                 &:hover
-                    background: darken($watering-color, 10%)
+                    background: darken(#6bb9ff, 10%)
 
         &:nth-child(2)
             &.active
-                background: $temperature-color
-
+                background: #ff6b6b
                 &:hover
-                    background: darken($temperature-color, 10%)
+                    background: darken(#ff6b6b, 10%)
 
         &:nth-child(3)
             &.active
-                background: $lighting-color
-
+                background: #ffa502
                 &:hover
-                    background: darken($lighting-color, 10%)
+                    background: darken(#ffa502, 10%)
 
         &:nth-child(4)
             &.active
@@ -471,20 +473,23 @@
         align-items: center
         gap: 0.5rem
 
+        b
+            color: white
+
         .status-text
             margin-left: 0.5rem
             font-weight: 600
 
             &.high
-                color: #e74c3c
+                color: #ff6b6b !important
             &.low
-                color: #3498db
+                color: #6bb9ff !important
             &.good
-                color: #2ecc71
+                color: #7bed9f !important
 
-        &.temperature .status-text
-            color: #e74c3c
-        &.humidity .status-text
-            color: #3498db
-        &.light .status-text
-            color: #f1c40f
+        &.temperature
+            color: #ffffff
+        &.humidity
+            color: #ffffff
+        &.light
+            color: #ffffff

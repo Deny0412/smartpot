@@ -7,7 +7,7 @@ import Loader from '../../components/Loader/Loader'
 import { H3 } from '../../components/Text/Heading/Heading'
 import { Paragraph } from '../../components/Text/Paragraph/Paragraph'
 import { TranslationFunction } from '../../i18n'
-import { loadFlowerpots, loadInactiveFlowerpots } from '../../redux/slices/flowerpotsSlice'
+import { clearFlowerpots, loadFlowerpots, loadInactiveFlowerpots } from '../../redux/slices/flowerpotsSlice'
 import { AppDispatch, RootState } from '../../redux/store/store'
 import { Household } from '../../types/householdTypes'
 import SmartPotItem from './SmartPotItem/SmartPotItem'
@@ -33,7 +33,9 @@ const SmartPotList: React.FC = () => {
     const [filterType, setFilterType] = useState<FilterType>('all')
     const [isOwner, setIsOwner] = useState(false)
 
-    const householdFlowerpots = Array.isArray(flowerpots) ? flowerpots : []
+    const householdFlowerpots = Array.isArray(flowerpots)
+        ? flowerpots.filter(pot => pot.household_id === householdId)
+        : []
     const emptyFlowerpots = householdFlowerpots.length === 0
 
     useEffect(() => {
@@ -41,14 +43,20 @@ const SmartPotList: React.FC = () => {
             navigate('/')
             return
         }
-    
-        dispatch(loadFlowerpots(householdId))
-        dispatch(loadInactiveFlowerpots(householdId))
-    }, [dispatch, householdId, navigate])
 
-    useEffect(() => {
-      
-    }, [flowerpots, inactiveFlowerpots])
+        dispatch(clearFlowerpots())
+
+        try {
+            dispatch(loadFlowerpots(householdId))
+            dispatch(loadInactiveFlowerpots(householdId))
+        } catch (error: any) {
+            if (error.response?.status === 404) {
+                // 404 znamená že nie sú žiadne flowerpoty, čo je v poriadku
+                return
+            }
+            console.error('Error loading flowerpots:', error)
+        }
+    }, [dispatch, householdId, navigate])
 
     useEffect(() => {
         if (user && householdId && households.length > 0) {
@@ -82,16 +90,6 @@ const SmartPotList: React.FC = () => {
         return <Loader />
     }
 
-    if (flowerpotsError) {
-        return (
-            <div className="error-container">
-                <Paragraph variant="primary" size="md">
-                    {flowerpotsError}
-                </Paragraph>
-            </div>
-        )
-    }
-
     return (
         <div className="smart-pot-list-container">
             <H3 variant="secondary" className="main-title">
@@ -111,25 +109,21 @@ const SmartPotList: React.FC = () => {
             </div>
 
             <div className="smart-pots-list">
-                {!emptyFlowerpots
-                    ? filteredFlowerpots.map(flowerpot => {
-                      
-                          return (
-                              <SmartPotItem
-                                  key={flowerpot._id}
-                                  serialNumber={flowerpot.serial_number}
-                                  id={flowerpot._id}
-                                  activeFlowerId={flowerpot.active_flower_id}
-                                  householdId={householdId}
-                                
-                              />
-                          )
-                      })
-                    : !flowerpotsLoading && (
-                          <Paragraph variant="primary" size="md" className="no-smart-pots-text">
-                              {t('smart_pot_list.no_smart_pots')}
-                          </Paragraph>
-                      )}
+                {!emptyFlowerpots ? (
+                    filteredFlowerpots.map(flowerpot => (
+                        <SmartPotItem
+                            key={flowerpot._id}
+                            serialNumber={flowerpot.serial_number}
+                            id={flowerpot._id}
+                            activeFlowerId={flowerpot.active_flower_id}
+                            householdId={householdId}
+                        />
+                    ))
+                ) : (
+                    <Paragraph variant="primary" size="md" className="no-smart-pots-text">
+                        {t('smart_pot_list.no_smart_pots')}
+                    </Paragraph>
+                )}
             </div>
 
             <div className="add-smart-pot-section">

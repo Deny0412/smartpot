@@ -19,7 +19,6 @@ const initialState: FlowerpotsState = {
 export const loadFlowerpots = createAsyncThunk('flowerpots/load', async (householdId: string, { rejectWithValue }) => {
     try {
         const flowerpots = await flowerpotsApi.getHouseholdSmartPots(householdId)
-     
         return flowerpots
     } catch (error) {
         return rejectWithValue(error instanceof Error ? error.message : 'Chyba pri načítaní kvetináčov')
@@ -45,12 +44,18 @@ const flowerpotsSlice = createSlice({
         clearError: state => {
             state.error = null
         },
+        clearFlowerpots: state => {
+            state.flowerpots = []
+            state.inactiveFlowerpots = []
+            state.error = null
+        },
     },
     extraReducers: builder => {
         builder
             .addCase(loadFlowerpots.pending, state => {
                 state.loading = true
                 state.error = null
+                state.flowerpots = []
             })
             .addCase(loadFlowerpots.fulfilled, (state, action: PayloadAction<SmartPot[]>) => {
                 state.flowerpots = action.payload
@@ -63,6 +68,7 @@ const flowerpotsSlice = createSlice({
             .addCase(loadInactiveFlowerpots.pending, state => {
                 state.loading = true
                 state.error = null
+                state.inactiveFlowerpots = []
             })
             .addCase(loadInactiveFlowerpots.fulfilled, (state, action: PayloadAction<SmartPot[]>) => {
                 state.inactiveFlowerpots = action.payload
@@ -75,5 +81,5 @@ const flowerpotsSlice = createSlice({
     },
 })
 
-export const { clearError } = flowerpotsSlice.actions
+export const { clearError, clearFlowerpots } = flowerpotsSlice.actions
 export default flowerpotsSlice.reducer

@@ -68,7 +68,12 @@
             "add_member": {
                 "title": "Přidat člena",
                 "input": "Email nového člena",
-                "button": "Pozvat člena"
+                "button": "Pozvat člena",
+                "invite_member": "Pozvat člena",
+                "email": "Email",
+                "email_placeholder": "Zadejte emailovou adresu",
+                "send": "Odeslat pozvánku",
+                "sending": "Odesílání..."
             }
         },
         "manage_flowers": {
@@ -191,33 +196,39 @@
         "status_unknown": "Neznámá hodnota"
     },
     "add_flower": {
-        "title": "Vytvořit květinu",
-        "description": "Nastavení květináče",
-        "name": "Název květiny",
-        "name_placeholder": "Zadejte název květiny",
+        "title": "Vytvoriť kvetinu",
+        "description": "Nastavenie kvetináča",
+        "name": "Názov kvetiny",
+        "name_placeholder": "Zadajte názov kvetiny",
         "profile_type": "Typ profilu",
-        "use_existing_profile": "Použít existující profil",
-        "custom_settings": "Vlastní nastavení",
+        "use_existing_profile": "Použiť existujúci profil",
+        "custom_settings": "Vlastné nastavenia",
         "select_profile": "Vyberte profil",
-        "select_profile_placeholder": "Vyberte existující profil",
+        "select_profile_placeholder": "Vyberte existujúci profil",
         "temperature": "Teplota (°C)",
-        "humidity": "Vlhkost (%)",
-        "light": "Světlo (%)",
-        "avatar": "Avatar květiny",
-        "schedule_title": "Rozvrh zalévání",
+        "humidity": "Vlhkosť (%)",
+        "light": "Svetlo (%)",
+        "avatar": "Avatar kvetiny",
+        "schedule_title": "Rozvrh zavlažovania",
         "schedule": {
-            "monday": "Pondělí",
-            "tuesday": "Úterý",
-            "wednesday": "Středa",
-            "thursday": "Čtvrtek",
-            "friday": "Pátek",
+            "monday": "Pondelok",
+            "tuesday": "Utorok",
+            "wednesday": "Streda",
+            "thursday": "Štvrtok",
+            "friday": "Piatok",
             "saturday": "Sobota",
-            "sunday": "Neděle"
+            "sunday": "Nedeľa"
         },
         "schedule_from": "Od",
         "schedule_to": "Do",
-        "saving": "Ukládání...",
-        "final_button": "Dokončit"
+        "saving": "Ukladanie...",
+        "final_button": "Dokončiť",
+        "error": {
+            "name_required": "Názov kvetiny je povinný",
+            "profile_required": "Prosím vyberte profil",
+            "schedule_required": "Je potrebný aspoň jeden časový interval",
+            "invalid_time_range": "Neplatný časový rozsah pre {{day}} - čas 'Od' musí byť pred časom 'Do'"
+        }
     },
     "add_flowerpot": {
         "title": "Připojte květináč k vaší domácnosti",
@@ -259,6 +270,7 @@
             "not_active": "Neaktivní"
         },
         "no_smart_pots": "Žádné chytré květináče",
+        "error_loading": "V této domácnosti nebyly nalezeny žádné chytré květináče",
         "actions": {
             "add": "Přidat květináč"
         },
@@ -302,7 +314,27 @@
             "friday": "Pátek",
             "saturday": "Sobota",
             "sunday": "Neděle"
-        }
+        },
+        "missing_params": "Chýbajúce parametre",
+        "loading": "Načítavam...",
+        "error_loading": "Chyba pri načítaní dát: {{error}}",
+        "flower_not_found": "Kvetina nebola nájdená",
+        "loading_flower_data": "Načítavam dáta kvetiny...",
+        "signed_into": "Prihlásený do {{serialNumber}}",
+        "smartpot_low_warning": "Upozornenie: Smartpot je nízky",
+        "auto_watering_settings": "Nastaveni profilu automatickeho zavlazovani",
+        "assigned_profile": "Kvetina má priradený profil:",
+        "custom_settings": "Kvetina je na vlastných nastaveniach",
+        "temperature": "Teplota",
+        "humidity": "Vlhkosť",
+        "light": "Svietenie",
+        "min": "Minimálna:",
+        "max": "Maximálna:",
+        "min_light": "Minimálne:",
+        "max_light": "Maximálne:",
+        "transplant": "Presadiť kvetinu",
+        "back_to_list": "Späť na zoznam",
+        "view_smartpot": "Zobraziť smartpot"
     },
     "edit_flower_profile": {
         "title": "Upravit profil kvetiny",
@@ -315,5 +347,38 @@
         "humidity": "Vlhkost (%)",
         "light": "Světlo (%)",
         "save": "Uložit"
+    },
+    "settings": {
+        "household_settings": "Nastavení domácnosti",
+        "rename_household": "Přejmenovat domácnost",
+        "new_household_name": "Nový název domácnosti",
+        "rename": "Přejmenovat",
+        "leave_household": "Opustit domácnost",
+        "leave": "Opustit",
+        "delete_household": "Smazat domácnost",
+        "delete": "Smazat",
+        "toast": {
+            "enter_household_name": "Prosím zadejte název domácnosti",
+            "rename_success": "Domácnost byla úspěšně přejmenována",
+            "rename_error": "Chyba při přejmenování domácnosti",
+            "leave_success": "Opustili jste domácnost",
+            "leave_error": "Chyba při opuštění domácnosti",
+            "delete_success": "Domácnost byla úspěšně smazána",
+            "delete_error": "Chyba při mazání domácnosti"
+        }
+    },
+    "smart_pot_detail": {
+        "missing_params": "Chybějící parametry",
+        "loading": "Načítání...",
+        "error_loading": "Chyba při načítání dat: {{error}}",
+        "smart_pot_not_found": "Smart pot nebyl nalezen",
+        "loading_smart_pot_data": "Načítání dat smart potu...",
+        "battery_level": "Stav baterie",
+        "last_connection": "Poslední připojení",
+        "assigned_flower": "Přiřazená květina",
+        "no_flower_assigned": "Žádná květina není přiřazena",
+        "view_flower": "Zobrazit květinu",
+        "disconnect": "Odpojit",
+        "transplant": "Přesadit"
     }
 }

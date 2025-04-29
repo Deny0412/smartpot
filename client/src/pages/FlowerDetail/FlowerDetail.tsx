@@ -1,11 +1,13 @@
-import { PencilSimple } from '@phosphor-icons/react'
+import { PencilSimple, WarningCircle } from '@phosphor-icons/react'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, useParams } from 'react-router-dom'
 import Button from '../../components/Button/Button'
+import Loader from '../../components/Loader/Loader'
 import { H4, H5 } from '../../components/Text/Heading/Heading'
 import { Paragraph } from '../../components/Text/Paragraph/Paragraph'
+import { loadFlowerpots, loadInactiveFlowerpots } from '../../redux/slices/flowerpotsSlice'
 import { loadFlowerProfiles } from '../../redux/slices/flowerProfilesSlice'
 import { loadFlowerDetails } from '../../redux/slices/flowersSlice'
 import { fetchMeasurementsForFlower } from '../../redux/slices/measurementsSlice'
@@ -13,11 +15,12 @@ import { loadSchedule } from '../../redux/slices/scheduleSlice'
 import { RootState } from '../../redux/store/rootReducer'
 import { AppDispatch } from '../../redux/store/store'
 import { MeasurementValue, Schedule, ScheduleResponse } from '../../types/flowerTypes'
-import FlowerpotMeasurment from '../FlowerpotMeasurment/FlowerpotMeasurment'
 import EditFlowerProfile from './EditFlowerProfile/EditFlowerProfile'
 import EditFlowerSchedule from './EditFlowerSchedule/EditFlowerSchedule'
 import EditNameAndAvatar from './EditNameAndAvatar/EditNameAndAvatar'
 import './FlowerDetail.sass'
+import FlowerpotMeasurment from './FlowerpotMeasurment/FlowerpotMeasurment'
+
 interface FlowerpotData {
     name: string
     status: string
@@ -65,24 +68,23 @@ const selectLoading = (state: RootState) =>
 const selectError = (state: RootState) =>
     state.measurements.error || state.flowers.error || state.flowerProfiles.error || state.schedule.error
 const selectSchedule = (state: RootState) => state.schedule.schedule as unknown as ScheduleResponse
+const selectSmartPot = (state: RootState, serialNumber: string) => {
+    const allPots = [...state.flowerpots.flowerpots, ...state.flowerpots.inactiveFlowerpots]
+    return allPots.find(pot => pot.serial_number === serialNumber)
+}
 
 const FlowerDetail: React.FC = () => {
     const { t } = useTranslation()
     const { flowerId, householdId } = useParams<{ flowerId: string; householdId: string }>()
     const dispatch = useDispatch<AppDispatch>()
     const [isInitialLoad, setIsInitialLoad] = useState(true)
+    const [isLoading, setIsLoading] = useState(true)
     const [timeRange, setTimeRange] = useState<'day' | 'week' | 'month' | 'custom'>('day')
     const [customDateRange, setCustomDateRange] = useState({ from: '', to: '' })
     const [isScheduleEditModalOpen, setIsScheduleEditModalOpen] = useState(false)
     const [isProfileEditModalOpen, setIsProfileEditModalOpen] = useState(false)
     const [isEditModalOpen, setIsEditModalOpen] = useState(false)
     const navigate = useNavigate()
-    // Uloženie householdId do localStorage
-    useEffect(() => {
-        if (householdId) {
-            localStorage.setItem('householdId', householdId)
-        }
-    }, [householdId])
 
     const dayTranslations: Record<string, string> = {
         monday: t('flower_detail.days.monday'),
@@ -100,26 +102,24 @@ const FlowerDetail: React.FC = () => {
         value: string,
     ) => {
         if (!schedule) return
-        // TODO: Implementovať aktualizáciu rozvrhu
     }
 
-    
     const flower = useSelector(selectFlower)
     const profiles = useSelector(selectProfiles)
     const measurements = useSelector((state: RootState) => selectMeasurements(state, flowerId || ''))
     const loading = useSelector(selectLoading)
     const error = useSelector(selectError)
     const schedule = useSelector(selectSchedule)
+    const smartPot = useSelector((state: RootState) =>
+        flower?.serial_number ? selectSmartPot(state, flower.serial_number) : null,
+    )
 
-   
     const flowerProfileData = useMemo(() => {
         if (!flower || !profiles) return undefined
         const foundProfile = profiles.find(profile => profile._id === flower.profile_id)
 
         return foundProfile
     }, [flower, profiles])
-
-    
 
     // Memoizovaný výpočet flowerpotData
     const flowerpotData = useMemo(() => {
@@ -152,28 +152,22 @@ const FlowerDetail: React.FC = () => {
         dispatch(loadSchedule(flowerId))
     }, [dispatch, flowerId])
 
-
- 
     useEffect(() => {
         if (!flowerId || !householdId) {
-          
             return
         }
 
         const loadData = async () => {
             try {
-                
+                setIsLoading(true)
                 await dispatch(loadFlowerDetails(flowerId)).unwrap()
-            
-
-                
                 await dispatch(loadFlowerProfiles()).unwrap()
-                
+                await dispatch(loadFlowerpots(householdId)).unwrap()
+                await dispatch(loadInactiveFlowerpots(householdId)).unwrap()
 
-              
                 const now = new Date()
                 const startDate = new Date(now)
-                startDate.setFullYear(now.getFullYear() - 1) // Načítame merania za posledný rok
+                startDate.setFullYear(now.getFullYear() - 1)
 
                 await dispatch(
                     fetchMeasurementsForFlower({
@@ -185,8 +179,10 @@ const FlowerDetail: React.FC = () => {
                 ).unwrap()
 
                 setIsInitialLoad(false)
+                setIsLoading(false)
             } catch (error) {
                 console.error('Chyba pri načítaní dát:', error)
+                setIsLoading(false)
             }
         }
 
@@ -204,24 +200,24 @@ const FlowerDetail: React.FC = () => {
         setCustomDateRange(range)
     }
 
-    if (!flowerId || !householdId) {
-        return <div>Chýbajúce parametre</div>
+    if (isLoading) {
+        return <Loader />
     }
 
-    if (loading && isInitialLoad) {
-        return <div>Načítavam...</div>
+    if (!flowerId || !householdId) {
+        return <div>{t('flower_detail.missing_params')}</div>
     }
 
     if (error) {
-        return <div>Chyba pri načítaní dát: {error}</div>
+        return <div>{t('flower_detail.error_loading', { error })}</div>
     }
 
     if (!flower) {
-        return <div>Kvetina nebola nájdená</div>
+        return <div>{t('flower_detail.flower_not_found')}</div>
     }
 
     if (!flowerpotData) {
-        return <div>Načítavam dáta kvetiny...</div>
+        return <Loader />
     }
 
     return (
@@ -241,11 +237,27 @@ const FlowerDetail: React.FC = () => {
                 <img src={flowerpotData.flower_avatar} alt="Flowerpot Avatar" className="flowerpot-avatar" />
             </div>
             <div className="smartpot-container">
-                <Paragraph>Currently signed into {flower?.serial_number}</Paragraph>
-                <span>Warning: Smartpot is low</span>
-                {/* <Button onClick={() => navigate(`/households/${householdId}/smartPots/${flower?.serial_number}`)}>
-                    Check smartpot
-                </Button> */}
+                <div className="smartpot-container-warning">
+                    {smartPot ? (
+                        <>
+                            <Paragraph>
+                                {t('flower_detail.signed_into', { serialNumber: flower?.serial_number })}
+                            </Paragraph>
+                            <WarningCircle size={32} color="#f93333" />
+                        </>
+                    ) : (
+                        <Paragraph>No smartpot assigned</Paragraph>
+                    )}
+                </div>
+
+                {smartPot && (
+                    <Button
+                        onClick={() => {
+                            navigate(`/households/${householdId}/smartPots/${smartPot._id}`)
+                        }}>
+                        {t('flower_detail.view_smartpot')}
+                    </Button>
+                )}
             </div>
 
             <EditNameAndAvatar
@@ -343,7 +355,7 @@ const FlowerDetail: React.FC = () => {
 
             <div className="profile-container">
                 <H4>
-                    Nastaveni profilu automatickeho zavlazovani
+                    {t('flower_detail.auto_watering_settings')}
                     <PencilSimple
                         size={20}
                         color="#bfbfbf"
@@ -354,39 +366,39 @@ const FlowerDetail: React.FC = () => {
                 {flowerProfileData ? (
                     <div className="profile-info">
                         <div className="profile-text">
-                            Kvetina má priradený profil: <strong>{flowerProfileData.name}</strong>
+                            {t('flower_detail.assigned_profile')} <strong>{flowerProfileData.name}</strong>
                         </div>
                         <div className="profile-settings">
                             <div className="setting-group">
-                                <div className="setting-title">Teplota</div>
+                                <div className="setting-title">{t('flower_detail.temperature')}</div>
                                 <div className="setting-item">
-                                    <span>Minimálna:</span>
+                                    <span>{t('flower_detail.min')}</span>
                                     <span>{flowerProfileData.temperature.min}°C</span>
                                 </div>
                                 <div className="setting-item">
-                                    <span>Maximálna:</span>
+                                    <span>{t('flower_detail.max')}</span>
                                     <span>{flowerProfileData.temperature.max}°C</span>
                                 </div>
                             </div>
                             <div className="setting-group">
-                                <div className="setting-title">Vlhkosť</div>
+                                <div className="setting-title">{t('flower_detail.humidity')}</div>
                                 <div className="setting-item">
-                                    <span>Minimálna:</span>
+                                    <span>{t('flower_detail.min')}</span>
                                     <span>{flowerProfileData.humidity.min}%</span>
                                 </div>
                                 <div className="setting-item">
-                                    <span>Maximálna:</span>
+                                    <span>{t('flower_detail.max')}</span>
                                     <span>{flowerProfileData.humidity.max}%</span>
                                 </div>
                             </div>
                             <div className="setting-group">
-                                <div className="setting-title">Svietenie</div>
+                                <div className="setting-title">{t('flower_detail.light')}</div>
                                 <div className="setting-item">
-                                    <span>Minimálne:</span>
+                                    <span>{t('flower_detail.min_light')}</span>
                                     <span>{flowerProfileData.light.min} </span>
                                 </div>
                                 <div className="setting-item">
-                                    <span>Maximálne:</span>
+                                    <span>{t('flower_detail.max_light')}</span>
                                     <span>{flowerProfileData.light.max}</span>
                                 </div>
                             </div>
@@ -394,39 +406,39 @@ const FlowerDetail: React.FC = () => {
                     </div>
                 ) : (
                     <div className="no-profile">
-                        <div className="profile-text">Kvetina je na vlastných nastaveniach</div>
+                        <div className="profile-text">{t('flower_detail.custom_settings')}</div>
                         {flower?.profile && (
                             <div className="profile-settings">
                                 <div className="setting-group">
-                                    <div className="setting-title">Teplota</div>
+                                    <div className="setting-title">{t('flower_detail.temperature')}</div>
                                     <div className="setting-item">
-                                        <span>Minimálna:</span>
+                                        <span>{t('flower_detail.min')}</span>
                                         <span>{flower.profile.temperature.min}°C</span>
                                     </div>
                                     <div className="setting-item">
-                                        <span>Maximálna:</span>
+                                        <span>{t('flower_detail.max')}</span>
                                         <span>{flower.profile.temperature.max}°C</span>
                                     </div>
                                 </div>
                                 <div className="setting-group">
-                                    <div className="setting-title">Vlhkosť</div>
+                                    <div className="setting-title">{t('flower_detail.humidity')}</div>
                                     <div className="setting-item">
-                                        <span>Minimálna:</span>
+                                        <span>{t('flower_detail.min')}</span>
                                         <span>{flower.profile.humidity.min}%</span>
                                     </div>
                                     <div className="setting-item">
-                                        <span>Maximálna:</span>
+                                        <span>{t('flower_detail.max')}</span>
                                         <span>{flower.profile.humidity.max}%</span>
                                     </div>
                                 </div>
                                 <div className="setting-group">
-                                    <div className="setting-title">Svietenie</div>
+                                    <div className="setting-title">{t('flower_detail.light')}</div>
                                     <div className="setting-item">
-                                        <span>Minimálne:</span>
+                                        <span>{t('flower_detail.min_light')}</span>
                                         <span>{flower.profile.light.min} </span>
                                     </div>
                                     <div className="setting-item">
-                                        <span>Maximálne:</span>
+                                        <span>{t('flower_detail.max_light')}</span>
                                         <span>{flower.profile.light.max}</span>
                                     </div>
                                 </div>
@@ -437,7 +449,7 @@ const FlowerDetail: React.FC = () => {
             </div>
             <div className="transplant-container">
                 <div className="flower-detail-transplant-title-container">
-                    <H4>Transplant flower</H4>
+                    <H4>{t('flower_detail.transplant')}</H4>
 
                     <PencilSimple
                         size={20}
@@ -448,7 +460,9 @@ const FlowerDetail: React.FC = () => {
                         }}
                     />
                 </div>
-                <Button onClick={() => navigate(`/households/${householdId}/flowers`)}>Back to list</Button>
+                <Button onClick={() => navigate(`/households/${householdId}/flowers`)}>
+                    {t('flower_detail.back_to_list')}
+                </Button>
             </div>
         </>
     )

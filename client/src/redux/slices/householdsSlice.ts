@@ -1,6 +1,12 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { CreateHouseholdData, Household } from '../../types/householdTypes'
-import { addHousehold, deleteHousehold, fetchHouseholds, updateHousehold } from '../services/householdsApi'
+import {
+    addHousehold,
+    deleteHousehold,
+    fetchHouseholds,
+    leaveHousehold,
+    updateHousehold,
+} from '../services/householdsApi'
 
 interface HouseholdsState {
     households: Household[]
@@ -58,6 +64,15 @@ export const updateHouseholdData = createAsyncThunk(
     },
 )
 
+export const leaveHouseholdAction = createAsyncThunk('households/leave', async (id: string, { rejectWithValue }) => {
+    try {
+        await leaveHousehold(id)
+        return id
+    } catch (error) {
+        return rejectWithValue(error instanceof Error ? error.message : 'Chyba pri opustení domácnosti')
+    }
+})
+
 const householdsSlice = createSlice({
     name: 'households',
     initialState,
@@ -111,11 +126,27 @@ const householdsSlice = createSlice({
             .addCase(updateHouseholdData.fulfilled, (state, action: PayloadAction<Household>) => {
                 const index = state.households.findIndex(h => h.id === action.payload.id)
                 if (index !== -1) {
-                    state.households[index] = action.payload
+                    state.households[index] = {
+                        ...state.households[index],
+                        ...action.payload,
+                    }
                 }
                 state.loading = false
+                state.error = null
             })
             .addCase(updateHouseholdData.rejected, (state, action) => {
+                state.loading = false
+                state.error = action.payload as string
+            })
+            .addCase(leaveHouseholdAction.pending, state => {
+                state.loading = true
+                state.error = null
+            })
+            .addCase(leaveHouseholdAction.fulfilled, (state, action: PayloadAction<string>) => {
+                state.households = state.households.filter(household => household.id !== action.payload)
+                state.loading = false
+            })
+            .addCase(leaveHouseholdAction.rejected, (state, action) => {
                 state.loading = false
                 state.error = action.payload as string
             })

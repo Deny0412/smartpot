@@ -8,6 +8,60 @@
     @media (max-width: 768px)
         font-size: 2rem
 
+.invites-section
+    margin-bottom: 32px
+
+.invites-title
+    text-align: center
+    margin-bottom: 16px
+    font-size: 1.5rem
+
+.invites-list
+    display: flex
+    flex-direction: column
+    gap: 12px
+    width: 60%
+    margin: 0 auto
+    @media (max-width: 768px)
+        width: 100%
+
+.invite-item
+    border: none
+    border-radius: 12px
+    padding: 16px
+    color: #ffffff
+    width: 100%
+    box-sizing: border-box
+    border:2px solid #888
+   
+
+    .invite-content
+        display: flex
+        width: 100%
+        justify-content: space-between
+        gap: 12px
+
+    .invite-header
+        display: flex
+        justify-content: space-between
+        align-items: center
+
+    .invite-household
+        font-size: 16px
+        font-weight: 500
+
+    .invite-timestamp
+        font-size: 14px
+        opacity: 0.7
+
+    .invite-message
+        font-size: 14px
+        opacity: 0.8
+
+    .invite-actions
+        display: flex
+        gap: 8px
+        margin-top: 8px
 
 .back-button
     cursor: pointer
@@ -28,7 +82,6 @@
         width: 100%
 
 .notification-item
-    
     border: none
     border-radius: 12px
     padding: 16px 20px
@@ -39,9 +92,10 @@
     color: #ffffff
     width: 100%
     box-sizing: border-box
+    border:2px solid #888
+    cursor: pointer
 
-    &:hover
-        background: rgba(255, 255, 255, 0.15)
+    
 
     .household-name
         font-size: 16px
@@ -81,9 +135,8 @@
     width: 100%
     padding: 16px
     box-sizing: border-box
-    
     border-radius: 12px
-    
+
     .alert-icon
         font-size: 24px
         min-width: 32px
@@ -107,3 +160,14 @@
             font-size: 12px
             opacity: 0.6
             color: #ffffff
+
+.invite-action-button
+    cursor: pointer
+    transition: all 0.3s ease
+    border:1px solid #ffffff
+    border-radius: 50%
+    padding: 4px
+    
+    &:hover
+        transform: scale(1.1)
+        opacity: 0.8

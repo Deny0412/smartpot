@@ -61,4 +61,20 @@ export const NotificationsMockData = {
             ],
         },
     ],
+    householdInvites: [
+        {
+            id: 1,
+            household_name: 'Domácnosť Novákovci',
+            inviter_name: 'Ján Novák',
+            timestamp: '2024-03-20T14:30:00Z',
+            status: 'pending',
+        },
+        {
+            id: 2,
+            household_name: 'Kvetinová záhrada',
+            inviter_name: 'Eva Krátka',
+            timestamp: '2024-03-19T16:45:00Z',
+            status: 'pending',
+        },
+    ],
 }

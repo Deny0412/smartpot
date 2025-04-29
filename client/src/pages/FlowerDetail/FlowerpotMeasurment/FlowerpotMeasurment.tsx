@@ -2,12 +2,12 @@ import { Drop, Sun, Thermometer } from '@phosphor-icons/react'
 import React, { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDispatch, useSelector } from 'react-redux'
-import Button from '../../components/Button/Button'
-import ChartVizual from '../../components/ChartVizual/ChartVizual'
-import { H5 } from '../../components/Text/Heading/Heading'
-import { TranslationFunction } from '../../i18n'
-import { AppDispatch, RootState } from '../../redux/store/store'
-import { Flower, FlowerProfile, MeasurementValue } from '../../types/flowerTypes'
+import Button from '../../../components/Button/Button'
+import ChartVizual from '../../../components/ChartVizual/ChartVizual'
+import { H5 } from '../../../components/Text/Heading/Heading'
+import { TranslationFunction } from '../../../i18n'
+import { AppDispatch, RootState } from '../../../redux/store/store'
+import { Flower, FlowerProfile, MeasurementValue } from '../../../types/flowerTypes'
 import './FlowerpotMeasurment.sass'
 
 interface FlowerpotMeasurmentProps {
@@ -90,14 +90,12 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
     const { t } = useTranslation() as { t: TranslationFunction }
 
     const [measurementType, setMeasurementType] = useState<MeasurementType>('humidity')
-    const [measurementLabel, setMeasurementLabel] = useState<string>(t('flower_measurments.measurments.humidity'))
     const [selectedDate, setSelectedDate] = useState<string>('')
 
     const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
     const processedMeasurements = useMemo(() => {
         if (!measurements || Object.keys(measurements).length === 0) {
-         
             return {
                 humidity: [],
                 temperature: [],
@@ -335,17 +333,14 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
         {
             type: 'humidity',
             icon: <Drop size={24} />,
-            label: t('flower_measurments.measurments.humidity'),
         },
         {
             type: 'temperature',
             icon: <Thermometer size={24} />,
-            label: t('flower_measurments.measurments.temperature'),
         },
         {
             type: 'light',
             icon: <Sun size={24} />,
-            label: t('flower_measurments.measurments.light'),
         },
     ]
 
@@ -438,7 +433,7 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
                             )}
                         </div>
                     </div>
-                    <H5 className="chart-header-title">{measurementLabel}</H5>
+                    <H5 className="chart-header-title">{t(`flower_measurments.measurments.${measurementType}`)}</H5>
 
                     <div className="chart-container">
                         <ChartVizual
@@ -451,13 +446,12 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
                     </div>
 
                     <div className="measurement-icons">
-                        {measurementIcons.map(({ type, icon, label }) => (
+                        {measurementIcons.map(({ type, icon }) => (
                             <button
                                 key={type}
                                 className={`icon-button ${measurementType === type ? 'active' : ''}`}
                                 onClick={() => {
                                     setMeasurementType(type as MeasurementType)
-                                    setMeasurementLabel(label)
                                 }}>
                                 {icon}
                             </button>
@@ -467,7 +461,7 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
 
                 <div className="measurements-history">
                     <h3>
-                        {getMeasurementLabel()} {t('flower_measurments.measurements')}
+                        {t(`flower_measurments.measurments.${measurementType}`)} {t('flower_measurments.measurements')}
                     </h3>
                     <div className="date-picker">
                         <input

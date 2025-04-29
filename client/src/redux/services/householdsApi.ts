@@ -39,3 +39,8 @@ export const updateHousehold = async (id: string, household: Partial<Household>)
     const response = await api.put<Household>('/household/update', { ...household, id })
     return response.data
 }
+
+export const leaveHousehold = async (id: string): Promise<void> => {
+    const response = await api.put(`/household/leave`, { id })
+    return response.data
+}

@@ -6,6 +6,7 @@ import householdGetAbl from '../abl/household/household-get-abl'
 import householdGetMembersAbl from '../abl/household/household-getMembers-abl'
 import householdInviteAbl from '../abl/household/household-invite-abl'
 import householdKickAbl from '../abl/household/household-kick-abl'
+import householdLeaveAbl from '../abl/household/household-leave-abl'
 import householdListAbl from '../abl/household/household-list-abl'
 import householdUpdateAbl from '../abl/household/household-update-abl'
 import { sendError } from '../middleware/response-handler'
@@ -122,6 +123,18 @@ export const householdController = {
     try {
       const id = (request.params as Params).id
       await householdGetMembersAbl(id, reply)
+    } catch (error) {
+      sendError(reply, error)
+    }
+  },
+  leave: async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const householdId = (request.body as Params).id
+      const userId = (request.user as { id: string })?.id
+      if (!userId) {
+        return reply.status(401).send({ error: 'Unauthorized' })
+      }
+      await householdLeaveAbl(householdId, userId, reply)
     } catch (error) {
       sendError(reply, error)
     }

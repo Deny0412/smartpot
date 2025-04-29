@@ -4,6 +4,7 @@ import GradientDiv from '../../components/GradientDiv/GradientDiv'
 import { H2 } from '../../components/Text/Heading/Heading'
 import './Notifications.sass'
 import { NotificationsMockData } from './NotificationsMockData'
+import { Check  , X} from 'phosphor-react'
 
 interface NotificationItemProps {
     household: string
@@ -11,13 +12,48 @@ interface NotificationItemProps {
     onClick: () => void
 }
 
+interface HouseholdInviteProps {
+    id: number
+    household_name: string
+    inviter_name: string
+    timestamp: string
+    status: string
+    onAccept: (id: number) => void
+    onReject: (id: number) => void
+}
+
 const NotificationItem: React.FC<NotificationItemProps> = ({ household, notificationCount, onClick }) => (
     <div onClick={onClick} style={{ cursor: 'pointer', width: '100%' }}>
-        <GradientDiv className="notification-item">
+        <div className="notification-item">
             <span className="household-name">{household}</span>
             <div className="notification-count">{notificationCount}</div>
             <span className="arrow">›</span>
-        </GradientDiv>
+        </div>
+    </div>
+)
+
+const HouseholdInvite: React.FC<HouseholdInviteProps> = ({
+    id,
+    household_name,
+    inviter_name,
+    timestamp,
+    status,
+    onAccept,
+    onReject,
+}) => (
+    <div className="invite-item">
+        <div className="invite-content">
+            <div className="invite-header">
+                <span className="invite-household">{household_name}</span>
+            </div>
+        
+            {status === 'pending' && (
+                <div className="invite-actions">
+                    <Check size={32} color="#4CAF50" onClick={() => onAccept(id)} className="invite-action-button"/>
+                    <X size={32} color="#f93333" onClick={() => onReject(id)} className="invite-action-button"/>
+                </div>
+            )}
+        </div>
     </div>
 )
 
@@ -60,6 +96,7 @@ const formatDate = (timestamp: string) => {
 
 const Notifications: React.FC = () => {
     const [selectedHousehold, setSelectedHousehold] = useState<string | null>(null)
+    const [invites, setInvites] = useState(NotificationsMockData.householdInvites)
 
     const households = NotificationsMockData.notifications.map(household => ({
         name: household.household_name,
@@ -68,6 +105,16 @@ const Notifications: React.FC = () => {
 
     const selectedHouseholdData = NotificationsMockData.notifications.find(h => h.household_name === selectedHousehold)
 
+    const handleAcceptInvite = (id: number) => {
+        setInvites(invites.filter(invite => invite.id !== id))
+        // TODO: Implementácia prijatia pozvánky
+    }
+
+    const handleRejectInvite = (id: number) => {
+        setInvites(invites.filter(invite => invite.id !== id))
+        // TODO: Implementácia zamietnutia pozvánky
+    }
+
     if (selectedHousehold && selectedHouseholdData) {
         return (
             <div className="main-notifications-container">
@@ -75,14 +122,14 @@ const Notifications: React.FC = () => {
 
                 <div className="notifications-list">
                     {selectedHouseholdData.alerts.map(alert => (
-                        <GradientDiv key={alert.id} className="alert-item">
+                        <div key={alert.id} className="alert-item">
                             <div className="alert-icon">{getAlertIcon(alert.type)}</div>
                             <div className="alert-content">
                                 <div className="alert-plant-name">{alert.plant_name}</div>
                                 <div className="alert-message">{alert.message}</div>
                                 <div className="alert-timestamp">{formatDate(alert.timestamp)}</div>
                             </div>
-                        </GradientDiv>
+                        </div>
                     ))}
                     <Button variant="default" onClick={() => setSelectedHousehold(null)} className="back-button">
                         ‹ Back to all notifications
@@ -95,7 +142,25 @@ const Notifications: React.FC = () => {
     return (
         <div className="main-notifications-container">
             <H2 className="main-notifications-title">Notifications</H2>
+
+            {invites.length > 0 && (
+                <div className="invites-section">
+                    <H2 className="invites-title">Pozvánky do domácností</H2>
+                    <div className="invites-list">
+                        {invites.map(invite => (
+                            <HouseholdInvite
+                                key={invite.id}
+                                {...invite}
+                                onAccept={handleAcceptInvite}
+                                onReject={handleRejectInvite}
+                            />
+                        ))}
+                    </div>
+                </div>
+            )}
+
             <div className="households-list">
+                <H2 className="invites-title">Domácnosti</H2>
                 {households.map(household => (
                     <NotificationItem
                         key={household.name}

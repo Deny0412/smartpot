@@ -78,4 +78,11 @@ export default async function householdRoutes(fastify: FastifyInstance) {
     },
     householdController.decision
   )
+  fastify.put(
+    '/leave',
+    {
+      onRequest: [authMiddleware], // Authenticate first
+    },
+    householdController.leave
+  )
 }

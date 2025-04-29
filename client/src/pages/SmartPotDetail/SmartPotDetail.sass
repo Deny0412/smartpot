@@ -1,7 +1,7 @@
 @import "../../styles/global.sass"
 
 .smart-pot-detail
-    
+
     min-height: 100vh
     padding: 20px
     max-width: 1200px
@@ -64,8 +64,8 @@
             gap: 0.5rem
 
     &__avatar
-        width: 100px
-        height: 100px
+        width: 60px
+        height: 60px
         object-fit: cover
         border-radius: 50%
 
@@ -110,17 +110,23 @@
         border-radius: 10px
         padding: 5px 10px
         height: 30px
-        
+        position: relative
+        overflow: hidden
+        background-color: rgba(0, 0, 0, 0.2)
 
     &__battery-progress
         height: 100%
-        background-color: #4CAF50
+        background: linear-gradient(90deg, #4CAF50, #8BC34A)
         border-radius: 5px
-        transition: width 0.3s ease
+        position: relative
+        width: 0
+        animation: fillBattery 1.5s ease-out forwards
 
     &__battery-value
         font-weight: 600
         color: #ffffff
+        position: relative
+        z-index: 1
 
     &__status
         padding: 2px 6px
@@ -179,3 +185,25 @@
         height: auto
         object-fit: contain
         border-radius: 50%
+
+@keyframes batteryPulse
+    0%
+        filter: brightness(1)
+    50%
+        filter: brightness(1.1)
+    100%
+        filter: brightness(1)
+
+@keyframes shine
+    0%
+        transform: translateX(-100%)
+    50%
+        transform: translateX(100%)
+    100%
+        transform: translateX(100%)
+
+@keyframes fillBattery
+    from
+        width: 0
+    to
+        width: var(--battery-level)

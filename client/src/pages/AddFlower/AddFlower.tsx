@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDispatch, useSelector } from 'react-redux'
 import { useParams } from 'react-router-dom'
-import GradientDiv from '../../components/GradientDiv/GradientDiv'
+import { toast } from 'react-toastify'
 import { H5 } from '../../components/Text/Heading/Heading'
 import { createSchedule } from '../../redux/services/flowersApi'
 import { createFlower, loadFlowers } from '../../redux/slices/flowersSlice'
@@ -99,12 +99,53 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
         e.preventDefault()
         setLoading(true)
         setError(null)
+
+        // Validácia mena
+        if (!name.trim()) {
+            toast.error(t('add_flower.error.name_required'))
+            setLoading(false)
+            return
+        }
+
+        // Validácia profilu
+        if (profileType === 'global' && !selectedProfileId) {
+            toast.error(t('add_flower.error.profile_required'))
+            setLoading(false)
+            return
+        }
+
+        // Validácia časových intervalov
+        const hasValidSchedule = Object.entries(scheduleData).some(([day, times]) => {
+            if (day === 'active') return false
+            return times.from && times.to && times.from < times.to
+        })
+
+        if (!hasValidSchedule) {
+            toast.error(t('add_flower.error.schedule_required'))
+            setLoading(false)
+            return
+        }
+
+        // Validácia časových intervalov - kontrola či from < to
+        const hasInvalidTimeRange = Object.entries(scheduleData).some(([day, times]) => {
+            if (day === 'active') return false
+            if (times.from && times.to && times.from >= times.to) {
+                toast.error(t('add_flower.error.invalid_time_range', { day: dayTranslations[day] }))
+                return true
+            }
+            return false
+        })
+
+        if (hasInvalidTimeRange) {
+            setLoading(false)
+            return
+        }
+
         try {
             let profileId = null
             if (profileType === 'global' && selectedProfileId) {
                 profileId = selectedProfileId
             }
-       
 
             const newFlower = await dispatch(
                 createFlower({
@@ -123,7 +164,6 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
                 }),
             ).unwrap()
 
-    
             if (!newFlower._id) {
                 throw new Error('ID kvetiny nebolo vrátené zo servera')
             }
@@ -147,9 +187,11 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
             await dispatch(loadFlowers(householdId || ''))
 
             onClose()
+            toast.success('Flower added successfully')
         } catch (err) {
             setError('Chyba pri vytváraní kvetináča. Skúste to prosím znova.')
             console.error('Error creating flower:', err)
+            toast.error('Error creating flower')
         } finally {
             setLoading(false)
         }

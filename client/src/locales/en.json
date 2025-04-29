@@ -68,7 +68,12 @@
             "add_member": {
                 "title": "Add member",
                 "input": "Email new member",
-                "button": "Invite member"
+                "button": "Invite member",
+                "invite_member": "Invite member",
+                "email": "Email",
+                "email_placeholder": "Enter email address",
+                "send": "Send invitation",
+                "sending": "Sending..."
             }
         },
         "manage_flowers": {
@@ -217,7 +222,13 @@
         "schedule_from": "From",
         "schedule_to": "To",
         "saving": "Saving...",
-        "final_button": "Finish"
+        "final_button": "Finish",
+        "error": {
+            "name_required": "Flower name is required",
+            "profile_required": "Please select a profile",
+            "schedule_required": "At least one time interval is required",
+            "invalid_time_range": "Invalid time range for {{day}} - 'From' time must be before 'To' time"
+        }
     },
     "add_flowerpot": {
         "title": "Connect your flowerpot to your household",
@@ -259,6 +270,7 @@
             "not_active": "Not active"
         },
         "no_smart_pots": "No smart pots",
+        "error_loading": "No smart pots found in this household",
         "actions": {
             "add": "Add smart pot"
         },
@@ -302,7 +314,27 @@
             "friday": "Friday",
             "saturday": "Saturday",
             "sunday": "Sunday"
-        }
+        },
+        "missing_params": "Missing parameters",
+        "loading": "Loading...",
+        "error_loading": "Error loading data: {{error}}",
+        "flower_not_found": "Flower not found",
+        "loading_flower_data": "Loading flower data...",
+        "signed_into": "Currently signed into {{serialNumber}}",
+        "smartpot_low_warning": "Warning: Smartpot is low",
+        "auto_watering_settings": "Automatic watering profile settings",
+        "assigned_profile": "Flower has assigned profile:",
+        "custom_settings": "Flower is on custom settings",
+        "temperature": "Temperature",
+        "humidity": "Humidity",
+        "light": "Light",
+        "min": "Minimum:",
+        "max": "Maximum:",
+        "min_light": "Minimum:",
+        "max_light": "Maximum:",
+        "transplant": "Transplant flower",
+        "back_to_list": "Back to list",
+        "view_smartpot": "View smartpot"
     },
     "edit_flower_profile": {
         "title": "Edit Flower Profile",
@@ -315,5 +347,38 @@
         "humidity": "Humidity (%)",
         "light": "Light (%)",
         "save": "Save"
+    },
+    "settings": {
+        "household_settings": "Household Settings",
+        "rename_household": "Rename Household",
+        "new_household_name": "New household name",
+        "rename": "Rename",
+        "leave_household": "Leave Household",
+        "leave": "Leave",
+        "delete_household": "Delete Household",
+        "delete": "Delete",
+        "toast": {
+            "enter_household_name": "Please enter household name",
+            "rename_success": "Household was successfully renamed",
+            "rename_error": "Error while renaming household",
+            "leave_success": "You have left the household",
+            "leave_error": "Error while leaving household",
+            "delete_success": "Household was successfully deleted",
+            "delete_error": "Error while deleting household"
+        }
+    },
+    "smart_pot_detail": {
+        "missing_params": "Missing parameters",
+        "loading": "Loading...",
+        "error_loading": "Error loading data: {{error}}",
+        "smart_pot_not_found": "Smart pot not found",
+        "loading_smart_pot_data": "Loading smart pot data...",
+        "battery_level": "Battery level",
+        "last_connection": "Last connection",
+        "assigned_flower": "Assigned flower",
+        "no_flower_assigned": "No flower assigned",
+        "view_flower": "View flower",
+        "disconnect": "Disconnect",
+        "transplant": "Transplant"
     }
 }

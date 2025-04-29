@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, useParams } from 'react-router-dom'
 import Button from '../../components/Button/Button'
+import Loader from '../../components/Loader/Loader'
 import { Paragraph } from '../../components/Text/Paragraph/Paragraph'
 import { loadFlowerpots } from '../../redux/slices/flowerpotsSlice'
 import { RootState } from '../../redux/store/rootReducer'
@@ -12,7 +13,6 @@ const emptySmartPot = require('../../assets/flower_profiles_avatatars/empty-smar
 
 interface SmartPotData {
     serialNumber: string
-    status: string
     status_description: string
     activeFlowerId: string | null
     lastConnection: string
@@ -25,7 +25,7 @@ const SmartPotDetail: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>()
     const navigate = useNavigate()
     const [isInitialLoad, setIsInitialLoad] = useState(true)
-    const [loading, setLoading] = useState(true)
+    const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
     const smartPot = useSelector((state: RootState) => state.flowerpots.flowerpots.find(pot => pot._id === smartPotId))
@@ -35,43 +35,42 @@ const SmartPotDetail: React.FC = () => {
 
         const loadData = async () => {
             try {
-                setLoading(true)
+                setIsLoading(true)
                 await dispatch(loadFlowerpots(householdId)).unwrap()
-                setLoading(false)
+                setIsLoading(false)
                 setIsInitialLoad(false)
             } catch (error) {
                 console.error('Chyba pri načítaní dát:', error)
                 setError('Chyba pri načítaní dát smart potu')
-                setLoading(false)
+                setIsLoading(false)
             }
         }
 
         loadData()
     }, [dispatch, smartPotId, householdId])
 
-    if (!smartPotId || !householdId) {
-        return <div>Chýbajúce parametre</div>
+    if (isLoading) {
+        return <Loader />
     }
 
-    if (loading && isInitialLoad) {
-        return <div>Načítavam...</div>
+    if (!smartPotId || !householdId) {
+        return <div>{t('smart_pot_detail.missing_params')}</div>
     }
 
     if (error) {
-        return <div>Chyba pri načítaní dát: {error}</div>
+        return <div>{t('smart_pot_detail.error_loading', { error })}</div>
     }
 
     if (!smartPot) {
-        return <div>Smart pot nebol nájdený</div>
+        return <div>{t('smart_pot_detail.smart_pot_not_found')}</div>
     }
 
     const smartPotData: SmartPotData = {
         serialNumber: smartPot.serial_number,
-        status: smartPot.active_flower_id ? 'active' : 'inactive',
         status_description: smartPot.active_flower_id ? 'Smart pot je aktívny' : 'Smart pot nie je aktívny',
         activeFlowerId: smartPot.active_flower_id,
         lastConnection: smartPot.createdAt || new Date().toISOString(),
-        batteryLevel: 85, // TODO: Pridať skutočné dáta z API
+        batteryLevel: 85,
     }
 
     return (
@@ -88,35 +87,39 @@ const SmartPotDetail: React.FC = () => {
 
                 <div className="smart-pot-detail__info">
                     <div className="smart-pot-detail__info-section">
-                        <div className="smart-pot-detail__info-title">Stav batérie</div>
+                        <div className="smart-pot-detail__info-title">{t('smart_pot_detail.battery_level')}</div>
                         <div className="smart-pot-detail__battery">
                             <div
                                 className="smart-pot-detail__battery-progress"
-                                style={{ width: `${smartPotData.batteryLevel}%` }}></div>
+                                style={{ '--battery-level': `${smartPotData.batteryLevel}%` } as React.CSSProperties}
+                            />
                             <div className="smart-pot-detail__battery-value">{smartPotData.batteryLevel}%</div>
                         </div>
                     </div>
 
                     <div className="smart-pot-detail__info-section">
-                        <div className="smart-pot-detail__info-title">Posledné pripojenie</div>
+                        <div className="smart-pot-detail__info-title">{t('smart_pot_detail.last_connection')}</div>
                         <Paragraph>{new Date(smartPotData.lastConnection).toLocaleString()}</Paragraph>
                     </div>
 
                     <div className="smart-pot-detail__info-section">
-                        <div className="smart-pot-detail__info-title">Priradená kvetina</div>
+                        <div className="smart-pot-detail__info-title">{t('smart_pot_detail.assigned_flower')}</div>
                         {smartPotData.activeFlowerId ? (
                             <Button
                                 variant="default"
                                 onClick={() =>
                                     navigate(`/households/${householdId}/flowers/${smartPotData.activeFlowerId}`)
                                 }>
-                                Zobraziť kvetinu
+                                {t('smart_pot_detail.view_flower')}
                             </Button>
                         ) : (
-                            <Paragraph variant="secondary">Žiadna kvetina nie je priradená</Paragraph>
+                            <Paragraph variant="secondary">{t('smart_pot_detail.no_flower_assigned')}</Paragraph>
                         )}
                         <Button variant="default" onClick={() => {}}>
-                            Upraviť nastavenia
+                            {t('smart_pot_detail.disconnect')}
+                        </Button>
+                        <Button variant="default" onClick={() => {}}>
+                            {t('smart_pot_detail.transplant')}
                         </Button>
                     </div>
                 </div>

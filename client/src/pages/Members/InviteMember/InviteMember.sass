@@ -1,25 +1,4 @@
-@import '../../../styles/global.sass'
-
-.create-household-title
-    text-align: center
-    margin-top: 2rem
-    margin-bottom: 2rem
-    @media (max-width: 768px)
-        font-size: 2rem
-.create-household-description
-    text-align: center
-
-.create-household-form-container
-    display: flex
-    flex-direction: column
-    align-items: center
-    justify-content: center
-    gap: 1rem
-    
-    color: $primary-text
-    background-color: $background-color
-
-.create-household
+.invite-member
     &-container
         position: fixed
         top: 0
@@ -37,7 +16,7 @@
         padding: 2rem
         border-radius: 1rem
         width: 90%
-        max-width: 600px
+        max-width: 400px
         max-height: 90vh
         overflow-y: auto
         position: relative
@@ -65,16 +44,20 @@
         flex-direction: column
         gap: 0.5rem
 
+    &-input-label
+        color: #666666
+        font-size: 0.9rem
+
     &-input
         background: transparent
         border: 1px solid #333333
         border-radius: 20px
-        padding: 0.8rem 1rem
+        padding: 0.8rem 1.5rem
         color: #ffffff
         font-size: 0.9rem
 
         &::placeholder
-            color: #666666
+            color: #dfdfdf
 
         &:focus
             outline: none
@@ -84,30 +67,3 @@
         color: #FF3B30
         font-size: 14px
         margin-top: 1rem
-
-    &-button
-        background: transparent
-        border: 1px solid #00ff00
-        color: #00ff00
-        padding: 1rem
-        border-radius: 20px
-        font-size: 1rem
-        cursor: pointer
-        width: 100%
-        margin-top: 2rem
-        transition: all 0.3s ease
-
-        &:hover
-            background: rgba(0, 255, 0, 0.1)
-
-        &:disabled
-            opacity: 0.5
-            cursor: not-allowed
-
-        &--default
-            background: #4CAF50
-            color: white
-            border: none
-
-            &:hover
-                background: #45a049
