@@ -12,7 +12,7 @@ const oAuth2Client = new google.auth.OAuth2(
 );
 oAuth2Client.setCredentials({ refresh_token: process.env.REFRESH_TOKEN });
 
-async function sendEmailNotification(users: Array<any>, message: string) {
+async function sendEmailNotification(users: Array<any>, message: string, flower_name: string) {
   try {
     const { token } = await oAuth2Client.getAccessToken();
 
@@ -36,7 +36,7 @@ async function sendEmailNotification(users: Array<any>, message: string) {
       const notification = await transporter.sendMail({
         from: "Smartpot alert 🌼 <smartpot84@gmail.com>",
         to: userMail,
-        subject: "Smartpot notification",
+        subject: `${flower_name} notification`,
         text: message,
       });
       console.log("Message sent: %s", notification.messageId);
@@ -49,12 +49,12 @@ async function sendEmailNotification(users: Array<any>, message: string) {
 
 import axios from "axios";
 
-async function sendDiscordNotification(message: string) {
+async function sendDiscordNotification(message: string, flower_name: string) {
   try {
     await axios.post(process.env.DISCORD_WEBHOOK_URL!, {
       embeds: [
         {
-          title: "New Notification!",
+          title: `${flower_name} Notification`,
           description: message,
           color: 0x00ff00, // green
         },
