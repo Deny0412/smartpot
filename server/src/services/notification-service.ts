@@ -1,18 +1,20 @@
 import nodemailer from "nodemailer";
 import SMTPTransport from "nodemailer/lib/smtp-transport"; // <-- ADD THIS LINE
-import dotenv from "dotenv";
+import { secrets } from "../config/config";
 import { google } from "googleapis";
 
-dotenv.config();
-
 const oAuth2Client = new google.auth.OAuth2(
-  process.env.CLIENT_ID,
-  process.env.CLIENT_SECRET,
-  process.env.REDIRECT_URI
+  secrets.CLIENT_ID,
+  secrets.CLIENT_SECRET,
+  secrets.REDIRECT_URI
 );
-oAuth2Client.setCredentials({ refresh_token: process.env.REFRESH_TOKEN });
+oAuth2Client.setCredentials({ refresh_token: secrets.REFRESH_TOKEN });
 
-async function sendEmailNotification(users: Array<any>, message: string, flower_name: string) {
+async function sendEmailNotification(
+  users: Array<any>,
+  message: string,
+  data: any
+) {
   try {
     const { token } = await oAuth2Client.getAccessToken();
 
@@ -24,9 +26,9 @@ async function sendEmailNotification(users: Array<any>, message: string, flower_
       auth: {
         type: "OAuth2",
         user: "smartpot84@gmail.com",
-        clientId: process.env.CLIENT_ID,
-        clientSecret: process.env.CLIENT_SECRET,
-        refreshToken: process.env.REFRESH_TOKEN,
+        clientId: secrets.CLIENT_ID,
+        clientSecret: secrets.CLIENT_SECRET,
+        refreshToken: secrets.REFRESH_TOKEN,
         accessToken: token,
       },
     });
@@ -36,7 +38,7 @@ async function sendEmailNotification(users: Array<any>, message: string, flower_
       const notification = await transporter.sendMail({
         from: "Smartpot alert 🌼 <smartpot84@gmail.com>",
         to: userMail,
-        subject: `${flower_name} notification`,
+        subject: `${data.flower.name} notification`,
         text: message,
       });
       console.log("Message sent: %s", notification.messageId);
@@ -49,12 +51,12 @@ async function sendEmailNotification(users: Array<any>, message: string, flower_
 
 import axios from "axios";
 
-async function sendDiscordNotification(message: string, flower_name: string) {
+async function sendDiscordNotification(message: string, data: any) {
   try {
-    await axios.post(process.env.DISCORD_WEBHOOK_URL!, {
+    await axios.post(secrets.DISCORD_WEBHOOK_URL!, {
       embeds: [
         {
-          title: `${flower_name} Notification`,
+          title: `${data.flower.name} Notification`,
           description: message,
           color: 0x00ff00, // green
         },

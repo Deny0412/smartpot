@@ -1,10 +1,11 @@
-import { FastifyRequest, FastifyReply } from "fastify";
+import { FastifyReply } from "fastify";
 import createMeasurement from "../../dao/measurement/measurement-create-dao";
 import getSmartpot from "../../dao/smartpot/smart-pot-get-by-serial-number";
 import getFlower from "../../dao/flower/flower-get-dao";
 import { Types } from "mongoose";
 import { isValueOutOfRange } from "../../utils/flower/flower-range-util";
 import notificationService from "../../services/notification-service";
+import { sendToMultipleUsers } from "../../plugins/websocket/sender";
 import getHousehold from "../../dao/household/household-get-dao";
 import getUser from "../../dao/user/user-get-dao";
 import {
@@ -13,7 +14,7 @@ import {
   sendError,
 } from "../../middleware/response-handler";
 import Ajv from "ajv";
-
+import { IFlower } from "@/models/Flower";
 const schema = {
   type: "object",
   properties: {
@@ -31,11 +32,7 @@ const schema = {
 
 const ajv = new Ajv();
 
-async function createMeasurementHandler(
-  data: Object,
-  reply: FastifyReply,
-  user: any
-) {
+async function createMeasurementAbl(data: any, reply: FastifyReply, user: any) {
   try {
     const validate = ajv.compile(schema);
     const valid = validate(data);
@@ -50,15 +47,19 @@ async function createMeasurementHandler(
     const smartpot = await getSmartpot(data.smartpot_serial as string);
     if (!smartpot) {
       sendClientError(reply, "Smart pot does not exist");
+      return;
     }
 
     const activeFlowerId = smartpot?.active_flower_id;
     if (!activeFlowerId) {
       sendClientError(reply, "Smart pot does not have active flower");
+      return;
     }
-
-    const flower = await getFlower(String(activeFlowerId));
     const household = await getHousehold(String(smartpot?.household_id));
+    if (!household) {
+      sendClientError(reply, "Smart pot does not have assigned household");
+      return;
+    }
     if (data.typeOfData === "water") {
       if (typeof data.value !== "string") {
         return sendClientError(
@@ -76,43 +77,43 @@ async function createMeasurementHandler(
       }
     }
 
-    // Check if the value is out of range
+    const flower = await getFlower(String(activeFlowerId));
     const rangeCheckResult = isValueOutOfRange(
       data.typeOfData as string,
       data.value as number,
-      flower?.profile,
-      flower?.name as string
+      flower as IFlower
     );
     const householdOwner = await getUser(String(household?.owner));
-
     const memberIds = household?.members || [];
     const members = (
       await Promise.all(memberIds.map((id) => getUser(String(id))))
-    ).filter((user) => user?.email); //GETS ALL MEMBERS WITH EMAIL
+    ).filter((user) => user?.email);
 
     const usersToNotify = [...members];
     if (householdOwner) {
-      usersToNotify.push(householdOwner); //ADDS OWNER TO THE MEMBERS_TO_NOTIFY ARRAY
+      usersToNotify.push(householdOwner);
     }
-
     if (rangeCheckResult && rangeCheckResult.outOfRange) {
+      sendToMultipleUsers(usersToNotify, rangeCheckResult);
       notificationService.sendEmailNotification(
         usersToNotify,
         rangeCheckResult.message,
-        rangeCheckResult.flower_name
+        rangeCheckResult
       );
-      notificationService.sendDiscordNotification(rangeCheckResult.message, rangeCheckResult.flower_name);
+      notificationService.sendDiscordNotification(
+        rangeCheckResult.message,
+        rangeCheckResult
+      );
       console.log(`Sending notification: ${rangeCheckResult.message}`);
     }
+    sendToMultipleUsers(usersToNotify, data);
 
-    // Save the measurement data
     data.flower_id = new Types.ObjectId(String(activeFlowerId));
     const createdMeasurement = await createMeasurement(data);
-
     sendCreated(reply, createdMeasurement, "Measurement created successfully");
   } catch (error) {
     sendError(reply, error);
   }
 }
 
-export default createMeasurementHandler;
+export default createMeasurementAbl;
