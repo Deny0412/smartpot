@@ -1,76 +1,68 @@
+import { IFlower } from "../../models/Flower";
+
 export function isValueOutOfRange(
   typeOfData: string,
   value: number,
-  profile: any,
-  flowerName: string
-): { outOfRange: boolean; message: string; flower_name: string; } | null {
-  // Mapping typeOfData -> how to check
+  flower: IFlower
+): { outOfRange: boolean; message: string; flower: IFlower } | null {
+  const profile = flower.profile;
+
   const checks: {
     [key: string]: (
-      value: number,
-      profile: any
-    ) => { outOfRange: boolean; message: string; flower_name: string; } | null;
+      value: number
+    ) => { outOfRange: boolean; message: string; flower: IFlower } | null;
   } = {
-    soil: (value, profile) => {
-      const humidityProfile = profile?.humidity;
-      if (!humidityProfile) return null;
-      const { min, max } = humidityProfile;
+    soil: (value) => {
+      const { min, max } = profile.humidity || {};
+      if (min === null || max === null) return null;
       if (value < min || value > max) {
         return {
           outOfRange: true,
           message: `Soil humidity out of range! Measured ${value}%, expected between ${min}% - ${max}%`,
-          flower_name: flowerName
+          flower,
         };
       }
-      return { outOfRange: false, message: "", flower_name: ""};
+      return { outOfRange: false, message: "", flower };
     },
-    temperature: (value, profile) => {
-      const tempProfile = profile?.temperature;
-      if (!tempProfile) return null;
-      const { min, max } = tempProfile;
+    temperature: (value) => {
+      const { min, max } = profile.temperature || {};
+      if (min === null || max === null) return null;
       if (value < min || value > max) {
         return {
           outOfRange: true,
           message: `Temperature out of range! Measured ${value}°C, expected between ${min}°C - ${max}°C`,
-          flower_name: flowerName
-
+          flower,
         };
       }
-      return { outOfRange: false, message: "", flower_name: "" };
+      return { outOfRange: false, message: "", flower };
     },
-    light: (value, profile) => {
-      const lightProfile = profile?.light;
-      if (!lightProfile) return null;
-      const { min, max } = lightProfile;
+    light: (value) => {
+      const { min, max } = profile.light || {};
+      if (min === null || max === null) return null;
       if (value < min || value > max) {
         return {
           outOfRange: true,
           message: `Light intensity out of range! Measured ${value}lux, expected between ${min}lux - ${max}lux`,
-          flower_name: flowerName
-
+          flower,
         };
       }
-      return { outOfRange: false, message: "", flower_name: "" };
+      return { outOfRange: false, message: "", flower };
     },
-    battery: (value, _profile) => {
-      // Battery threshold is hardcoded, not in profile
-      const batteryThreshold = 30; // 30%
+    battery: (value) => {
+      const batteryThreshold = 30;
       if (value < batteryThreshold) {
         return {
           outOfRange: true,
           message: `Battery low! Measured ${value}%, should be at least ${batteryThreshold}%`,
-          flower_name: flowerName
-
+          flower,
         };
       }
-      return { outOfRange: false, message: "", flower_name: "" };
+      return { outOfRange: false, message: "", flower };
     },
   };
 
   const checkFn = checks[typeOfData];
-  if (!checkFn) {
-    return null; // Unknown type, skip check
-  }
+  if (!checkFn) return null;
 
-  return checkFn(value, profile);
+  return checkFn(value);
 }
