@@ -16,7 +16,6 @@ const avatars = [
     'https://res.cloudinary.com/dse3l4lly/image/upload/v1742308831/flowerpots_avatars/bfsivvzsqjzwig8uqzua.png',
     'https://res.cloudinary.com/dse3l4lly/image/upload/v1742308830/flowerpots_avatars/xwi1ujvpmm2d1magwid8.png',
     'https://res.cloudinary.com/dse3l4lly/image/upload/v1742308825/flowerpots_avatars/emgeoupoglpwkuknuvsi.png',
-    
 ]
 
 interface EditNameAndAvatarProps {
@@ -49,29 +48,17 @@ const EditNameAndAvatar: React.FC<EditNameAndAvatarProps> = ({
         setError(null)
 
         try {
-            // Najprv načítame aktuálne dáta kvetiny
-            const currentFlowerResponse = await dispatch(loadFlowerDetails(flowerId)).unwrap()
-            const currentFlower = currentFlowerResponse.data
-
-            // Vytvoríme aktualizované dáta, ktoré zachovávajú všetky existujúce hodnoty
-            const updatedFlower = {
-                ...currentFlower,
-                name,
-                avatar: selectedAvatar,
-                profile_id: currentFlower.profile_id,
-                profile: currentFlower.profile,
-            }
-
             await dispatch(
                 updateFlowerData({
                     id: flowerId,
-                    flower: updatedFlower,
+                    flower: {
+                        name,
+                        avatar: selectedAvatar,
+                    },
                 }),
             ).unwrap()
 
-            // Načítame aktualizované dáta kvetiny
             await dispatch(loadFlowerDetails(flowerId)).unwrap()
-
             toast.success('Kvetina bola úspešne aktualizovaná!')
             onClose()
         } catch (err) {

@@ -37,7 +37,7 @@ export const fetchFlowerDetails = async (flowerId: string): Promise<{ status: st
 
 export const addFlower = async (flower: Omit<Flower, '_id'>): Promise<Flower> => {
     const response = await api.post<{ status: string; data: Flower }>('/flower/add', flower)
-  
+
     if (!response.data.data) {
         throw new Error('ID kvetiny nebolo vrátené zo servera')
     }
@@ -61,13 +61,12 @@ export const fetchFlowerProfiles = async (): Promise<FlowerProfile[]> => {
 }
 
 export const fetchScheduleByFlower = async (flowerId: string): Promise<Schedule> => {
-    const response = await api.get<Schedule>(`/flower/schedule/${flowerId}`)
- 
-    return response.data
+    const response = await api.get<{ status: string; data: Schedule }>(`/flower/schedule/${flowerId}`)
+    return response.data.data
 }
 
 export const createSchedule = async (schedule: Omit<Schedule, 'id'>): Promise<Schedule> => {
-    // Format times to HH:mm and set empty times to null
+   
     const formattedSchedule = {
         flower_id: schedule.flower_id,
         active: schedule.active,
@@ -136,30 +135,53 @@ export const updateSmartPot = async (id: string, smartPot: Partial<SmartPot>): P
 }
 
 export const updateFlower = async (id: string, flower: Partial<Flower>): Promise<Flower> => {
- 
-
     const response = await api.put<{ status: string; data: Flower }>('/flower/update', { id, ...flower })
-
 
     return response.data.data
 }
 
-export const transplantFlowers = async (flowerIds: string[], targetHouseholdId: string): Promise<Flower[]> => {
-    const promises = flowerIds.map(flowerId => updateFlower(flowerId, { household_id: targetHouseholdId }))
-    const results = await Promise.all(promises)
-    return results
+export const transplantFlowerWithSmartPot = async (flowerId: string, targetHouseholdId: string): Promise<Flower> => {
+    const response = await api.post<{ status: string; data: Flower }>(`/flower/transplant-with-smartpot`, {
+        flowerId,
+        targetHouseholdId,
+    })
+    return response.data.data
+}
+
+export const transplantFlowerWithoutSmartPot = async (
+    flowerId: string,
+    targetHouseholdId: string,
+    assignOldSmartPot: boolean,
+    newFlowerId: string,
+): Promise<Flower> => {
+    const response = await api.post<{ status: string; data: Flower }>(`/flower/transplant-without-smartpot`, {
+        flowerId,
+        targetHouseholdId,
+        assignOldSmartPot,
+        newFlowerId,
+    })
+    return response.data.data
+}
+
+export const transplantFlowerToSmartPot = async (flowerId: string, targetSmartPotId: string): Promise<Flower> => {
+    const response = await api.post<{ status: string; data: Flower }>(`/flower/transplant-to-smartpot`, {
+        flowerId,
+        targetSmartPotId,
+    })
+    return response.data.data
 }
 
 export const detachFlower = async (flowerId: string): Promise<void> => {
     await api.put('/flower/update', { id: flowerId, serial_number: null })
 }
 
-export const updateSmartPotFlower = async (serialNumber: string, flowerId: string | null): Promise<SmartPot> => {
-    const response = await api.put<SmartPot>('/smart-pot/update', {
+export const updateSmartPotFlower = async (serialNumber: string, flowerId: string | null, householdId: string) => {
+    const response = await api.put('/smart-pot/update', {
         serial_number: serialNumber,
         active_flower_id: flowerId,
+        household_id: householdId,
     })
-    return response.data
+    return response.data.data
 }
 
 const updateScheduleByFlower = async (flowerId: string, schedule: Schedule): Promise<Schedule> => {
@@ -168,3 +190,16 @@ const updateScheduleByFlower = async (flowerId: string, schedule: Schedule): Pro
 }
 
 export { updateScheduleByFlower }
+
+export const disconnectFlower = async (flowerId: string) => {
+    try {
+        const response = await api.post('/flower/disconnect', { id: flowerId })
+        if (response.data.success) {
+            return response.data
+        }
+        throw new Error(response.data.message || 'Nepodarilo sa odpojiť kvetinu')
+    } catch (error) {
+        console.error('Chyba pri odpojení kvetiny:', error)
+        throw error
+    }
+}

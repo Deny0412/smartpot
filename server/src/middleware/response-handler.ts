@@ -8,42 +8,41 @@ export function sendResponse(reply: FastifyReply, statusCode: number, data: any,
 }
 
 // 2xx Responses
-export const sendSuccess = (reply: FastifyReply, data: any, message: string) => {
-  sendResponse(reply, 200, data, message)
+export const sendSuccess = (reply: FastifyReply, data: any, message?: string) => {
+  return reply.status(200).send({
+    success: true,
+    message: message || 'Success',
+    data,
+  })
 }
 
-export function sendCreated(reply: FastifyReply, data: any, message: string) {
-  sendResponse(reply, 201, data, message)
+export function sendCreated(reply: FastifyReply, data: any, message?: string) {
+  return reply.status(201).send({
+    success: true,
+    message: message || 'Created successfully',
+    data,
+  })
 }
 
-export const sendNoContent = (reply: FastifyReply, message: string = 'No content') => {
-  sendResponse(reply, 204, null, message)
+export const sendNoContent = (reply: FastifyReply) => {
+  return reply.status(204).send()
 }
 
 // Enhanced error handling function
-export const sendError = (reply: FastifyReply, error: unknown) => {
-  let statusCode = 500 // Default to Internal Server Error
-  let message = 'Unknown error occurred' // Default error message
-  if (error instanceof Error) {
-    message = error.message // Use the error message
-    if (message.includes('not found')) {
-      statusCode = 404 // Not Found
-    } else if (message.includes('unauthorized')) {
-      statusCode = 401 // Unauthorized
-    } else if (message.includes('duplicate key error')) {
-      statusCode = 409 // Conflict
-    } else if (message.includes('validation failed')) {
-      statusCode = 400 // Bad Request
-    }
-  }
-
-  sendResponse(reply, statusCode, null, message)
-  return
+export const sendError = (reply: FastifyReply, error: any) => {
+  console.error('Error:', error)
+  return reply.status(500).send({
+    success: false,
+    message: error.message || 'Internal server error',
+  })
 }
 
 // 4xx Responses
-export const sendClientError = (reply: FastifyReply, message: string, code: number = 400) => {
-  sendResponse(reply, code, null, message)
+export const sendClientError = (reply: FastifyReply, message: string) => {
+  return reply.status(400).send({
+    success: false,
+    message,
+  })
 }
 
 // New function for 3xx responses
@@ -54,12 +53,15 @@ export const sendRedirect = (reply: FastifyReply, location: string, message: str
   })
 }
 
-export const sendNotFound = (reply: FastifyReply, message: string = 'Resource not found') => {
-  sendClientError(reply, message, 404)
+export const sendNotFound = (reply: FastifyReply, message: string) => {
+  return reply.status(404).send({
+    success: false,
+    message,
+  })
 }
 
 export const sendUnauthorized = (reply: FastifyReply, message: string = 'Unauthorized access') => {
-  sendClientError(reply, message, 401)
+  sendClientError(reply, message)
 }
 
 // 5xx Responses

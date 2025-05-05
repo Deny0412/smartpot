@@ -4,9 +4,10 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { H5 } from '../../components/Text/Heading/Heading'
+import { selectProfiles } from '../../redux/selectors/flowerProfilesSelectors'
 import { createSchedule } from '../../redux/services/flowersApi'
 import { createFlower, loadFlowers } from '../../redux/slices/flowersSlice'
-import { AppDispatch, RootState } from '../../redux/store/store'
+import { AppDispatch } from '../../redux/store/store'
 import { FlowerProfile } from '../../types/flowerTypes'
 import './AddFlower.sass'
 
@@ -57,7 +58,7 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
         sunday: { from: '', to: '' },
         active: false,
     })
-    const { profiles } = useSelector((state: RootState) => state.flowerProfiles)
+    const profiles = useSelector(selectProfiles)
     const [selectedProfileId, setSelectedProfileId] = useState<string>('')
     const { t } = useTranslation()
 
@@ -219,18 +220,20 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
 
                     <div className="add-flower-option-section">
                         <div className="add-flower-profile-type-selection">
-                            <label>
+                            <label className="add-flower-profile-type-label">
                                 <input
                                     type="radio"
+                                    className="add-flower-profile-type-radio"
                                     value="global"
                                     checked={profileType === 'global'}
                                     onChange={e => setProfileType(e.target.value as 'global' | 'custom')}
                                 />
                                 {t('add_flower.use_existing_profile')}
                             </label>
-                            <label>
+                            <label className="add-flower-profile-type-label">
                                 <input
                                     type="radio"
+                                    className="add-flower-profile-type-radio"
                                     value="custom"
                                     checked={profileType === 'custom'}
                                     onChange={e => setProfileType(e.target.value as 'global' | 'custom')}
@@ -261,7 +264,7 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
                                     <div className="add-flower-range-inputs">
                                         <input
                                             type="number"
-                                            className="add-flower-input"
+                                            className="add-flower-range-input"
                                             value={customProfile.temperature?.min}
                                             onChange={e =>
                                                 handleCustomProfileChange(
@@ -272,10 +275,10 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
                                             }
                                             placeholder="Min"
                                         />
-                                        <span>až</span>
+                                        <span className="add-flower-range-separator">až</span>
                                         <input
                                             type="number"
-                                            className="add-flower-input"
+                                            className="add-flower-range-input"
                                             value={customProfile.temperature?.max}
                                             onChange={e =>
                                                 handleCustomProfileChange(
@@ -294,17 +297,17 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
                                     <div className="add-flower-range-inputs">
                                         <input
                                             type="number"
-                                            className="add-flower-input"
+                                            className="add-flower-range-input"
                                             value={customProfile.humidity?.min}
                                             onChange={e =>
                                                 handleCustomProfileChange('humidity', 'min', parseInt(e.target.value))
                                             }
                                             placeholder="Min"
                                         />
-                                        <span>až</span>
+                                        <span className="add-flower-range-separator">až</span>
                                         <input
                                             type="number"
-                                            className="add-flower-input"
+                                            className="add-flower-range-input"
                                             value={customProfile.humidity?.max}
                                             onChange={e =>
                                                 handleCustomProfileChange('humidity', 'max', parseInt(e.target.value))
@@ -319,17 +322,17 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
                                     <div className="add-flower-range-inputs">
                                         <input
                                             type="number"
-                                            className="add-flower-input"
+                                            className="add-flower-range-input"
                                             value={customProfile.light?.min}
                                             onChange={e =>
                                                 handleCustomProfileChange('light', 'min', parseInt(e.target.value))
                                             }
                                             placeholder="Min"
                                         />
-                                        <span>až</span>
+                                        <span className="add-flower-range-separator">až</span>
                                         <input
                                             type="number"
-                                            className="add-flower-input"
+                                            className="add-flower-range-input"
                                             value={customProfile.light?.max}
                                             onChange={e =>
                                                 handleCustomProfileChange('light', 'max', parseInt(e.target.value))
@@ -363,12 +366,12 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
                         <div className="add-flower-schedule-days">
                             {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(day => (
                                 <div key={day} className="add-flower-schedule-day">
-                                    <span>{dayTranslations[day]}</span>
+                                    <span className="add-flower-schedule-day-label">{dayTranslations[day]}</span>
                                     <div className="add-flower-time-inputs">
-                                        <label>{t('add_flower.schedule_from')}</label>
+                                        <label className="add-flower-time-label">{t('add_flower.schedule_from')}</label>
                                         <input
                                             type="time"
-                                            className="add-flower-input"
+                                            className="add-flower-time-input"
                                             value={scheduleData[day as keyof Omit<ScheduleData, 'active'>].from || ''}
                                             onChange={e =>
                                                 handleTimeChange(
@@ -378,10 +381,10 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
                                                 )
                                             }
                                         />
-                                        <label>{t('add_flower.schedule_to')}</label>
+                                        <label className="add-flower-time-label">{t('add_flower.schedule_to')}</label>
                                         <input
                                             type="time"
-                                            className="add-flower-input"
+                                            className="add-flower-time-input"
                                             value={scheduleData[day as keyof Omit<ScheduleData, 'active'>].to || ''}
                                             onChange={e =>
                                                 handleTimeChange(

@@ -1,10 +1,15 @@
-import React, { useState } from 'react'
-import Button from '../../components/Button/Button'
-import GradientDiv from '../../components/GradientDiv/GradientDiv'
+import { Check, X } from 'phosphor-react'
+import React, { useEffect } from 'react'
+import { toast } from 'react-toastify'
+import Loader from '../../components/Loader/Loader'
 import { H2 } from '../../components/Text/Heading/Heading'
+import { Paragraph } from '../../components/Text/Paragraph/Paragraph'
+import { selectInvites, selectInvitesLoading } from '../../redux/selectors/invitesSelectors'
+import { acceptInvite, loadInvites, rejectInvite } from '../../redux/slices/invitesSlice'
+import { useAppDispatch, useAppSelector } from '../../redux/store/hooks'
 import './Notifications.sass'
-import { NotificationsMockData } from './NotificationsMockData'
-import { Check  , X} from 'phosphor-react'
+
+const emptyPhotoMembersAvatar = require('../../assets/empty_notifications.png')
 
 interface NotificationItemProps {
     household: string
@@ -13,13 +18,13 @@ interface NotificationItemProps {
 }
 
 interface HouseholdInviteProps {
-    id: number
+    id: string
     household_name: string
     inviter_name: string
     timestamp: string
     status: string
-    onAccept: (id: number) => void
-    onReject: (id: number) => void
+    onAccept: (id: string) => void
+    onReject: (id: string) => void
 }
 
 const NotificationItem: React.FC<NotificationItemProps> = ({ household, notificationCount, onClick }) => (
@@ -45,12 +50,14 @@ const HouseholdInvite: React.FC<HouseholdInviteProps> = ({
         <div className="invite-content">
             <div className="invite-header">
                 <span className="invite-household">{household_name}</span>
+                <span className="invite-inviter">Pozývateľ: {inviter_name}</span>
+                <span className="invite-timestamp">{formatDate(timestamp)}</span>
             </div>
-        
+
             {status === 'pending' && (
                 <div className="invite-actions">
-                    <Check size={32} color="#4CAF50" onClick={() => onAccept(id)} className="invite-action-button"/>
-                    <X size={32} color="#f93333" onClick={() => onReject(id)} className="invite-action-button"/>
+                    <Check size={32} color="#4CAF50" onClick={() => onAccept(id)} className="invite-action-button" />
+                    <X size={32} color="#f93333" onClick={() => onReject(id)} className="invite-action-button" />
                 </div>
             )}
         </div>
@@ -95,45 +102,38 @@ const formatDate = (timestamp: string) => {
 }
 
 const Notifications: React.FC = () => {
-    const [selectedHousehold, setSelectedHousehold] = useState<string | null>(null)
-    const [invites, setInvites] = useState(NotificationsMockData.householdInvites)
+    const dispatch = useAppDispatch()
+    const invites = useAppSelector(selectInvites)
+    const loading = useAppSelector(selectInvitesLoading)
 
-    const households = NotificationsMockData.notifications.map(household => ({
-        name: household.household_name,
-        count: household.alerts.length,
-    }))
+    useEffect(() => {
+        dispatch(loadInvites())
+    }, [dispatch])
 
-    const selectedHouseholdData = NotificationsMockData.notifications.find(h => h.household_name === selectedHousehold)
-
-    const handleAcceptInvite = (id: number) => {
-        setInvites(invites.filter(invite => invite.id !== id))
-        // TODO: Implementácia prijatia pozvánky
+    const handleAcceptInvite = async (id: string) => {
+        try {
+            await dispatch(acceptInvite(id)).unwrap()
+            toast.success('Pozvánka prijatá')
+        } catch (error) {
+            toast.error('Nepodarilo sa prijať pozvánku')
+        }
     }
 
-    const handleRejectInvite = (id: number) => {
-        setInvites(invites.filter(invite => invite.id !== id))
-        // TODO: Implementácia zamietnutia pozvánky
+    const handleRejectInvite = async (id: string) => {
+        try {
+            await dispatch(rejectInvite(id)).unwrap()
+            toast.success('Pozvánka zamietnutá')
+        } catch (error) {
+            toast.error('Nepodarilo sa zamietnuť pozvánku')
+        }
     }
 
-    if (selectedHousehold && selectedHouseholdData) {
+    if (loading) {
         return (
             <div className="main-notifications-container">
-                <H2 className="main-notifications-title">Notifications {selectedHousehold}</H2>
-
-                <div className="notifications-list">
-                    {selectedHouseholdData.alerts.map(alert => (
-                        <div key={alert.id} className="alert-item">
-                            <div className="alert-icon">{getAlertIcon(alert.type)}</div>
-                            <div className="alert-content">
-                                <div className="alert-plant-name">{alert.plant_name}</div>
-                                <div className="alert-message">{alert.message}</div>
-                                <div className="alert-timestamp">{formatDate(alert.timestamp)}</div>
-                            </div>
-                        </div>
-                    ))}
-                    <Button variant="default" onClick={() => setSelectedHousehold(null)} className="back-button">
-                        ‹ Back to all notifications
-                    </Button>
+                <H2 className="main-notifications-title">Notifications</H2>
+                <div className="loading-container">
+                    <Loader />
                 </div>
             </div>
         )
@@ -143,7 +143,7 @@ const Notifications: React.FC = () => {
         <div className="main-notifications-container">
             <H2 className="main-notifications-title">Notifications</H2>
 
-            {invites.length > 0 && (
+            {invites.length > 0 ? (
                 <div className="invites-section">
                     <H2 className="invites-title">Pozvánky do domácností</H2>
                     <div className="invites-list">
@@ -157,19 +157,14 @@ const Notifications: React.FC = () => {
                         ))}
                     </div>
                 </div>
+            ) : (
+                <div className="no-invites-container">
+                    <div className="no-invites-content">
+                        <img src={emptyPhotoMembersAvatar} alt="Žiadne notifikácie" className="no-invites-image" />
+                        <Paragraph>Nemáte žiadne pozvánky do domácností</Paragraph>
+                    </div>
+                </div>
             )}
-
-            <div className="households-list">
-                <H2 className="invites-title">Domácnosti</H2>
-                {households.map(household => (
-                    <NotificationItem
-                        key={household.name}
-                        household={household.name}
-                        notificationCount={household.count}
-                        onClick={() => setSelectedHousehold(household.name)}
-                    />
-                ))}
-            </div>
         </div>
     )
 }

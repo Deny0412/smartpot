@@ -3,12 +3,20 @@ import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, useParams } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import Button from '../../components/Button/Button'
 import GradientDiv from '../../components/GradientDiv/GradientDiv'
 import Loader from '../../components/Loader/Loader'
 import { H3 } from '../../components/Text/Heading/Heading'
 import { TranslationFunction } from '../../i18n'
-import { loadHouseholds } from '../../redux/slices/householdsSlice'
+import { selectUser } from '../../redux/selectors/authSelectors'
+import {
+    selectHouseholdById,
+    selectHouseholds,
+    selectHouseholdsLoading,
+} from '../../redux/selectors/houseHoldSelectors'
+import { selectUsers, selectUsersLoading } from '../../redux/selectors/userSelectors'
+import { loadHouseholds, makeOwnerAction, removeMemberAction } from '../../redux/slices/householdsSlice'
 import { fetchUsers } from '../../redux/slices/usersSlice'
 import { AppDispatch, RootState } from '../../redux/store/store'
 import InviteMember from './InviteMember/InviteMember'
@@ -19,12 +27,14 @@ const Members: React.FC = () => {
     const navigate = useNavigate()
     const dispatch = useDispatch<AppDispatch>()
     const { householdId } = useParams<{ householdId: string }>()
-    const { households, loading: householdsLoading } = useSelector((state: RootState) => state.households)
-    const { users, loading: usersLoading } = useSelector((state: RootState) => state.users)
-    const { user } = useSelector((state: RootState) => state.auth)
+    const households = useSelector(selectHouseholds)
+    const householdsLoading = useSelector(selectHouseholdsLoading)
+    const users = useSelector(selectUsers)
+    const usersLoading = useSelector(selectUsersLoading)
+    const user = useSelector(selectUser)
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
 
-    const household = households.find(h => h.id === householdId)
+    const household = useSelector((state: RootState) => selectHouseholdById(state, householdId || ''))
     const isOwner = household?.owner === user?.id
 
     useEffect(() => {
@@ -43,14 +53,36 @@ const Members: React.FC = () => {
         }
     }, [household, isOwner, householdsLoading, navigate])
 
-    const handleRemoveMember = (memberId: string) => {
-        // TODO: Implement remove member functionality
-        console.log('Remove member:', memberId)
+    const handleRemoveMember = async (memberId: string) => {
+        if (!householdId) return
+        try {
+            await dispatch(removeMemberAction({ householdId, memberId })).unwrap()
+            toast.success('Člen bol úspešne odstránený')
+            // Aktualizujeme dáta
+            dispatch(loadHouseholds())
+            if (household?.id) {
+                dispatch(fetchUsers(household.id))
+            }
+        } catch (error) {
+            console.error('Chyba pri odstránení člena:', error)
+            toast.error('Nepodarilo sa odstrániť člena')
+        }
     }
 
-    const handleMakeOwner = (memberId: string) => {
-        // TODO: Implement make owner functionality
-        console.log('Make owner:', memberId)
+    const handleMakeOwner = async (memberId: string) => {
+        if (!householdId) return
+        try {
+            await dispatch(makeOwnerAction({ householdId, newOwnerId: memberId })).unwrap()
+            toast.success('Vlastník bol úspešne zmenený')
+            // Aktualizujeme dáta
+            dispatch(loadHouseholds())
+            if (household?.id) {
+                dispatch(fetchUsers(household.id))
+            }
+        } catch (error) {
+            console.error('Chyba pri zmene vlastníka:', error)
+            toast.error('Nepodarilo sa zmeniť vlastníka')
+        }
     }
 
     const getMemberName = (memberId: string) => {
@@ -87,7 +119,7 @@ const Members: React.FC = () => {
                 <div className="members-section">
                     <div className="section-content">
                         <div className="members-list">
-                            {household.members.map(memberId => (
+                            {household.members.map((memberId: string) => (
                                 <div key={memberId} className="member-item">
                                     <div className="member-info">
                                         <span className="member-name">{getMemberName(memberId)}</span>

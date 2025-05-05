@@ -2,65 +2,73 @@ import { Types } from 'mongoose'
 import FlowerModel from '../../models/Flower'
 
 async function updateFlower(id: string, flowerData: any) {
-
+  console.log('=== DAO - Vstupné dáta ===')
+  console.log('ID:', id)
+  console.log('Dáta:', flowerData)
 
   // Vytvoríme update objekt
   const updateData: any = {
     $set: {},
+    $unset: {},
   }
 
-  // Ak máme vlastný profil, odstránime profile_id a nastavíme profile
-  if (flowerData.profile) {
-    updateData.$set.profile = flowerData.profile
-    updateData.$unset = { profile_id: 1 }
-  }
-
-  // Ak máme globálny profil, odstránime profile a nastavíme profile_id
-  if (flowerData.profile_id) {
-    updateData.$set.profile_id = flowerData.profile_id
-    updateData.$unset = { ...(updateData.$unset || {}), profile: 1 }
-  }
-
-  // Ak nemáme ani profile ani profile_id, odstránime oboje
-  if (!flowerData.profile && !flowerData.profile_id) {
-    updateData.$unset = {
-      ...(updateData.$unset || {}),
-      profile: 1,
-      profile_id: 1,
-    }
-  }
-
-  // Pridáme ostatné polia do $set
-  Object.keys(flowerData).forEach((key) => {
-    if (key !== 'profile' && key !== 'profile_id' && flowerData[key] !== undefined) {
-      updateData.$set[key] = flowerData[key]
+  // Spracujeme všetky polia okrem _id
+  Object.entries(flowerData).forEach(([key, value]) => {
+    if (key !== '_id') {
+      if (value === undefined || value === null) {
+        updateData.$unset[key] = ''
+      } else {
+        updateData.$set[key] = value
+      }
     }
   })
+
+  // Ak máme custom profil, odstránime profile_id
+  if (updateData.$set.profile) {
+    updateData.$unset.profile_id = ''
+  }
+
+  // Ak máme globálny profil, odstránime profile
+  if (updateData.$set.profile_id) {
+    updateData.$unset.profile = ''
+  }
+
+  // Ak nemáme žiadne polia na nastavenie, odstránime $set
+  if (Object.keys(updateData.$set).length === 0) {
+    delete updateData.$set
+  }
+
+  // Ak nemáme žiadne polia na odstránenie, odstránime $unset
+  if (Object.keys(updateData.$unset).length === 0) {
+    delete updateData.$unset
+  }
 
   console.log('=== DAO - Finálne dáta pre aktualizáciu ===')
   console.log('Update data:', updateData)
 
   // Najprv vykonáme aktualizáciu
-  await FlowerModel.updateOne({ _id: new Types.ObjectId(id) }, updateData)
-
-  // Potom získame aktualizovaný dokument s explicitne vybranými poliami
-  const flower = await FlowerModel.findOne(
+  const result = await FlowerModel.updateOne(
     { _id: new Types.ObjectId(id) },
-    { profile_id: 1, name: 1, household_id: 1, avatar: 1, serial_number: 1, updatedAt: 1 }
-  ).lean()
+    updateData,
+    { new: true } // Vráti aktualizovaný dokument
+  )
 
   console.log('=== DAO - Výsledok aktualizácie ===')
-  console.log('Aktualizovaná kvetina:', flower)
+  console.log('Result:', result)
+
+  // Potom získame aktualizovaný dokument
+  const flower = await FlowerModel.findOne({ _id: new Types.ObjectId(id) }).lean()
+
+  console.log('=== DAO - Aktualizovaný dokument ===')
+  console.log('Flower:', flower)
 
   if (!flower) {
     return null
   }
 
-  // Vrátime všetky potrebné polia vrátane profile_id
   return {
     ...flower,
     _id: flower._id.toString(),
-    profile_id: flower.profile_id || flowerData.profile_id, // Pridáme profile_id z databázy alebo z vstupných dát
   }
 }
 

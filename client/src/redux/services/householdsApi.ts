@@ -44,3 +44,29 @@ export const leaveHousehold = async (id: string): Promise<void> => {
     const response = await api.put(`/household/leave`, { id })
     return response.data
 }
+
+export const inviteMember = async (householdId: string, userId: string): Promise<{ message: string }> => {
+    const data = {
+        id: householdId,
+        invited_user_id: userId,
+    }
+    console.log('Sending invite request with data:', data)
+    const response = await api.post<{ message: string }>('/household/invite', data)
+    return response.data
+}
+
+export const removeMember = async (householdId: string, memberId: string): Promise<Household> => {
+    const response = await api.put<Household>('/household/kick', {
+        id: householdId,
+        kicked_user_id: memberId,
+    })
+    return response.data
+}
+
+export const makeOwner = async (householdId: string, newOwnerId: string): Promise<Household> => {
+    const response = await api.put<Household>('/household/changeOwner', {
+        id: householdId,
+        new_owner_id: newOwnerId,
+    })
+    return response.data
+}

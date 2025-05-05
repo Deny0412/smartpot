@@ -171,7 +171,8 @@
             "humidity": "Humidity",
             "temperature": "Temperature",
             "light": "Light",
-            "water_level": "Water level"
+            "water_level": "Water level",
+            "battery": "Battery"
         },
         "filter_date_range": {
             "day": "Day",
@@ -246,7 +247,12 @@
         "button": "Login",
         "loading": "Logining in",
         "register": "Register",
-        "password": "Password"
+        "password": "Password",
+        "success": "Successfully logged in",
+        "error": {
+            "empty_fields": "Please fill in all fields",
+            "invalid_credentials": "Invalid login credentials"
+        }
     },
     "register_page": {
         "title": "Register",
@@ -254,7 +260,15 @@
         "button": "Register",
         "loading": "Registering",
         "password": "Password",
-        "confirm_password": "Confirm password"
+        "confirm_password": "Confirm password",
+        "name": "Name",
+        "surname": "Surname",
+        "success": "Registration successful",
+        "error": {
+            "passwords_dont_match": "Passwords do not match",
+            "registration_failed": "Registration failed",
+            "empty_fields": "Please fill in all fields"
+        }
     },
     "edit_flower": {
         "title": "Edit flower",
@@ -321,6 +335,8 @@
         "flower_not_found": "Flower not found",
         "loading_flower_data": "Loading flower data...",
         "signed_into": "Currently signed into {{serialNumber}}",
+        "water_level": "Water level",
+        "battery_status": "Battery status: {{value}}%",
         "smartpot_low_warning": "Warning: Smartpot is low",
         "auto_watering_settings": "Automatic watering profile settings",
         "assigned_profile": "Flower has assigned profile:",
@@ -334,7 +350,29 @@
         "max_light": "Maximum:",
         "transplant": "Transplant flower",
         "back_to_list": "Back to list",
-        "view_smartpot": "View smartpot"
+        "view_smartpot": "View smartpot",
+        "transplant_title": "Transplant flower",
+        "current_household": "Current household",
+        "select_new_household": "Select new household",
+        "select_household_placeholder": "Select household",
+        "keep_smart_pot": "Do you want to keep the smart pot when transplanting?",
+        "yes": "Yes",
+        "no": "No",
+        "confirm_transplant": "Confirm transplant",
+        "transplanting": "Transplanting...",
+        "transplant_success": "Flower was successfully transplanted",
+        "transplant_error": "Failed to transplant flower",
+        "assign_new_smart_pot": "Do you want to assign the smart pot to another flower in this household?",
+        "select_flower": "Select flower",
+        "select_flower_placeholder": "Select flower from household",
+        "no_flowers_available": "No available flowers in this household",
+        "transplant_type": "Transplant type",
+        "same_household": "Within the same household",
+        "different_household": "To a different household",
+        "select_smart_pot": "Select smart pot",
+        "select_smart_pot_placeholder": "Select smart pot from household",
+        "no_smartpots_available": "No available smart pots in this household",
+        "disconnect_flower": "Disconnect flower from smartpot"
     },
     "edit_flower_profile": {
         "title": "Edit Flower Profile",
@@ -379,6 +417,45 @@
         "no_flower_assigned": "No flower assigned",
         "view_flower": "View flower",
         "disconnect": "Disconnect",
-        "transplant": "Transplant"
+        "transplant": "Transplant",
+        "disconnect_title": "Disconnect flowerpot",
+        "disconnect_message": "Are you sure you want to disconnect this flowerpot from the flower? This action cannot be undone.",
+        "cancel": "Cancel",
+        "confirm_disconnect": "Disconnect",
+        "disconnecting": "Disconnecting...",
+        "disconnect_success": "Flowerpot was successfully disconnected",
+        "disconnect_error": "Failed to disconnect flowerpot",
+        "transplant_title": "Transplant smart pot",
+        "current_household": "Current household",
+        "select_new_household": "Select new household",
+        "select_household_placeholder": "Select household",
+        "confirm_transplant": "Confirm transplant",
+        "transplanting": "Transplanting...",
+        "transplant_success": "Smart pot was successfully transplanted",
+        "transplant_error": "Failed to transplant smart pot",
+        "transplant_type": "Transplant type",
+        "same_household": "Within the same household",
+        "different_household": "To a different household",
+        "select_flower": "Select flower",
+        "select_flower_placeholder": "Select flower from household",
+        "no_flowers_available": "No available flowers in this household",
+        "transplant_warning": "Warning: If you transplant a smart pot with an assigned flower, the flower will be deactivated"
+    },
+    "not_found": {
+        "title": "404",
+        "subtitle": "Page not found",
+        "description": "Sorry, but the page you are looking for does not exist.",
+        "button": "Back to home page"
+    },
+    "add_smart_pot": {
+        "title": "Add smart pot",
+        "serial_number": "Smart pot serial number",
+        "serial_number_placeholder": "Enter smart pot serial number",
+        "final_button": "Add smart pot",
+        "saving": "Saving...",
+        "error": {
+            "serial_required": "Serial number is required",
+            "general": "Failed to add smart pot"
+        }
     }
 }

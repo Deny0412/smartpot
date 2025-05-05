@@ -7,15 +7,22 @@ import Loader from '../../../components/Loader/Loader'
 import { H2 } from '../../../components/Text/Heading/Heading'
 import { Paragraph } from '../../../components/Text/Paragraph/Paragraph'
 import { TranslationFunction } from '../../../i18n'
+import {
+    selectHouseholds,
+    selectHouseholdsError,
+    selectHouseholdsLoading,
+} from '../../../redux/selectors/houseHoldSelectors'
 import { clearError, loadHouseholds } from '../../../redux/slices/householdsSlice'
-import { AppDispatch, RootState } from '../../../redux/store/store'
+import { AppDispatch } from '../../../redux/store/store'
 import CreateHousehold from '../CreateHousehold/CreateHousehold'
 import HouseHoldItem from '../components/HouseHoldItem/HouseHoldItem'
 import './HouseholdsMain.sass'
 
 const HouseholdsMain: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>()
-    const { households, loading, error } = useSelector((state: RootState) => state.households)
+    const households = useSelector(selectHouseholds)
+    const loading = useSelector(selectHouseholdsLoading)
+    const error = useSelector(selectHouseholdsError)
     const token = localStorage.getItem('token')
     const emptyHousehold = !Array.isArray(households) || households.length === 0
     const navigate = useNavigate()

@@ -15,11 +15,11 @@
     align-items: center
     justify-content: center
     gap: 1rem
-    
+
     color: $primary-text
     background-color: $background-color
 
-.create-household
+.modal-create-household
     &-container
         position: fixed
         top: 0
@@ -43,7 +43,12 @@
         position: relative
         display: flex
         flex-direction: column
+        align-items: center
         gap: 1rem
+        margin: 0 1rem
+        @media (max-width: 768px)
+            width: 95%
+            margin: 0 0.5rem
 
     &-close-button
         position: absolute
@@ -54,36 +59,55 @@
         font-size: 1.5rem
         cursor: pointer
         color: #ffffff
+        width: 2rem
+        height: 2rem
+        display: flex
+        align-items: center
+        justify-content: center
+        z-index: 1001
+        @media (max-width: 768px)
+            font-size: 2rem
+            width: 3rem
+            height: 3rem
 
     &-form
         display: flex
         flex-direction: column
+        align-items: center
+        width: 100%
         gap: 1.5rem
 
     &-form-group
         display: flex
         flex-direction: column
+        align-items: center
+        width: 100%
         gap: 0.5rem
 
     &-input
         background: transparent
-        border: 1px solid #333333
-        border-radius: 20px
+        border: 1px solid #ffffff
+        border-radius: 8px
         padding: 0.8rem 1rem
         color: #ffffff
         font-size: 0.9rem
+        width: 80%
+        text-align: center
 
         &::placeholder
-            color: #666666
+            color: #ffffff
+            opacity: 0.7
 
         &:focus
             outline: none
-            border-color: #666666
+            border-color: #ffffff
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.3)
 
     &-error-message
         color: #FF3B30
         font-size: 14px
         margin-top: 1rem
+        text-align: center
 
     &-button
         background: transparent
@@ -94,8 +118,7 @@
         font-size: 1rem
         cursor: pointer
         width: 100%
-        margin-top: 2rem
-        transition: all 0.3s ease
+        margin-top: 1rem
 
         &:hover
             background: rgba(0, 255, 0, 0.1)
@@ -111,3 +134,7 @@
 
             &:hover
                 background: #45a049
+
+.modal-create-household-title
+    text-align: center
+    margin: 0 auto

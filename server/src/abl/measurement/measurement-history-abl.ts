@@ -28,7 +28,6 @@ const schema = {
 
 async function measurementHistoryAbl(data: MeasurementHistoryRequest, reply: FastifyReply) {
   try {
-  
     const validate = ajv.compile(schema)
     const valid = validate(data)
 

@@ -21,6 +21,6 @@ export const deleteUser = async (id: string): Promise<void> => {
 }
 
 export const updateUser = async (id: string, user: Partial<User>): Promise<User> => {
-    const response = await api.put<User>(`/users/${id}`, user)
+    const response = await api.put<User>(`/user/${id}`, user)
     return response.data
 }

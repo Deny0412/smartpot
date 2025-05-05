@@ -1,4 +1,5 @@
 import { Types } from 'mongoose'
+import BatteryMeasurementModel from '../../models/BatteryMeasurement'
 import HumidityMeasurementModel from '../../models/HumidityMeasurement'
 import LightMeasurementModel from '../../models/LightMeasurement'
 import TemperatureMeasurementModel from '../../models/TemperatureMeasurement'
@@ -9,7 +10,7 @@ interface MeasurementRecord {
   flower_id: Types.ObjectId
   value: number | string
   createdAt: Date
-  type: 'water' | 'temperature' | 'light' | 'humidity'
+  type: 'water' | 'temperature' | 'light' | 'humidity' | 'battery'
 }
 
 interface MeasurementHistoryRequest {
@@ -23,17 +24,35 @@ export default async function measurementHistoryDao(data: MeasurementHistoryRequ
   const query: any = { flower_id: new Types.ObjectId(id) }
 
   if (dateFrom && dateTo) {
+    const fromDate = new Date(dateFrom)
+    fromDate.setHours(0, 0, 0, 0)
+    fromDate.setMinutes(fromDate.getMinutes() - fromDate.getTimezoneOffset())
+
+    const toDate = new Date(dateTo)
+    toDate.setHours(23, 59, 59, 999)
+    toDate.setMinutes(toDate.getMinutes() - toDate.getTimezoneOffset())
+
     query.createdAt = {
-      $gte: new Date(dateFrom),
-      $lte: new Date(dateTo),
+      $gte: fromDate,
+      $lte: toDate,
     }
   }
 
-  const [waterRecords, humidityRecords, lightRecords, temperatureRecords] = await Promise.all([
-    WaterMeasurementModel.find(query).sort({ createdAt: 1 }).lean(),
-    HumidityMeasurementModel.find(query).sort({ createdAt: 1 }).lean(),
-    LightMeasurementModel.find(query).sort({ createdAt: 1 }).lean(),
-    TemperatureMeasurementModel.find(query).sort({ createdAt: 1 }).lean(),
+  console.log('Query parameters:', {
+    flowerId: id,
+    dateFrom,
+    dateTo,
+    query,
+    fromDate: query.createdAt?.$gte,
+    toDate: query.createdAt?.$lte,
+  })
+
+  const [waterRecords, humidityRecords, lightRecords, temperatureRecords, batteryRecords] = await Promise.all([
+    WaterMeasurementModel.find(query).sort({ createdAt: -1 }).lean(),
+    HumidityMeasurementModel.find(query).sort({ createdAt: -1 }).lean(),
+    LightMeasurementModel.find(query).sort({ createdAt: -1 }).lean(),
+    TemperatureMeasurementModel.find(query).sort({ createdAt: -1 }).lean(),
+    BatteryMeasurementModel.find(query).sort({ createdAt: -1 }).lean(),
   ])
 
   const combinedRecords: MeasurementRecord[] = [
@@ -64,6 +83,13 @@ export default async function measurementHistoryDao(data: MeasurementHistoryRequ
       value: record.value,
       createdAt: record.createdAt,
       type: 'temperature' as const,
+    })),
+    ...(batteryRecords as any[]).map((record) => ({
+      _id: record._id,
+      flower_id: record.flower_id,
+      value: record.value,
+      createdAt: record.createdAt,
+      type: 'battery' as const,
     })),
   ]
 

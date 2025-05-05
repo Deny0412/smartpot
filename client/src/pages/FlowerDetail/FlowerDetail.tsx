@@ -1,20 +1,42 @@
-import { PencilSimple, WarningCircle } from '@phosphor-icons/react'
+import { CheckCircle, PencilSimple, WarningCircle } from '@phosphor-icons/react'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, useParams } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import Button from '../../components/Button/Button'
 import Loader from '../../components/Loader/Loader'
 import { H4, H5 } from '../../components/Text/Heading/Heading'
 import { Paragraph } from '../../components/Text/Paragraph/Paragraph'
-import { loadFlowerpots, loadInactiveFlowerpots } from '../../redux/slices/flowerpotsSlice'
+import { selectUser } from '../../redux/selectors/authSelectors'
+import {
+    selectConnectedSmartPot,
+    selectFlower,
+    selectFlowerpotData,
+    selectInactiveSmartPot,
+    selectSmartPot,
+} from '../../redux/selectors/flowerDetailSelectors'
+import { selectFlowerProfile } from '../../redux/selectors/flowerProfilesSelectors'
+import { selectHouseholdById, selectIsHouseholdOwner } from '../../redux/selectors/houseHoldSelectors'
+import {
+    selectMeasurementsError,
+    selectMeasurementsLoading,
+    selectProcessedMeasurements,
+} from '../../redux/selectors/measurementSelectors'
+import { selectSchedule } from '../../redux/selectors/scheduleSelectors'
+import { disconnectFlower } from '../../redux/services/flowersApi'
 import { loadFlowerProfiles } from '../../redux/slices/flowerProfilesSlice'
-import { loadFlowerDetails } from '../../redux/slices/flowersSlice'
-import { fetchMeasurementsForFlower } from '../../redux/slices/measurementsSlice'
+import { loadFlowerDetails, removeFlower } from '../../redux/slices/flowersSlice'
+import {
+    clearMeasurements,
+    startWebSocketConnection,
+    stopWebSocketConnection,
+} from '../../redux/slices/measurementsSlice'
 import { loadSchedule } from '../../redux/slices/scheduleSlice'
-import { RootState } from '../../redux/store/rootReducer'
-import { AppDispatch } from '../../redux/store/store'
-import { MeasurementValue, Schedule, ScheduleResponse } from '../../types/flowerTypes'
+import { fetchInactiveSmartPots, fetchSmartPots } from '../../redux/slices/smartPotsSlice'
+import { AppDispatch, RootState } from '../../redux/store/store'
+import { MeasurementValue, Schedule } from '../../types/flowerTypes'
+import EditFlowerHousehold from './EditFlowerHousehold/EditFlowerHousehold'
 import EditFlowerProfile from './EditFlowerProfile/EditFlowerProfile'
 import EditFlowerSchedule from './EditFlowerSchedule/EditFlowerSchedule'
 import EditNameAndAvatar from './EditNameAndAvatar/EditNameAndAvatar'
@@ -37,6 +59,14 @@ interface FlowerpotData {
         timestamp: string
         light: number
     }>
+    battery_measurement: Array<{
+        timestamp: string
+        battery: number
+    }>
+    water_measurement: Array<{
+        timestamp: string
+        water: string
+    }>
 }
 
 interface FlowerDetailProps {
@@ -48,29 +78,8 @@ interface Measurements {
     humidity: MeasurementValue[]
     temperature: MeasurementValue[]
     light: MeasurementValue[]
-}
-
-const selectFlower = (state: RootState) => state.flowers.selectedFlower
-const selectProfiles = (state: RootState) => state.flowerProfiles.profiles
-const selectMeasurements = (state: RootState, flowerId: string) => {
-    const measurements = state.measurements.measurements[flowerId]
-    if (!measurements) {
-        return {
-            humidity: [],
-            temperature: [],
-            light: [],
-        } as Measurements
-    }
-    return measurements as Measurements
-}
-const selectLoading = (state: RootState) =>
-    state.measurements.loading || state.flowers.loading || state.flowerProfiles.loading || state.schedule.loading
-const selectError = (state: RootState) =>
-    state.measurements.error || state.flowers.error || state.flowerProfiles.error || state.schedule.error
-const selectSchedule = (state: RootState) => state.schedule.schedule as unknown as ScheduleResponse
-const selectSmartPot = (state: RootState, serialNumber: string) => {
-    const allPots = [...state.flowerpots.flowerpots, ...state.flowerpots.inactiveFlowerpots]
-    return allPots.find(pot => pot.serial_number === serialNumber)
+    battery: MeasurementValue[]
+    water: MeasurementValue[]
 }
 
 const FlowerDetail: React.FC = () => {
@@ -84,7 +93,24 @@ const FlowerDetail: React.FC = () => {
     const [isScheduleEditModalOpen, setIsScheduleEditModalOpen] = useState(false)
     const [isProfileEditModalOpen, setIsProfileEditModalOpen] = useState(false)
     const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+    const [isTransplantModalOpen, setIsTransplantModalOpen] = useState(false)
     const navigate = useNavigate()
+
+    const user = useSelector(selectUser)
+    const flower = useSelector(selectFlower)
+    const flowerProfileData = useSelector((state: RootState) => selectFlowerProfile(state, flowerId || ''))
+    const measurements = useSelector((state: RootState) => selectProcessedMeasurements(state, flowerId || ''))
+    const loading = useSelector(selectMeasurementsLoading)
+    const error = useSelector(selectMeasurementsError)
+    const schedule = useSelector(selectSchedule)
+    const smartPot = useSelector((state: RootState) =>
+        flower?.serial_number ? selectSmartPot(state, flower.serial_number) : null,
+    )
+    const connectedSmartPot = useSelector((state: RootState) => selectConnectedSmartPot(state, flowerId || ''))
+    const inactiveSmartPot = useSelector((state: RootState) => selectInactiveSmartPot(state, flowerId || ''))
+    const currentHousehold = useSelector((state: RootState) => selectHouseholdById(state, householdId || ''))
+    const isOwner = useSelector((state: RootState) => selectIsHouseholdOwner(state, householdId || ''))
+    const flowerpotData = useSelector((state: RootState) => selectFlowerpotData(state, flowerId || ''))
 
     const dayTranslations: Record<string, string> = {
         monday: t('flower_detail.days.monday'),
@@ -104,79 +130,79 @@ const FlowerDetail: React.FC = () => {
         if (!schedule) return
     }
 
-    const flower = useSelector(selectFlower)
-    const profiles = useSelector(selectProfiles)
-    const measurements = useSelector((state: RootState) => selectMeasurements(state, flowerId || ''))
-    const loading = useSelector(selectLoading)
-    const error = useSelector(selectError)
-    const schedule = useSelector(selectSchedule)
-    const smartPot = useSelector((state: RootState) =>
-        flower?.serial_number ? selectSmartPot(state, flower.serial_number) : null,
-    )
-
-    const flowerProfileData = useMemo(() => {
-        if (!flower || !profiles) return undefined
-        const foundProfile = profiles.find(profile => profile._id === flower.profile_id)
-
-        return foundProfile
-    }, [flower, profiles])
-
-    // Memoizovaný výpočet flowerpotData
-    const flowerpotData = useMemo(() => {
-        if (!flower) return null
+    // Pridáme kontrolu stavu batérie
+    const batteryStatus = useMemo(() => {
+        if (!measurements?.battery || measurements.battery.length === 0) return null
+        const lastBatteryValue = measurements.battery[0].battery
         return {
-            name: flower.name,
-            status: 'active',
-
-            flower_avatar: flower.avatar,
-            humidity_measurement:
-                measurements?.humidity?.map((m: MeasurementValue) => ({
-                    timestamp: m.createdAt,
-                    humidity: Number(m.value),
-                })) || [],
-            temperature_measurement:
-                measurements?.temperature?.map((m: MeasurementValue) => ({
-                    timestamp: m.createdAt,
-                    temperature: Number(m.value),
-                })) || [],
-            light_measurement:
-                measurements?.light?.map((m: MeasurementValue) => ({
-                    timestamp: m.createdAt,
-                    light: Number(m.value),
-                })) || [],
+            value: lastBatteryValue,
+            hasWarning: lastBatteryValue < 30 || lastBatteryValue > 100,
         }
-    }, [flower, measurements])
+    }, [measurements])
+
+    const handleDisconnectFlower = async () => {
+        if (!flowerId || !householdId) return
+
+        try {
+            const response = await disconnectFlower(flowerId)
+            if (response.success) {
+                toast.success('Kvetina bola úspešne odpojená od smartpotu')
+
+                // Aktualizácia dát - zachováme profil
+                const currentFlower = await dispatch(loadFlowerDetails(flowerId)).unwrap()
+                if (currentFlower) {
+                    await Promise.all([
+                        dispatch(fetchSmartPots(householdId)).unwrap(),
+                        dispatch(fetchInactiveSmartPots(householdId)).unwrap(),
+                        dispatch(loadFlowerProfiles()).unwrap(),
+                    ])
+                }
+            } else {
+                toast.error(response.message || 'Nepodarilo sa odpojiť kvetinu od smartpotu')
+            }
+        } catch (error) {
+            console.error('Chyba pri odpojení kvetiny:', error)
+            toast.error('Nepodarilo sa odpojiť kvetinu od smartpotu')
+        }
+    }
+
+    const handleDeleteFlower = async () => {
+        if (!flowerId) return
+        try {
+            await dispatch(removeFlower(flowerId)).unwrap()
+            toast.success('Kvetina bola úspešne vymazaná')
+            navigate(`/households/${householdId}/flowers`)
+        } catch (error) {
+            toast.error('Nepodarilo sa vymazať kvetinu')
+        }
+    }
 
     useEffect(() => {
         if (!flowerId) return
+        console.log('Načítavam rozvrh pre kvetinu:', flowerId)
         dispatch(loadSchedule(flowerId))
+            .unwrap()
+            .then(response => {
+                console.log('Rozvrh načítaný:', response)
+            })
+            .catch(error => {
+                console.error('Chyba pri načítaní rozvrhu:', error)
+            })
     }, [dispatch, flowerId])
 
     useEffect(() => {
         if (!flowerId || !householdId) {
             return
         }
-
         const loadData = async () => {
             try {
                 setIsLoading(true)
-                await dispatch(loadFlowerDetails(flowerId)).unwrap()
-                await dispatch(loadFlowerProfiles()).unwrap()
-                await dispatch(loadFlowerpots(householdId)).unwrap()
-                await dispatch(loadInactiveFlowerpots(householdId)).unwrap()
-
-                const now = new Date()
-                const startDate = new Date(now)
-                startDate.setFullYear(now.getFullYear() - 1)
-
-                await dispatch(
-                    fetchMeasurementsForFlower({
-                        flowerId,
-                        householdId,
-                        dateFrom: startDate.toISOString().split('T')[0],
-                        dateTo: now.toISOString().split('T')[0],
-                    }),
-                ).unwrap()
+                await Promise.all([
+                    dispatch(loadFlowerDetails(flowerId)).unwrap(),
+                    dispatch(loadFlowerProfiles()).unwrap(),
+                    dispatch(fetchSmartPots(householdId)).unwrap(),
+                    dispatch(fetchInactiveSmartPots(householdId)).unwrap(),
+                ])
 
                 setIsInitialLoad(false)
                 setIsLoading(false)
@@ -187,7 +213,25 @@ const FlowerDetail: React.FC = () => {
         }
 
         loadData()
+
+        // Cleanup funkcia
+        return () => {
+            dispatch(clearMeasurements())
+        }
     }, [dispatch, flowerId, householdId])
+
+    // Pridaný nový useEffect pre WebSocket pripojenie
+    useEffect(() => {
+        if (flowerId) {
+            // Spustíme WebSocket pripojenie pre túto kvetinu
+            dispatch(startWebSocketConnection(flowerId))
+
+            // Cleanup funkcia - zatvoríme WebSocket pripojenie keď komponent unmount
+            return () => {
+                dispatch(stopWebSocketConnection())
+            }
+        }
+    }, [dispatch, flowerId])
 
     const handleTimeRangeChange = (range: 'day' | 'week' | 'month' | 'custom') => {
         setTimeRange(range)
@@ -238,22 +282,31 @@ const FlowerDetail: React.FC = () => {
             </div>
             <div className="smartpot-container">
                 <div className="smartpot-container-warning">
-                    {smartPot ? (
+                    {connectedSmartPot ? (
                         <>
                             <Paragraph>
                                 {t('flower_detail.signed_into', { serialNumber: flower?.serial_number })}
                             </Paragraph>
-                            <WarningCircle size={32} color="#f93333" />
+                            {measurements?.humidity && measurements.humidity.length > 0 && (
+                                <Paragraph>
+                                    {t('flower_detail.water_level')}: {measurements.humidity[0].humidity}%
+                                </Paragraph>
+                            )}
+                            {batteryStatus?.hasWarning ? (
+                                <WarningCircle size={32} color="#f93333" />
+                            ) : (
+                                <CheckCircle size={32} color="#4CAF50" />
+                            )}
                         </>
                     ) : (
                         <Paragraph>No smartpot assigned</Paragraph>
                     )}
                 </div>
 
-                {smartPot && (
+                {connectedSmartPot && (
                     <Button
                         onClick={() => {
-                            navigate(`/households/${householdId}/smartPots/${smartPot._id}`)
+                            navigate(`/households/${householdId}/smartPots/${connectedSmartPot._id}`)
                         }}>
                         {t('flower_detail.view_smartpot')}
                     </Button>
@@ -279,61 +332,49 @@ const FlowerDetail: React.FC = () => {
                 onCustomDateRangeChange={handleCustomDateRangeChange}
             />
 
-            <div className="schedule-container">
-                {schedule?.data ? (
-                    <>
-                        <div className="flower-detail-schedule-title-container">
-                            <H4 className="flower-detail-schedule-title">{t('flower_detail.schedule')}</H4>
-                            <PencilSimple
-                                size={20}
-                                color="#bfbfbf"
-                                className="pencil-icon"
-                                onClick={() => setIsScheduleEditModalOpen(true)}
-                            />
-                        </div>
-
-                        <div className="schedule-grid">
-                            {Object.entries(schedule.data).map(([day, times]) => {
-                                if (
-                                    day === '_id' ||
-                                    day === 'flower_id' ||
-                                    day === 'active' ||
-                                    day === 'createdAt' ||
-                                    day === 'updatedAt'
-                                ) {
-                                    return null
-                                }
-
-                                const timeSlot = times as { from: string | null; to: string | null }
-                                return (
-                                    <div key={day} className="schedule-day">
-                                        <H5>{dayTranslations[day]}</H5>
-                                        <div className="time-slots">
-                                            <div className="time-slot">
-                                                <span>{t('add_flower.schedule_from')}:</span>
-                                                <span>{timeSlot.from || '-'}</span>
-                                            </div>
-                                            <div className="time-slot">
-                                                <span>{t('add_flower.schedule_to')}:</span>
-                                                <span>{timeSlot.to || '-'}</span>
-                                            </div>
+            {schedule && (
+                <div className="schedule-container">
+                    <div className="flower-detail-schedule-title-container">
+                        <H4 className="flower-detail-schedule-title">{t('flower_detail.schedule')}</H4>
+                        <PencilSimple
+                            size={20}
+                            color="#bfbfbf"
+                            className="pencil-icon"
+                            onClick={() => setIsScheduleEditModalOpen(true)}
+                        />
+                    </div>
+                    <div className="schedule-grid">
+                        {Object.entries(schedule).map(([day, times]) => {
+                            if (['_id', 'flower_id', 'active', 'createdAt', 'updatedAt'].includes(day)) {
+                                return null
+                            }
+                            const timeSlot = times as { from: string | null; to: string | null }
+                            return (
+                                <div key={day} className="schedule-day">
+                                    <H5>{dayTranslations[day]}</H5>
+                                    <div className="time-slots">
+                                        <div className="time-slot">
+                                            <span>{t('add_flower.schedule_from')}:</span>
+                                            <span>{timeSlot.from || '-'}</span>
+                                        </div>
+                                        <div className="time-slot">
+                                            <span>{t('add_flower.schedule_to')}:</span>
+                                            <span>{timeSlot.to || '-'}</span>
                                         </div>
                                     </div>
-                                )
-                            })}
-                        </div>
-                    </>
-                ) : (
-                    <div className="no-schedule">{t('flower_detail.no_schedule')}</div>
-                )}
-            </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                </div>
+            )}
 
             <EditFlowerSchedule
                 isOpen={isScheduleEditModalOpen}
                 onClose={() => setIsScheduleEditModalOpen(false)}
                 flowerId={flowerId || ''}
                 currentSchedule={
-                    schedule?.data || {
+                    schedule || {
                         monday: { from: null, to: null },
                         tuesday: { from: null, to: null },
                         wednesday: { from: null, to: null },
@@ -450,20 +491,41 @@ const FlowerDetail: React.FC = () => {
             <div className="transplant-container">
                 <div className="flower-detail-transplant-title-container">
                     <H4>{t('flower_detail.transplant')}</H4>
-
+                    <div className="flower-detail-transplant-info">
+                        {t('flower_detail.current_household')}: {currentHousehold?.name}
+                    </div>
                     <PencilSimple
                         size={20}
                         color="#bfbfbf"
                         className="pencil-icon"
-                        onClick={() => {
-                            /* TODO: Implementovať transplant modal */
-                        }}
+                        onClick={() => setIsTransplantModalOpen(true)}
                     />
                 </div>
+            </div>
+
+            <div className="flower-detail-buttons-container">
                 <Button onClick={() => navigate(`/households/${householdId}/flowers`)}>
                     {t('flower_detail.back_to_list')}
                 </Button>
+                <Button variant="warning" onClick={handleDisconnectFlower} disabled={!connectedSmartPot}>
+                    {t('flower_detail.disconnect_flower')}
+                </Button>
+
+                {isOwner && (
+                    <Button variant="warning" onClick={handleDeleteFlower}>
+                        Delete Flower
+                    </Button>
+                )}
             </div>
+
+            <EditFlowerHousehold
+                isOpen={isTransplantModalOpen}
+                onClose={() => setIsTransplantModalOpen(false)}
+                flowerId={flowerId || ''}
+                currentHouseholdId={householdId || ''}
+                hasSmartPot={!!connectedSmartPot}
+                smartPotId={connectedSmartPot?._id}
+            />
         </>
     )
 }

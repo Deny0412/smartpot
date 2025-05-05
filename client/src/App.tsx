@@ -12,18 +12,22 @@ import Home from './pages/Home/Home'
 import HouseholdsMain from './pages/HouseHold/HouseholdsMain/HouseholdsMain'
 import Login from './pages/Login/Login'
 import Members from './pages/Members/Members'
+import NotFound from './pages/NotFound/NotFound'
 import Notifications from './pages/Notifications/Notifications'
 import Register from './pages/Register/Register'
 import SmartPotDetail from './pages/SmartPotDetail/SmartPotDetail'
 import SmartPotList from './pages/SmartPotList/SmartPotList'
 import UserProfile from './pages/UserProfile/UserProfile'
 import { checkAuthStatus } from './redux/slices/authSlice'
+import { initializeWebSocket } from './redux/slices/measurementsSlice'
 import { AppDispatch } from './redux/store/store'
+
 const App = () => {
     const dispatch = useDispatch<AppDispatch>()
 
     useEffect(() => {
         dispatch(checkAuthStatus())
+        initializeWebSocket(dispatch)
     }, [dispatch])
 
     return (
@@ -60,6 +64,8 @@ const App = () => {
                     <Route path="smartPots" element={<SmartPotList />} />
                     <Route path="smartPots/:smartPotId" element={<SmartPotDetail />} />
                 </Route>
+
+                <Route path="*" element={<NotFound />} />
             </Routes>
             <Footer />
         </Router>

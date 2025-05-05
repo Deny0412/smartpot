@@ -11,6 +11,11 @@ export interface WaterMeasurement extends BaseMeasurement {
     type: 'water'
 }
 
+export interface BatteryMeasurement extends BaseMeasurement {
+    value: number
+    type: 'battery'
+}
+
 export interface TemperatureMeasurement extends BaseMeasurement {
     value: number
     type: 'temperature'
@@ -26,8 +31,13 @@ export interface HumidityMeasurement extends BaseMeasurement {
     type: 'humidity'
 }
 
-export type MeasurementType = 'water' | 'temperature' | 'light' | 'humidity'
-export type MeasurementValue = WaterMeasurement | TemperatureMeasurement | LightMeasurement | HumidityMeasurement
+export type MeasurementType = 'water' | 'temperature' | 'light' | 'humidity' | 'battery'
+export type MeasurementValue =
+    | WaterMeasurement
+    | TemperatureMeasurement
+    | LightMeasurement
+    | HumidityMeasurement
+    | BatteryMeasurement
 
 interface MeasurementSettings {
     min: number
@@ -41,6 +51,7 @@ export interface Flower {
     household_id: string
     profile_id: string | null
     serial_number: string | null
+    keepSmartPot?: boolean
     profile?: {
         temperature: { min: number; max: number }
         humidity: { min: number; max: number }
@@ -104,8 +115,8 @@ export interface ScheduleResponse {
 export interface SmartPot {
     _id: string
     serial_number: string
-    household_id: string | null
+    household_id: string
     active_flower_id: string | null
-    createdAt?: string
-    updatedAt?: string
+    createdAt: string
+    updatedAt: string
 }

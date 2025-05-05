@@ -1,128 +1,76 @@
-import Ajv from "ajv";
-const ajv = new Ajv();
-import { FastifyRequest, FastifyReply } from "fastify";
-import smartpotUpdateDao from "../../dao/smartpot/smart-pot-update-dao";
-import { ISmartPot } from "../../models/SmartPot";
-import {
-  sendSuccess,
-  sendError,
-  sendNotFound,
-  sendClientError,
-} from "../../middleware/response-handler";
-import checkFlowerExists from "../../dao/flower/flower-exists-dao";
-import householdGetDao from "../../dao/household/household-get-dao";
-import mongoose from "mongoose";
-import smartpotGetBySerialNumberDao from "../../dao/smartpot/smart-pot-get-by-serial-number";
-import flowerGetDao from "../../dao/flower/flower-get-dao";
-import getSmartBySerialNumberPot from "../../dao/smartpot/smart-pot-get-by-serial-number";
+import Ajv from 'ajv'
+import { FastifyReply } from 'fastify'
+import mongoose from 'mongoose'
+import getSmartBySerialNumberPot from '../../dao/smartpot/smart-pot-get-by-serial-number'
+import smartpotUpdateDao from '../../dao/smartpot/smart-pot-update-dao'
+import { sendClientError, sendError, sendNotFound, sendSuccess } from '../../middleware/response-handler'
+import { ISmartPot } from '../../models/SmartPot'
+const ajv = new Ajv()
 
 function isValidObjectId(id: string): boolean {
-  return mongoose.Types.ObjectId.isValid(id);
+  return mongoose.Types.ObjectId.isValid(id)
 }
 
 const schema = {
-  type: "object",
+  type: 'object',
   properties: {
-    serial_number: { type: "string" },
-    active_flower_id: { type: "string", nullable: true },
-    household_id: { type: "string" },
+    serial_number: { type: 'string' },
+    active_flower_id: { type: 'string', nullable: true },
+    household_id: { type: 'string', nullable: true },
   },
-  required: ["serial_number"],
-};
+  required: ['serial_number'],
+}
 
 // Add this type to handle the update data
 interface SmartPotUpdateData {
-    serial_number: string;
-    household_id?: mongoose.Types.ObjectId;
-    active_flower_id?: mongoose.Types.ObjectId | null;
+  serial_number: string
+  household_id?: mongoose.Types.ObjectId
+  active_flower_id?: mongoose.Types.ObjectId | null
 }
 
-async function updateSmartPotHandler(data: ISmartPot, reply: FastifyReply) {
-    try {
-        // Get existing smartpot data
-        const existingSmartPot = await getSmartBySerialNumberPot(data.serial_number);
-        if (!existingSmartPot) {
-            sendNotFound(reply, "SmartPot not found");
-            return;
-        }
+export const SmartPotAblUpdate = async (data: ISmartPot, reply: FastifyReply) => {
+  try {
+    console.log('Update input data:', data)
 
-        // Create update data object with correct types
-        const updateData: SmartPotUpdateData = {
-            serial_number: data.serial_number
-        };
-
-        if (data.household_id) {
-            updateData.household_id = new mongoose.Types.ObjectId(data.household_id.toString());
-        }
-
-        if (data.active_flower_id) {
-            updateData.active_flower_id = new mongoose.Types.ObjectId(data.active_flower_id.toString());
-        }
-
-        const validate = ajv.compile(schema);
-        const valid = validate(data);
-        if (!valid) {
-            sendClientError(reply, JSON.stringify(validate.errors?.map(error => error.message)));
-            return;
-        }
-
-        // Validate IDs format
-        if (data.active_flower_id && !isValidObjectId(data.active_flower_id.toString())) {
-            sendClientError(reply, "Invalid active_flower_id format");
-            return;
-        }
-
-        if (data.household_id && !isValidObjectId(data.household_id.toString())) {
-            sendClientError(reply, "Invalid household_id format");
-            return;
-        }
-
-        // Validate household if provided
-        if (updateData.household_id) {
-            const existsHousehold = await householdGetDao(updateData.household_id.toString());
-            if (!existsHousehold) {
-                console.log("Household not found");
-                sendNotFound(reply, "Household not found");
-                return;
-            }
-
-            // Check if household has changed
-            if (existingSmartPot.household_id?.toString() !== updateData.household_id.toString()) {
-                console.log("Household changed, removing active flower");
-                updateData.active_flower_id = null;
-            }
-        }
-
-        // Validate active flower if provided
-        if (updateData.active_flower_id) {
-            const existsFlower = await checkFlowerExists(updateData.active_flower_id.toString());
-            if (!existsFlower) {
-                sendNotFound(reply, "Active flower not found");
-                return;
-            }
-
-            // Check if flower is from the same household
-            const flower = await flowerGetDao(updateData.active_flower_id.toString());
-            if (flower && updateData.household_id && flower.household_id.toString() !== updateData.household_id.toString()) {
-                console.log("Flower is not from the same household");
-                sendClientError(reply, "Flower must be from the same household as the smartpot");
-                return;
-            }
-        }
-
-        // Update the smartpot with properly typed data
-        const updatedSmartPot = await smartpotUpdateDao(updateData as ISmartPot);
-        if (!updatedSmartPot) {
-            sendNotFound(reply, "SmartPot not found");
-            return;
-        }
-
-        // Send success response
-        sendSuccess(reply, updatedSmartPot, "SmartPot updated successfully");
-    } catch (error) {
-        console.error('Error updating smartpot:', error);
-        sendError(reply, error);
+    // Validácia vstupných dát
+    if (!data.serial_number) {
+      console.error('Missing serial_number')
+      return sendClientError(reply, 'Chýbajúci parameter serial_number')
     }
+
+    // Získanie existujúceho smart potu
+    const existingSmartPot = await getSmartBySerialNumberPot(data.serial_number)
+    console.log('Existing smart pot:', existingSmartPot)
+
+    if (!existingSmartPot) {
+      console.error('Smart pot not found with serial number:', data.serial_number)
+      return sendNotFound(reply, 'SmartPot not found')
+    }
+
+    // Vytvorenie update objektu
+    const updateData = {
+      serial_number: data.serial_number,
+      household_id: data.household_id ? new mongoose.Types.ObjectId(data.household_id) : existingSmartPot.household_id,
+      active_flower_id: data.active_flower_id
+        ? new mongoose.Types.ObjectId(data.active_flower_id)
+        : existingSmartPot.active_flower_id,
+    }
+    console.log('Update data:', updateData)
+
+    // Aktualizácia smart potu
+    const updatedSmartPot = await smartpotUpdateDao(updateData as ISmartPot)
+    console.log('Updated smart pot:', updatedSmartPot)
+
+    if (!updatedSmartPot) {
+      console.error('Failed to update smart pot')
+      return sendError(reply, 'Failed to update smart pot')
+    }
+
+    return sendSuccess(reply, updatedSmartPot, 'SmartPot updated successfully')
+  } catch (error) {
+    console.error('Error in SmartPotAblUpdate:', error)
+    return sendError(reply, error)
+  }
 }
 
-export default updateSmartPotHandler;
+export default SmartPotAblUpdate

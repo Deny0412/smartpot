@@ -27,6 +27,8 @@ export interface Measurements {
     humidity: MeasurementValue[]
     temperature: MeasurementValue[]
     light: MeasurementValue[]
+    battery: MeasurementValue[]
+    water: MeasurementValue[]
 }
 
 export type TimeRange = 'day' | 'week' | 'month' | 'custom'

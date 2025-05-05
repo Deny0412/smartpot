@@ -1,7 +1,10 @@
-import { useState } from 'react'
-import { useSelector } from 'react-redux'
+import { useEffect, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { Outlet, useLocation, useParams } from 'react-router-dom'
-import { RootState } from '../../redux/store/store'
+import { selectUserId } from '../../redux/selectors/authSelectors'
+import { selectHouseholds, selectIsHouseholdOwner } from '../../redux/selectors/houseHoldSelectors'
+import { loadHouseholds } from '../../redux/slices/householdsSlice'
+import { AppDispatch, RootState } from '../../redux/store/store'
 
 import './HouseholdLayout.sass'
 
@@ -15,19 +18,24 @@ const HouseholdLayout = () => {
     const location = useLocation()
     const navigate = useNavigate()
     const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+    const dispatch = useDispatch<AppDispatch>()
 
-    const householdsState = useSelector((state: RootState) => state.households)
-    const userId = useSelector((state: RootState) => state.auth.user?.id)
+    const households = useSelector(selectHouseholds)
+    const userId = useSelector(selectUserId)
 
-    const household = householdsState.households.find((h: { id: string }) => h.id === householdId)
-    const isOwner = household?.owner === userId
+    useEffect(() => {
+        dispatch(loadHouseholds())
+    }, [dispatch])
+
+    const household = households.find((h: { id: string }) => h.id === householdId)
+    const isOwner = useSelector((state: RootState) => selectIsHouseholdOwner(state, householdId || ''))
 
     const getActiveClass = (path: string) => {
         return location.pathname.includes(path) ? 'active' : ''
     }
 
     return (
-        <div>
+        <>
             <div className="navigation-indicator">
                 <CaretRight size={32} weight="bold" />
             </div>
@@ -66,7 +74,7 @@ const HouseholdLayout = () => {
                 onClose={() => setIsSettingsOpen(false)}
                 householdId={householdId || ''}
             />
-        </div>
+        </>
     )
 }
 

@@ -1,13 +1,22 @@
-import { Drop, Sun, Thermometer } from '@phosphor-icons/react'
-import React, { useMemo, useState } from 'react'
+import { BatteryChargingVertical, Drop, Sun, Thermometer } from '@phosphor-icons/react'
+import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDispatch, useSelector } from 'react-redux'
 import Button from '../../../components/Button/Button'
 import ChartVizual from '../../../components/ChartVizual/ChartVizual'
 import { H5 } from '../../../components/Text/Heading/Heading'
 import { TranslationFunction } from '../../../i18n'
+import { selectFlower } from '../../../redux/selectors/flowerDetailSelectors'
+import {
+    selectChartData,
+    selectFilteredMeasurements,
+    selectMeasurementLimits,
+    selectMeasurementsError,
+    selectMeasurementsLoading,
+    selectProcessedMeasurements,
+} from '../../../redux/selectors/measurementSelectors'
 import { AppDispatch, RootState } from '../../../redux/store/store'
-import { Flower, FlowerProfile, MeasurementValue } from '../../../types/flowerTypes'
+import { Flower, FlowerProfile } from '../../../types/flowerTypes'
 import './FlowerpotMeasurment.sass'
 
 interface FlowerpotMeasurmentProps {
@@ -16,7 +25,6 @@ interface FlowerpotMeasurmentProps {
     flowerpotData: {
         name: string
         status: string
-
         flower_avatar: string
         humidity_measurement: Array<{
             timestamp: string
@@ -30,6 +38,10 @@ interface FlowerpotMeasurmentProps {
             timestamp: string
             light: number
         }>
+        battery_measurement: Array<{
+            timestamp: string
+            battery: number
+        }>
     }
     flowerProfile?: FlowerProfile
     timeRange: 'day' | 'week' | 'month' | 'custom'
@@ -39,7 +51,7 @@ interface FlowerpotMeasurmentProps {
 }
 
 type TimeRange = 'day' | 'week' | 'month' | 'custom'
-type MeasurementType = 'humidity' | 'temperature' | 'light'
+type MeasurementType = 'humidity' | 'temperature' | 'light' | 'battery'
 
 interface MeasurementLimits {
     min: number
@@ -65,6 +77,13 @@ interface FlowerProfileWithSettings {
     light?: FlowerMeasurementSettings
 }
 
+type MeasurementData = {
+    timestamp: string
+    humidity?: number
+    temperature?: number
+    light?: number
+}
+
 const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
     flowerId,
     householdId,
@@ -76,48 +95,27 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
     onCustomDateRangeChange,
 }) => {
     const dispatch = useDispatch<AppDispatch>()
-    const measurements = useSelector(
-        (state: RootState) =>
-            state.measurements.measurements[flowerId] || {
-                humidity: [],
-                light: [],
-                temperature: [],
-            },
-    )
-    const loading = useSelector((state: RootState) => state.measurements.loading)
-    const error = useSelector((state: RootState) => state.measurements.error)
-    const flower = useSelector((state: RootState) => state.flowers.selectedFlower) as Flower | null
+    const loading = useSelector(selectMeasurementsLoading)
+    const error = useSelector(selectMeasurementsError)
+    const flower = useSelector(selectFlower) as Flower | null
     const { t } = useTranslation() as { t: TranslationFunction }
 
     const [measurementType, setMeasurementType] = useState<MeasurementType>('humidity')
     const [selectedDate, setSelectedDate] = useState<string>('')
 
+    const processedMeasurements = useSelector((state: RootState) => selectProcessedMeasurements(state, flowerId))
+
+    const filteredMeasurements = useSelector((state: RootState) =>
+        selectFilteredMeasurements(state, flowerId, measurementType, selectedDate),
+    )
+
+    const chartData = useSelector((state: RootState) =>
+        selectChartData(state, flowerId, measurementType, timeRange, customDateRange),
+    )
+
+    const limits = useSelector((state: RootState) => selectMeasurementLimits(state, flowerId, measurementType))
+
     const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-
-    const processedMeasurements = useMemo(() => {
-        if (!measurements || Object.keys(measurements).length === 0) {
-            return {
-                humidity: [],
-                temperature: [],
-                light: [],
-            }
-        }
-
-        return {
-            humidity: measurements.humidity.map(m => ({
-                timestamp: m.createdAt,
-                humidity: Number(m.value),
-            })),
-            temperature: measurements.temperature.map(m => ({
-                timestamp: m.createdAt,
-                temperature: Number(m.value),
-            })),
-            light: measurements.light.map(m => ({
-                timestamp: m.createdAt,
-                light: Number(m.value),
-            })),
-        }
-    }, [measurements])
 
     const handleIrrigation = () => {
         setSelectedDate('')
@@ -144,8 +142,13 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
 
         switch (timeRange) {
             case 'day':
-                startDate.setDate(now.getDate() - 1)
-                break
+                startDate.setHours(0, 0, 0, 0)
+                return data
+                    .filter(item => {
+                        const itemDate = new Date(item.timestamp)
+                        return itemDate >= startDate && itemDate <= now
+                    })
+                    .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
             case 'week':
                 startDate.setDate(now.getDate() - 7)
                 break
@@ -186,6 +189,8 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
                 return t('flower_measurments.measurments.temperature')
             case 'light':
                 return t('flower_measurments.measurments.light')
+            case 'battery':
+                return t('flower_measurments.measurments.battery')
             default:
                 return ''
         }
@@ -199,89 +204,45 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
                 return '°C'
             case 'light':
                 return '%'
+            case 'battery':
+                return '%'
             default:
                 return ''
         }
     }
 
-    const getMeasurementValue = (measurement: MeasurementValue) => {
-        return Number(measurement.value).toFixed(2)
+    const getMeasurementValue = (data: MeasurementData, type: MeasurementType): number => {
+        switch (type) {
+            case 'humidity':
+                return data.humidity || 0
+            case 'temperature':
+                return data.temperature || 0
+            case 'light':
+                return data.light || 0
+            default:
+                return 0
+        }
     }
-
-    const getLimits = (type: MeasurementType): MeasurementLimits => {
-        if (flower?.profile_id && flowerProfile?.[type]) {
-            return {
-                min: flowerProfile[type].min,
-                max: flowerProfile[type].max,
-            }
-        }
-
-        if (flower?.profile?.[type]) {
-            return {
-                min: flower.profile[type].min,
-                max: flower.profile[type].max,
-            }
-        }
-
-        const defaults: Record<MeasurementType, MeasurementLimits> = {
-            humidity: { min: 0, max: 100 },
-            temperature: { min: -20, max: 50 },
-            light: { min: 0, max: 100 },
-        }
-
-        return defaults[type]
-    }
-
-    const chartData = useMemo(() => {
-        if (!measurements || !measurements[measurementType]) {
-            return []
-        }
-
-        const data = measurements[measurementType]
-            .map((m: MeasurementValue) => ({
-                timestamp: m.createdAt,
-                value: Number(m.value),
-            }))
-            .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-
-        return filterDataByTimeRange(data)
-    }, [measurements, measurementType, timeRange, customDateRange])
-
-    const filteredMeasurements = useMemo(() => {
-        if (!selectedDate || selectedDate === '') {
-            if (measurements[measurementType].length === 0) return []
-            const sortedMeasurements = [...measurements[measurementType]].sort(
-                (a: MeasurementValue, b: MeasurementValue) =>
-                    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-            )
-            return sortedMeasurements.slice(0, 15)
-        }
-
-        const selectedDateObj = new Date(selectedDate)
-        selectedDateObj.setHours(0, 0, 0, 0)
-        const nextDay = new Date(selectedDateObj)
-        nextDay.setDate(nextDay.getDate() + 1)
-
-        const filtered = measurements[measurementType].filter((measurement: MeasurementValue) => {
-            const measurementDate = new Date(measurement.createdAt)
-            return measurementDate >= selectedDateObj && measurementDate < nextDay
-        })
-
-        return [...filtered].sort(
-            (a: MeasurementValue, b: MeasurementValue) =>
-                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-        )
-    }, [selectedDate, measurementType, measurements])
 
     const formatDate = (timestamp: string) => {
+        // Konvertujeme UTC čas na lokálny čas
         const date = new Date(timestamp)
-        return date.toLocaleString('sk-SK', {
+
+        if (isNaN(date.getTime())) {
+            console.error('Neplatný dátum:', timestamp)
+            return 'Neplatný dátum'
+        }
+
+        // Formátujeme dátum v lokálnom čase
+        return new Intl.DateTimeFormat('sk-SK', {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric',
             hour: '2-digit',
             minute: '2-digit',
-        })
+            hour12: false,
+            timeZone: 'Europe/Bratislava',
+        }).format(date)
     }
 
     const getChartColor = () => {
@@ -292,6 +253,8 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
                 return '#e74c3c'
             case 'light':
                 return '#f1c40f'
+            case 'battery':
+                return '#2ecc71'
             default:
                 return '#000'
         }
@@ -300,14 +263,22 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
     // Funkcia na získanie poslednej hodnoty
     const getLastValue = (arr: any[], key: string) => {
         if (!arr || arr.length === 0) return null
-        return arr[arr.length - 1][key]
+        const lastValue = arr[0][key]
+        console.log(`Posledná hodnota pre ${key}:`, lastValue)
+        return lastValue
     }
 
     // Funkcia na generovanie statusu pre daný typ merania
     const getStatusText = (type: MeasurementType, value: number | null) => {
-        const limits = getLimits(type)
         if (value === null || value === undefined)
             return { text: t('flower_measurments.status_unknown'), className: '' }
+
+        if (type === 'battery') {
+            if (value < 20) return { text: t('flower_measurments.status_low_battery'), className: 'low' }
+            if (value < 50) return { text: t('flower_measurments.status_medium_battery'), className: 'medium' }
+            return { text: t('flower_measurments.status_ok'), className: 'good' }
+        }
+
         if (value < limits.min) return { text: t(`flower_measurments.status_low_${type}`), className: 'low' }
         if (value > limits.max) return { text: t(`flower_measurments.status_high_${type}`), className: 'high' }
         return { text: t('flower_measurments.status_ok'), className: 'good' }
@@ -316,6 +287,7 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
     const lastHumidity = getLastValue(processedMeasurements.humidity, 'humidity')
     const lastTemperature = getLastValue(processedMeasurements.temperature, 'temperature')
     const lastLight = getLastValue(processedMeasurements.light, 'light')
+    const lastBattery = getLastValue(processedMeasurements.battery, 'battery')
 
     if (loading) {
         return <div>{t('common.loading')}</div>
@@ -342,6 +314,10 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
             type: 'light',
             icon: <Sun size={24} />,
         },
+        {
+            type: 'battery',
+            icon: <BatteryChargingVertical size={24} />,
+        },
     ]
 
     return (
@@ -353,23 +329,30 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
                     <div className="status-measurements">
                         <div className="status-item temperature">
                             <span>{t('flower_measurments.measurments.temperature')}: </span>
-                            <b>{lastTemperature !== null ? `${lastTemperature} °C` : '-'}</b>
+                            <b>{lastTemperature !== null ? `${lastTemperature.toFixed(1)} °C` : '-'}</b>
                             <span className={`status-text ${getStatusText('temperature', lastTemperature).className}`}>
                                 {getStatusText('temperature', lastTemperature).text}
                             </span>
                         </div>
                         <div className="status-item humidity">
                             <span>{t('flower_measurments.measurments.humidity')}: </span>
-                            <b>{lastHumidity !== null ? `${lastHumidity} %` : '-'}</b>
+                            <b>{lastHumidity !== null ? `${lastHumidity.toFixed(1)} %` : '-'}</b>
                             <span className={`status-text ${getStatusText('humidity', lastHumidity).className}`}>
                                 {getStatusText('humidity', lastHumidity).text}
                             </span>
                         </div>
                         <div className="status-item light">
                             <span>{t('flower_measurments.measurments.light')}: </span>
-                            <b>{lastLight !== null ? `${lastLight} %` : '-'}</b>
+                            <b>{lastLight !== null ? `${lastLight.toFixed(1)} %` : '-'}</b>
                             <span className={`status-text ${getStatusText('light', lastLight).className}`}>
                                 {getStatusText('light', lastLight).text}
+                            </span>
+                        </div>
+                        <div className="status-item battery">
+                            <span>{t('flower_measurments.measurments.battery')}: </span>
+                            <b>{lastBattery !== null ? `${lastBattery.toFixed(1)} %` : '-'}</b>
+                            <span className={`status-text ${getStatusText('battery', lastBattery).className}`}>
+                                {getStatusText('battery', lastBattery).text}
                             </span>
                         </div>
                     </div>
@@ -440,8 +423,8 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
                             data={chartData}
                             dataKey={measurementType}
                             color={getChartColor()}
-                            minValue={getLimits(measurementType).min}
-                            maxValue={getLimits(measurementType).max}
+                            minValue={limits.min}
+                            maxValue={limits.max}
                         />
                     </div>
 
@@ -472,11 +455,11 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
                         />
                     </div>
                     <div className="measurement-list">
-                        {filteredMeasurements.map((measurement: MeasurementValue, index: number) => (
+                        {filteredMeasurements.map((measurement, index) => (
                             <div key={index} className="measurement-item">
                                 <span className="timestamp">{formatDate(measurement.createdAt)}</span>
                                 <span className="value">
-                                    {getMeasurementLabel()} {getMeasurementValue(measurement)}
+                                    {getMeasurementLabel()} {measurement.value}
                                     {getMeasurementUnit()}
                                 </span>
                             </div>

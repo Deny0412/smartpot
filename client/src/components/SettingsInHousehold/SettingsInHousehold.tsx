@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
+import { selectUserId } from '../../redux/selectors/authSelectors'
+import { selectHouseholdById, selectIsHouseholdOwner } from '../../redux/selectors/houseHoldSelectors'
 import { leaveHouseholdAction, loadHouseholds, updateHouseholdData } from '../../redux/slices/householdsSlice'
 import { AppDispatch, RootState } from '../../redux/store/store'
 import Button from '../Button/Button'
@@ -23,12 +25,9 @@ const SettingsInHousehold: React.FC<SettingsInHouseholdProps> = ({ isOpen, onClo
     const [newHouseholdName, setNewHouseholdName] = useState('')
     const [loading, setLoading] = useState(false)
 
-    const authState = useSelector((state: RootState) => state.auth)
-    const userId = authState.user?.id
-
-    const householdsState = useSelector((state: RootState) => state.households)
-    const household = householdsState.households.find(h => h.id === householdId)
-    const isOwner = household?.owner === userId
+    const userId = useSelector(selectUserId)
+    const household = useSelector((state: RootState) => selectHouseholdById(state, householdId))
+    const isOwner = useSelector((state: RootState) => selectIsHouseholdOwner(state, householdId))
 
     const handleRenameHousehold = async () => {
         if (!newHouseholdName.trim()) {

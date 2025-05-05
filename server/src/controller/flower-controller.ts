@@ -6,10 +6,11 @@ import flowerGetAbl from '../abl/flower/flower-get-abl'
 import flowerListAbl from '../abl/flower/flower-list-abl'
 import listActiveFlowersHandler from '../abl/flower/flower-list-active-abl'
 
+import flowerExportAbl from '../abl/flower/flower-export-abl'
 import flowerGetScheduleAbl from '../abl/flower/flower-schedule-get-abl'
-import flowerUpdateAbl from '../abl/flower/flower-update-abl'
-
 import flowerUpdateScheduleAbl, { ScheduleData } from '../abl/flower/flower-schedule-update-abl'
+import { flowerTransplantAbl } from '../abl/flower/flower-transplant-abl'
+import flowerUpdateAbl from '../abl/flower/flower-update-abl'
 import { sendError, sendInternalServerError } from '../middleware/response-handler'
 import { IFlower } from '../models/Flower'
 
@@ -97,6 +98,59 @@ export const flowerController = {
       const data = request.body as ScheduleData
       await flowerUpdateScheduleAbl(data, reply)
     } catch (error) {
+      sendError(reply, error)
+    }
+  },
+  export: async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { id } = request.body as { id: string }
+      if (!id) {
+        return reply.status(400).send({
+          status: 'error',
+          message: 'Flower ID is required',
+        })
+      }
+      await flowerExportAbl(id, reply)
+    } catch (error) {
+      sendError(reply, error)
+    }
+  },
+  async transplantWithSmartPot(request: FastifyRequest, reply: FastifyReply) {
+    const { flowerId, targetHouseholdId } = request.body as {
+      flowerId: string
+      targetHouseholdId: string
+    }
+
+    await flowerTransplantAbl.transplantWithSmartPot(flowerId, targetHouseholdId, reply)
+  },
+  async transplantWithoutSmartPot(request: FastifyRequest, reply: FastifyReply) {
+    const { flowerId, targetHouseholdId, assignOldSmartPot, newFlowerId } = request.body as {
+      flowerId: string
+      targetHouseholdId: string
+      assignOldSmartPot: boolean
+      newFlowerId?: string
+    }
+
+    await flowerTransplantAbl.transplantWithoutSmartPot(
+      flowerId,
+      targetHouseholdId,
+      assignOldSmartPot,
+      newFlowerId,
+      reply
+    )
+  },
+  async transplantToSmartPot(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const { flowerId, targetSmartPotId } = request.body as { flowerId: string; targetSmartPotId: string }
+
+      // Validácia vstupných parametrov
+      if (!flowerId || !targetSmartPotId) {
+        return sendError(reply, new Error('Flower ID and target smart pot ID are required'))
+      }
+
+      await flowerTransplantAbl.transplantToSmartPot(flowerId, targetSmartPotId, reply)
+    } catch (error) {
+      console.error('Transplant to smart pot error:', error)
       sendError(reply, error)
     }
   },

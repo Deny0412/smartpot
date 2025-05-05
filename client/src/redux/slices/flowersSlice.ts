@@ -6,9 +6,10 @@ import {
     detachFlower,
     fetchFlowerDetails,
     fetchFlowersByHousehold,
-    transplantFlowers,
+    transplantFlowerToSmartPot,
+    transplantFlowerWithoutSmartPot,
+    transplantFlowerWithSmartPot,
     updateFlower,
-    updateSmartPotFlower,
 } from '../services/flowersApi'
 
 interface FlowersState {
@@ -69,42 +70,66 @@ export const updateFlowerData = createAsyncThunk<Flower, { id: string; flower: P
     },
 )
 
-export const transplantFlowersToHousehold = createAsyncThunk(
-    'flowers/transplant',
+export const transplantFlowerToSmartPotThunk = createAsyncThunk(
+    'flowers/transplantToSmartPot',
+    async ({ flowerId, targetSmartPotId }: { flowerId: string; targetSmartPotId: string }, { rejectWithValue }) => {
+        try {
+            return await transplantFlowerToSmartPot(flowerId, targetSmartPotId)
+        } catch (error) {
+            return rejectWithValue(
+                error instanceof Error ? error.message : 'Chyba pri presadzovaní kvetiny do kvetináča',
+            )
+        }
+    },
+)
+
+export const transplantFlowerWithSmartPotThunk = createAsyncThunk(
+    'flowers/transplantWithSmartPot',
+    async ({ flowerId, targetHouseholdId }: { flowerId: string; targetHouseholdId: string }, { rejectWithValue }) => {
+        try {
+            return await transplantFlowerWithSmartPot(flowerId, targetHouseholdId)
+        } catch (error) {
+            return rejectWithValue(
+                error instanceof Error ? error.message : 'Chyba pri presadzovaní kvetiny s kvetináčom',
+            )
+        }
+    },
+)
+
+export const transplantFlowerWithoutSmartPotThunk = createAsyncThunk(
+    'flowers/transplantWithoutSmartPot',
     async (
-        { flowerIds, targetHouseholdId }: { flowerIds: string[]; targetHouseholdId: string },
+        {
+            flowerId,
+            targetHouseholdId,
+            assignOldSmartPot,
+            newFlowerId,
+        }: {
+            flowerId: string
+            targetHouseholdId: string
+            assignOldSmartPot: boolean
+            newFlowerId: string
+        },
         { rejectWithValue },
     ) => {
         try {
-            return await transplantFlowers(flowerIds, targetHouseholdId)
+            return await transplantFlowerWithoutSmartPot(flowerId, targetHouseholdId, assignOldSmartPot, newFlowerId)
         } catch (error) {
-            return rejectWithValue(error instanceof Error ? error.message : 'Chyba pri presune kvetín')
+            return rejectWithValue(
+                error instanceof Error ? error.message : 'Chyba pri presadzovaní kvetiny bez kvetináča',
+            )
         }
     },
 )
 
-export const detachFlowerFromPot = createAsyncThunk(
-    'flowers/detach',
-    async ({ flowerId, serialNumber }: { flowerId: string; serialNumber: string }, { rejectWithValue }) => {
+export const detachFlowerFromPotThunk = createAsyncThunk(
+    'flowers/detachFromPot',
+    async (flowerId: string, { rejectWithValue }) => {
         try {
             await detachFlower(flowerId)
-            await updateSmartPotFlower(serialNumber, null)
             return flowerId
         } catch (error) {
-            return rejectWithValue(error instanceof Error ? error.message : 'Chyba pri odpájaní kvetiny')
-        }
-    },
-)
-
-export const updateFlowerSmartPot = createAsyncThunk(
-    'flowers/updateSmartPot',
-    async ({ flowerId, smartPotId }: { flowerId: string; smartPotId: string }, { rejectWithValue }) => {
-        try {
-            const updatedFlower = await updateFlower(flowerId, { serial_number: smartPotId })
-            await updateSmartPotFlower(smartPotId, flowerId)
-            return updatedFlower
-        } catch (error) {
-            return rejectWithValue(error instanceof Error ? error.message : 'Chyba pri pripájaní kvetiny')
+            return rejectWithValue(error instanceof Error ? error.message : 'Chyba pri odpojení kvetiny od kvetináča')
         }
     },
 )
@@ -127,7 +152,6 @@ const flowersSlice = createSlice({
                 state.error = null
             })
             .addCase(loadFlowers.fulfilled, (state, action: PayloadAction<Flower[]>) => {
-            
                 state.flowers = action.payload.map(flower => ({
                     ...flower,
                 }))
@@ -143,7 +167,7 @@ const flowersSlice = createSlice({
             })
             .addCase(loadFlowerDetails.fulfilled, (state, action: PayloadAction<{ status: string; data: Flower }>) => {
                 state.loading = false
-                state.selectedFlower = action.payload.data // Uložíme len data z odpovede
+                state.selectedFlower = action.payload.data
             })
             .addCase(loadFlowerDetails.rejected, (state, action) => {
                 state.loading = false
@@ -186,46 +210,11 @@ const flowersSlice = createSlice({
                 state.loading = false
                 state.error = action.payload as string
             })
-            .addCase(transplantFlowersToHousehold.pending, state => {
+            .addCase(transplantFlowerToSmartPotThunk.pending, state => {
                 state.loading = true
                 state.error = null
             })
-            .addCase(transplantFlowersToHousehold.fulfilled, (state, action: PayloadAction<Flower[]>) => {
-                action.payload.forEach(updatedFlower => {
-                    const index = state.flowers.findIndex(flower => flower._id === updatedFlower._id)
-                    if (index !== -1) {
-                        state.flowers[index] = updatedFlower
-                    }
-                })
-                state.loading = false
-            })
-            .addCase(transplantFlowersToHousehold.rejected, (state, action) => {
-                state.loading = false
-                state.error = action.payload as string
-            })
-            .addCase(detachFlowerFromPot.pending, state => {
-                state.loading = true
-                state.error = null
-            })
-            .addCase(detachFlowerFromPot.fulfilled, (state, action: PayloadAction<string>) => {
-                const index = state.flowers.findIndex(flower => flower._id === action.payload)
-                if (index !== -1) {
-                    state.flowers[index] = { ...state.flowers[index], serial_number: null }
-                }
-                if (state.selectedFlower?._id === action.payload) {
-                    state.selectedFlower = { ...state.selectedFlower, serial_number: null }
-                }
-                state.loading = false
-            })
-            .addCase(detachFlowerFromPot.rejected, (state, action) => {
-                state.loading = false
-                state.error = action.payload as string
-            })
-            .addCase(updateFlowerSmartPot.pending, state => {
-                state.loading = true
-                state.error = null
-            })
-            .addCase(updateFlowerSmartPot.fulfilled, (state, action: PayloadAction<Flower>) => {
+            .addCase(transplantFlowerToSmartPotThunk.fulfilled, (state, action: PayloadAction<Flower>) => {
                 const index = state.flowers.findIndex(flower => flower._id === action.payload._id)
                 if (index !== -1) {
                     state.flowers[index] = action.payload
@@ -235,7 +224,61 @@ const flowersSlice = createSlice({
                 }
                 state.loading = false
             })
-            .addCase(updateFlowerSmartPot.rejected, (state, action) => {
+            .addCase(transplantFlowerToSmartPotThunk.rejected, (state, action) => {
+                state.loading = false
+                state.error = action.payload as string
+            })
+            .addCase(transplantFlowerWithSmartPotThunk.pending, state => {
+                state.loading = true
+                state.error = null
+            })
+            .addCase(transplantFlowerWithSmartPotThunk.fulfilled, (state, action: PayloadAction<Flower>) => {
+                const index = state.flowers.findIndex(flower => flower._id === action.payload._id)
+                if (index !== -1) {
+                    state.flowers[index] = action.payload
+                }
+                if (state.selectedFlower?._id === action.payload._id) {
+                    state.selectedFlower = action.payload
+                }
+                state.loading = false
+            })
+            .addCase(transplantFlowerWithSmartPotThunk.rejected, (state, action) => {
+                state.loading = false
+                state.error = action.payload as string
+            })
+            .addCase(transplantFlowerWithoutSmartPotThunk.pending, state => {
+                state.loading = true
+                state.error = null
+            })
+            .addCase(transplantFlowerWithoutSmartPotThunk.fulfilled, (state, action: PayloadAction<Flower>) => {
+                const index = state.flowers.findIndex(flower => flower._id === action.payload._id)
+                if (index !== -1) {
+                    state.flowers[index] = action.payload
+                }
+                if (state.selectedFlower?._id === action.payload._id) {
+                    state.selectedFlower = action.payload
+                }
+                state.loading = false
+            })
+            .addCase(transplantFlowerWithoutSmartPotThunk.rejected, (state, action) => {
+                state.loading = false
+                state.error = action.payload as string
+            })
+            .addCase(detachFlowerFromPotThunk.pending, state => {
+                state.loading = true
+                state.error = null
+            })
+            .addCase(detachFlowerFromPotThunk.fulfilled, (state, action: PayloadAction<string>) => {
+                const index = state.flowers.findIndex(flower => flower._id === action.payload)
+                if (index !== -1) {
+                    state.flowers[index] = { ...state.flowers[index], serial_number: null }
+                }
+                if (state.selectedFlower?._id === action.payload) {
+                    state.selectedFlower = { ...state.selectedFlower, serial_number: null }
+                }
+                state.loading = false
+            })
+            .addCase(detachFlowerFromPotThunk.rejected, (state, action) => {
                 state.loading = false
                 state.error = action.payload as string
             })

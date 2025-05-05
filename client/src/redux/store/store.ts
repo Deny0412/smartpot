@@ -1,31 +1,17 @@
 import { configureStore } from '@reduxjs/toolkit'
-import authReducer from '../slices/authSlice'
-import flowerpotsReducer from '../slices/flowerpotsSlice'
-import flowerProfilesReducer from '../slices/flowerProfilesSlice'
-import flowersReducer from '../slices/flowersSlice'
-import householdsReducer from '../slices/householdsSlice'
-import measurementsReducer from '../slices/measurementsSlice'
-import scheduleReducer from '../slices/scheduleSlice'
-import usersReducer from '../slices/usersSlice'
+import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux'
+import { initializeWebSocket } from '../slices/measurementsSlice'
+import rootReducer from './rootReducer'
 
 export const store = configureStore({
-    reducer: {
-        auth: authReducer,
-        flowers: flowersReducer,
-        flowerProfiles: flowerProfilesReducer,
-        flowerpots: flowerpotsReducer,
-        households: householdsReducer,
-        measurements: measurementsReducer,
-        schedule: scheduleReducer,
-        users: usersReducer,
-    },
-    middleware: getDefaultMiddleware =>
-        getDefaultMiddleware({
-            serializableCheck: {
-                ignoredActions: ['auth/login/fulfilled'],
-            },
-        }),
+    reducer: rootReducer,
 })
+
+// Inicializácia WebSocket služby
+initializeWebSocket(store.dispatch)
 
 export type RootState = ReturnType<typeof store.getState>
 export type AppDispatch = typeof store.dispatch
+
+export const useAppDispatch = () => useDispatch<AppDispatch>()
+export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector

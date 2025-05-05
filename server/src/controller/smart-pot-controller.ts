@@ -1,9 +1,11 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import SmartPotAblUpdate from '../abl/smartpot/smart-pot-update-abl'
 import smartpotCreateAbl from '../abl/smartpot/smartpot-create-abl'
+import smartpotDisconnectAbl from '../abl/smartpot/smartpot-disconnect-abl'
 import smartpotEmptyAbl from '../abl/smartpot/smartpot-empty-abl'
 import smartpotGetAbl from '../abl/smartpot/smartpot-get-abl'
 import smartpotGetByHouseholdAbl from '../abl/smartpot/smartpot-get-by-household-abl'
+import { smartpotTransplantAbl } from '../abl/smartpot/smartpot-transplant-abl'
 import { sendClientError, sendCreated, sendError, sendSuccess } from '../middleware/response-handler'
 import { ISmartPot } from '../models/SmartPot'
 
@@ -31,12 +33,18 @@ export const smartpotController = {
   },
   update: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const user = request.user
       const data = request.body as ISmartPot
-      const response = await SmartPotAblUpdate(data, reply)
-      sendSuccess(reply, response, 'SmartPot updated successfully')
+      await SmartPotAblUpdate(data, reply)
     } catch (error) {
       sendError(reply, error)
+    }
+  },
+  disconnect: async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const data = request.body as { serial_number: string }
+      await smartpotDisconnectAbl(data, reply)
+    } catch (error) {
+      return sendError(reply, error)
     }
   },
   empty: async (request: FastifyRequest, reply: FastifyReply) => {
@@ -59,5 +67,37 @@ export const smartpotController = {
     } catch (error) {
       sendError(reply, error)
     }
+  },
+  transplantWithFlower: async (request: FastifyRequest, reply: FastifyReply) => {
+    const { smartPotId, targetHouseholdId } = request.body as {
+      smartPotId: string
+      targetHouseholdId: string
+    }
+
+    await smartpotTransplantAbl.transplantWithFlower(smartPotId, targetHouseholdId, reply)
+  },
+  transplantWithoutFlower: async (request: FastifyRequest, reply: FastifyReply) => {
+    const { smartPotId, targetHouseholdId, assignOldFlower, newSmartPotId } = request.body as {
+      smartPotId: string
+      targetHouseholdId: string
+      assignOldFlower: boolean
+      newSmartPotId?: string
+    }
+
+    await smartpotTransplantAbl.transplantWithoutFlower(
+      smartPotId,
+      targetHouseholdId,
+      assignOldFlower,
+      newSmartPotId,
+      reply
+    )
+  },
+  transplantToFlower: async (request: FastifyRequest, reply: FastifyReply) => {
+    const { smartPotId, targetFlowerId } = request.body as {
+      smartPotId: string
+      targetFlowerId: string
+    }
+
+    await smartpotTransplantAbl.transplantToFlower(smartPotId, targetFlowerId, reply)
   },
 }

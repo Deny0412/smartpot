@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDispatch, useSelector } from 'react-redux'
+import { toast } from 'react-toastify'
+import Button from '../../../components/Button/Button'
 import GradientDiv from '../../../components/GradientDiv/GradientDiv'
 import { H4, H5 } from '../../../components/Text/Heading/Heading'
 import { TranslationFunction } from '../../../i18n'
-import { loadFlowerDetails, updateFlowerData } from '../../../redux/slices/flowersSlice'
-import { AppDispatch, RootState } from '../../../redux/store/store'
+import { selectProfiles } from '../../../redux/selectors/flowerProfilesSelectors'
+import { updateFlowerData } from '../../../redux/slices/flowersSlice'
+import { AppDispatch } from '../../../redux/store/store'
 import { FlowerProfile } from '../../../types/flowerTypes'
 import './EditFlowerProfile.sass'
-import { toast } from 'react-toastify'
 
 interface EditFlowerProfileProps {
     isOpen: boolean
@@ -26,15 +28,23 @@ const EditFlowerProfile: React.FC<EditFlowerProfileProps> = ({ isOpen, onClose, 
         light: { min: 30, max: 70 },
     })
     const [selectedProfileId, setSelectedProfileId] = useState<string>('')
-    const { profiles } = useSelector((state: RootState) => state.flowerProfiles)
+    const profiles = useSelector(selectProfiles)
     const dispatch = useDispatch<AppDispatch>()
+    const [loading, setLoading] = useState(false)
+    const [flower, setFlower] = useState<FlowerProfile | null>(null)
 
     useEffect(() => {
         if (currentProfile) {
             setProfileType('global')
             setSelectedProfileId(currentProfile._id)
+            setFlower(currentProfile)
         } else {
             setProfileType('custom')
+            setCustomProfile({
+                temperature: { min: 18, max: 25 },
+                humidity: { min: 40, max: 60 },
+                light: { min: 30, max: 70 },
+            })
         }
     }, [currentProfile])
 
@@ -52,60 +62,73 @@ const EditFlowerProfile: React.FC<EditFlowerProfileProps> = ({ isOpen, onClose, 
         }))
     }
 
-    const handleSubmit = async () => {
-        try {
-            if (profileType === 'global') {
-                const selectedProfile = profiles.find(p => p._id === selectedProfileId)
-                if (!selectedProfile) {
-                    throw new Error('Vyberte prosím existujúci profil')
-                }
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
 
-              
+        console.log('=== Začiatok aktualizácie ===')
+        console.log('Profile Type:', profileType)
+        console.log('Selected Profile ID:', selectedProfileId)
 
-                await dispatch(
-                    updateFlowerData({
-                        id: flowerId,
-                        flower: {
-                            profile_id: selectedProfile._id,
-                            profile: undefined,
-                        },
-                    }),
-                ).unwrap()
-            } else {
-                if (!customProfile.temperature || !customProfile.humidity || !customProfile.light) {
-                    throw new Error('Vyplňte prosím všetky hodnoty')
-                    toast.error('Vyplňte prosím všetky hodnoty')
-                }
-
-                const customProfileData = {
-                    name: 'Custom Profile',
-                    temperature: customProfile.temperature,
-                    humidity: customProfile.humidity,
-                    light: customProfile.light,
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                }
-
-
-                await dispatch(
-                    updateFlowerData({
-                        id: flowerId,
-                        flower: {
-                            profile_id: undefined,
-                            profile: customProfileData,
-                        },
-                    }),
-                ).unwrap()
-            }
-
-            await dispatch(loadFlowerDetails(flowerId)).unwrap()
-            onClose()
-            toast.success('Profile updated successfully')
-        } catch (err) {
-       
-            toast.error('Error updating profile')
-            toast.error('Error updating profile')
+        if (profileType === 'custom' && !validateCustomProfile()) {
+            return
         }
+
+        if (profileType === 'global' && !selectedProfileId) {
+            toast.error(t('edit_flower_profile.select_profile_error'))
+            return
+        }
+
+        const updateData = {
+            id: flowerId,
+            flower: {
+                profile_id: profileType === 'global' ? selectedProfileId : undefined,
+                profile:
+                    profileType === 'custom'
+                        ? {
+                              temperature: {
+                                  min: customProfile.temperature!.min,
+                                  max: customProfile.temperature!.max,
+                              },
+                              humidity: {
+                                  min: customProfile.humidity!.min,
+                                  max: customProfile.humidity!.max,
+                              },
+                              light: {
+                                  min: customProfile.light!.min,
+                                  max: customProfile.light!.max,
+                              },
+                          }
+                        : undefined,
+            },
+        }
+
+        console.log('Update Data:', updateData)
+
+        try {
+            setLoading(true)
+            const result = await dispatch(updateFlowerData(updateData)).unwrap()
+            console.log('Update Result:', result)
+            toast.success(t('edit_flower_profile.update_success'))
+            onClose()
+        } catch (error) {
+            console.error('Chyba pri aktualizácii:', error)
+            toast.error(t('edit_flower_profile.update_error'))
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const validateCustomProfile = () => {
+        const { temperature, humidity, light } = customProfile
+        if (!temperature?.min || !temperature?.max || !humidity?.min || !humidity?.max || !light?.min || !light?.max) {
+            toast.error(t('edit_flower_profile.fill_all_values'))
+            return false
+        }
+        if (temperature.min > temperature.max || humidity.min > humidity.max || light.min > light.max) {
+            toast.error(t('edit_flower_profile.min_greater_than_max'))
+            return false
+        }
+        return true
     }
 
     if (!isOpen) return null
@@ -118,12 +141,7 @@ const EditFlowerProfile: React.FC<EditFlowerProfileProps> = ({ isOpen, onClose, 
                     ×
                 </button>
 
-                <form
-                    className="edit-flower-profile-form"
-                    onSubmit={e => {
-                        e.preventDefault()
-                        handleSubmit()
-                    }}>
+                <form className="edit-flower-profile-form" onSubmit={handleSubmit}>
                     <div className="edit-flower-profile-option-section">
                         <h3>{t('edit_flower_profile.profile_type')}</h3>
                         <div className="edit-flower-profile-profile-type-selection">
@@ -287,9 +305,7 @@ const EditFlowerProfile: React.FC<EditFlowerProfileProps> = ({ isOpen, onClose, 
                         )}
                     </div>
 
-                    <button type="submit" className="edit-flower-profile-button button-default">
-                        {t('edit_flower_profile.save')}
-                    </button>
+                    <Button type="submit">{t('edit_flower_profile.save')}</Button>
                 </form>
             </GradientDiv>
         </div>

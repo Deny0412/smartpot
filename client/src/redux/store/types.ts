@@ -1,4 +1,6 @@
 import { MeasurementType, MeasurementValue, Schedule } from '../../types/flowerTypes'
+import { User } from '../../types/userTypes'
+import { HouseholdInvite } from '../services/invitesApi'
 
 export interface ScheduleState {
     schedule: Schedule | null
@@ -45,7 +47,21 @@ export interface MeasurementsState {
 }
 
 export interface UsersState {
-    users: any[]
+    users: { [key: string]: User }
     loading: boolean
     error: string | null
+}
+
+export interface InvitesState {
+    invites: HouseholdInvite[]
+    loading: boolean
+    error: string | null
+}
+
+export interface SmartPotsState {
+    smartPots: any[]
+    inactiveSmartPots: any[]
+    loading: boolean
+    error: string | null
+    status: string
 }

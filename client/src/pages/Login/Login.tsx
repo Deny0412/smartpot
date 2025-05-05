@@ -2,21 +2,22 @@ import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import Button from '../../components/Button/Button'
 import GradientDiv from '../../components/GradientDiv/GradientDiv'
 import { H2 } from '../../components/Text/Heading/Heading'
 import { TranslationFunction } from '../../i18n/index'
+import { selectAuthLoading } from '../../redux/selectors/authSelectors'
 import { checkAuthStatus, login } from '../../redux/slices/authSlice'
-import { AppDispatch, RootState } from '../../redux/store/store'
+import { AppDispatch } from '../../redux/store/store'
 import './Login.sass'
 
 const Login: React.FC = () => {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
-    const [localError, setLocalError] = useState<string | null>(null)
     const dispatch = useDispatch<AppDispatch>()
     const navigate = useNavigate()
-    const { loading, error } = useSelector((state: RootState) => state.auth)
+    const loading = useSelector(selectAuthLoading)
     const { t } = useTranslation() as { t: TranslationFunction }
 
     useEffect(() => {
@@ -33,21 +34,28 @@ const Login: React.FC = () => {
         checkAuth()
     }, [dispatch, navigate])
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
-        setLocalError(null)
+        e.stopPropagation()
 
         if (!email.trim() || !password.trim()) {
-            setLocalError(t('login_page.error.empty_fields'))
+            toast.error(t('login_page.error.empty_fields'))
             return
         }
 
         try {
-            await dispatch(login({ email, password })).unwrap()
-            navigate('/')
+            const result = await dispatch(login({ email, password })).unwrap()
+            if (result) {
+                toast.success(t('login_page.success'))
+                navigate('/')
+            }
         } catch (err: any) {
-            setLocalError(err.response?.data?.error || err.message || t('login_page.error.invalid_credentials'))
+            toast.error(err.response?.data?.error || err.message || t('login_page.error.invalid_credentials'))
         }
+    }
+
+    const handleButtonClick = () => {
+        handleSubmit({ preventDefault: () => {}, stopPropagation: () => {} } as React.FormEvent<HTMLFormElement>)
     }
 
     return (
@@ -57,7 +65,7 @@ const Login: React.FC = () => {
             </H2>
 
             <GradientDiv className="login-form__wrapper">
-                <form className="login-form" onSubmit={handleSubmit}>
+                <form className="login-form" onSubmit={handleSubmit} noValidate>
                     <div className="login-form-group">
                         <label htmlFor="email">{t('login_page.input')}</label>
                         <input
@@ -82,9 +90,12 @@ const Login: React.FC = () => {
                         />
                     </div>
 
-                    {(error || localError) && <div className="login-form__error">{localError || error}</div>}
-
-                    <Button variant="default" className="login-form__button" disabled={loading}>
+                    <Button
+                        type="button"
+                        variant="default"
+                        className="login-form__button"
+                        disabled={loading}
+                        onClick={handleButtonClick}>
                         {loading ? t('login_page.loading') : t('login_page.button')}
                     </Button>
                 </form>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDispatch } from 'react-redux'
+import { toast } from 'react-toastify'
 import Button from '../../../components/Button/Button'
 import GradientDiv from '../../../components/GradientDiv/GradientDiv'
 import { H5 } from '../../../components/Text/Heading/Heading'
@@ -8,7 +9,6 @@ import { TranslationFunction } from '../../../i18n'
 import { createHousehold } from '../../../redux/slices/householdsSlice'
 import { AppDispatch } from '../../../redux/store/store'
 import './CreateHousehold.sass'
-import { toast } from 'react-toastify'
 
 interface CreateHouseholdProps {
     isOpen: boolean
@@ -64,25 +64,27 @@ const CreateHousehold: React.FC<CreateHouseholdProps> = ({ isOpen, onClose, onSu
     if (!isOpen) return null
 
     return (
-        <div className="create-household-container">
-            <GradientDiv className="create-household-step-container">
-                <H5 variant="primary">{t('create_household.title')}</H5>
-                <button className="create-household-close-button" onClick={onClose}>
+        <div className="modal-create-household-container">
+            <GradientDiv className="modal-create-household-step-container">
+                <H5 variant="primary" className="modal-create-household-title">
+                    {t('create_household.title')}
+                </H5>
+                <button className="modal-create-household-close-button" onClick={onClose}>
                     ×
                 </button>
 
-                <form onSubmit={handleSubmit} className="create-household-form">
-                    <div className="create-household-form-group">
+                <form onSubmit={handleSubmit} className="modal-create-household-form">
+                    <div className="modal-create-household-form-group">
                         <input
                             type="text"
-                            className="create-household-input"
+                            className="modal-create-household-input"
                             placeholder={t('create_household.input')}
                             value={householdName}
                             onChange={e => setHouseholdName(e.target.value)}
                         />
                     </div>
 
-                    {error && <div className="create-household-error-message">{error}</div>}
+                    {error && <div className="modal-create-household-error-message">{error}</div>}
 
                     <Button variant="default" onClick={() => handleSubmit()} disabled={loading}>
                         {loading ? t('create_household.saving') : t('create_household.button')}

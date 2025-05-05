@@ -26,6 +26,8 @@ export const ConfigSchema = Type.Object({
 export const appConfig: AppConfig = {
   PORT: parseInt(process.env.PORT || '3001', 10),
   NODE_ENV: (process.env.NODE_ENV as AppConfig['NODE_ENV']) || 'development',
-  MONGODB_URI: process.env.MONGODB_URI || 'mongodb://localhost:27017/smart-pot',
+  MONGODB_URI:
+    process.env.MONGODB_URI ||
+    'mongodb+srv://skull-crusher123:275Y34NbzVky4QrN@clustermain.zgzesyz.mongodb.net/smart-pot',
   JWT_SECRET: process.env.JWT_SECRET || 'your-secret-key',
 }

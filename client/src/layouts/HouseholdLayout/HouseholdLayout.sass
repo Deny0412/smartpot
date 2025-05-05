@@ -6,7 +6,7 @@
     align-items: center
     padding: 1rem
     width: 300px
-    margin: 0 auto
+    margin: 0 10px
     & > *
         cursor: pointer
         border-radius: 50%
@@ -18,7 +18,20 @@
         &.active
             border-color: green
 
-@media screen and (min-width: 768px)
+    @media screen and (max-width: 1000px)
+        width: 100%
+        justify-content: center
+        gap: 1rem
+        margin: 0
+        padding: 1rem 0
+        & > *
+            margin: 0 0.5rem
+            padding: 0.3rem
+            & svg
+                width: 24px
+                height: 24px
+
+@media screen and (min-width: 1000px)
     .household-layout__navigation
         position: fixed
         left: -60px
@@ -53,6 +66,7 @@
         justify-content: center
         cursor: pointer
         transition: all 0.3s ease
+
         &:hover
             background: rgba(0, 0, 0, 0.2)
             & svg

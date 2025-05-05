@@ -149,7 +149,6 @@
                 line-height: 1.3
 
         .profile-settings
-
             display: grid
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr))
             gap: 1.5rem
@@ -176,9 +175,13 @@
 
         @media (max-width: 768px)
             margin-bottom: 0.75rem
+            flex-direction: column
+            gap: 0.25rem
 
         @media (max-width: 480px)
             margin-bottom: 0.5rem
+            flex-direction: column
+            gap: 0.25rem
 
         .pencil-icon
             @extend .pencil-icon
@@ -187,13 +190,14 @@
     display: flex
     align-items: center
     justify-content: space-between
-    width: 100%
     max-width: 1200px
-    margin: 0 auto
-    box-sizing: border-box
+    margin: 1rem auto
+    padding: 0 2rem
 
     @media (max-width: 768px)
         padding: 0 1rem
+        width: 90%
+        margin: 0 auto
 
     @media (max-width: 480px)
         display: flex
@@ -201,6 +205,7 @@
         align-items: center
         justify-content: center
         gap: 1rem
+        padding: 0 0.5rem
 
     .flower-name-container
         display: flex
@@ -247,27 +252,42 @@
     .pencil-icon
         @extend .pencil-icon
 
+/* .flowerpot-detail
+ max-width: 1200px
+ margin: 1rem auto
+ padding: 0 2rem
+ color: $primary-text
+ display: flex
+ flex-direction: column
+ @media (max-width: 768px)
+ padding: 0 1rem
+ width: 90%
+ margin: 0 auto
+
+ @media (max-width: 480px)
+ padding: 0.5rem */
+
 .smartpot-container
     display: flex
     flex-direction: row
-    width: 100%
+
     max-width: 1200px
     margin: 1rem auto
     align-items: center
     justify-content: space-between
-    gap: 1rem
 
-    box-sizing: border-box
+    padding: 0 2rem
 
     @media (max-width: 768px)
-
-        gap: 0.75rem
+        padding: 0 1rem
+        width: 90%
+        margin: 0 auto
 
     @media (max-width: 480px)
-
         flex-direction: column
         gap: 0.5rem
         text-align: center
+        padding: 0 0.5rem
 
 .pencil-icon
     cursor: pointer
@@ -325,7 +345,25 @@
         @media (max-width: 480px)
             grid-template-columns: repeat(2, 1fr)
             gap: 0.75rem
+
 .smartpot-container-warning
+    display: flex
+    align-items: center
+    justify-content: center
+    gap: 1rem
+    .battery-status
+        margin-left: 10px
+        font-weight: 500
+        color: #666
+
+    .battery-status.warning
+        color: #f93333
+
+.disconnect-flower-button
+    display: flex
+    margin:0 auto
+
+.flower-detail-buttons-container
     display: flex
     align-items: center
     justify-content: center

@@ -38,7 +38,7 @@ const EditFlowerSchedule: React.FC<EditFlowerScheduleProps> = ({ isOpen, onClose
     const dispatch = useDispatch<AppDispatch>()
     const [scheduleData, setScheduleData] = useState<ScheduleData>(currentSchedule)
     const [loading, setLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
+    
 
     const dayTranslations: Record<string, string> = {
         monday: t('flower_detail.days.monday'),
@@ -76,7 +76,31 @@ const EditFlowerSchedule: React.FC<EditFlowerScheduleProps> = ({ isOpen, onClose
             e.preventDefault()
         }
         setLoading(true)
-        setError(null)
+        
+
+        // 1. Kontrola časov
+        for (const day of Object.keys(scheduleData)) {
+            if (day === 'active') continue
+            const dayData = scheduleData[day as keyof ScheduleData] as ScheduleDay
+            if (dayData && dayData.from && dayData.to && dayData.from > dayData.to) {
+                toast.error(t('flower_detail.edit_schedule.invalid_time'))
+                setLoading(false)
+                return
+            }
+        }
+
+        // 2. Kontrola aspoň jedného dňa
+        const atLeastOneDay = Object.keys(scheduleData).some(day => {
+            if (day === 'active') return false
+            const dayData = scheduleData[day as keyof ScheduleData] as ScheduleDay
+            return !!(dayData && (dayData.from || dayData.to))
+        })
+        if (!atLeastOneDay) {
+            toast.error(t('flower_detail.edit_schedule.at_least_one_day'))
+            
+            setLoading(false)
+            return
+        }
 
         try {
             const scheduleToUpdate: Schedule = {
@@ -92,8 +116,7 @@ const EditFlowerSchedule: React.FC<EditFlowerScheduleProps> = ({ isOpen, onClose
             onClose()
             toast.success('Schedule updated successfully')
         } catch (err) {
-            setError('Chyba pri aktualizácii rozvrhu. Skúste to prosím znova.')
-
+           
             toast.error('Error updating schedule')
         } finally {
             setLoading(false)
@@ -176,7 +199,7 @@ const EditFlowerSchedule: React.FC<EditFlowerScheduleProps> = ({ isOpen, onClose
                         </div>
                     </div>
 
-                    {error && <div className="edit-flower-schedule-error-message">{error}</div>}
+                   
 
                     <Button variant="default" onClick={handleSubmit} disabled={loading}>
                         {loading ? t('flower_detail.saving') : t('flower_detail.save')}

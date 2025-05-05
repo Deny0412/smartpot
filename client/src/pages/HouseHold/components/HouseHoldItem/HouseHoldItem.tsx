@@ -4,9 +4,8 @@ import { useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import GradientDiv from '../../../../components/GradientDiv/GradientDiv'
 import { H4 } from '../../../../components/Text/Heading/Heading'
-import { Paragraph } from '../../../../components/Text/Paragraph/Paragraph'
 import { TranslationFunction } from '../../../../i18n'
-import { RootState } from '../../../../redux/store/store'
+import { selectUserId } from '../../../../redux/selectors/authSelectors'
 import './HouseHoldItem.sass'
 
 interface HouseHoldItemProps {
@@ -17,19 +16,13 @@ interface HouseHoldItemProps {
     members?: string[]
 }
 
-const HouseHoldItem: React.FC<HouseHoldItemProps> = ({
-    name,
-    description = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-    id,
-    owner,
-    members = [],
-}) => {
+const HouseHoldItem: React.FC<HouseHoldItemProps> = ({ name, id, owner, members = [] }) => {
     const navigate = useNavigate()
-    const authState = useSelector((state: RootState) => state.auth)
-    const userId = authState.user?.id
+    const userId = useSelector(selectUserId)
     const isOwner = owner === userId
     const isMember = members.includes(userId || '')
     const { t } = useTranslation() as { t: TranslationFunction }
+
     const handleCheckClick = () => {
         if (id) {
             navigate(`/households/${id}/flowers`)
@@ -50,9 +43,6 @@ const HouseHoldItem: React.FC<HouseHoldItemProps> = ({
                         )}
                     </div>
                 </div>
-                <Paragraph variant="secondary" size="md" className="household-description">
-                    {description}
-                </Paragraph>
             </div>
         </GradientDiv>
     )

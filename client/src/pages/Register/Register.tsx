@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import Button from '../../components/Button/Button'
 import GradientDiv from '../../components/GradientDiv/GradientDiv'
 import { H2 } from '../../components/Text/Heading/Heading'
@@ -16,25 +17,35 @@ const Register: React.FC = () => {
     const [confirmPassword, setConfirmPassword] = useState('')
     const [name, setName] = useState('')
     const [surname, setSurname] = useState('')
-    const [error, setError] = useState<string | null>(null)
+    const [loading, setLoading] = useState(false)
     const { t } = useTranslation() as { t: TranslationFunction }
     const dispatch = useDispatch<AppDispatch>()
     const navigate = useNavigate()
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        setError(null)
+        setLoading(true)
+
+        if (!email.trim() || !password.trim() || !confirmPassword.trim() || !name.trim() || !surname.trim()) {
+            toast.error(t('register_page.error.empty_fields'))
+            setLoading(false)
+            return
+        }
 
         if (password !== confirmPassword) {
-            setError(t('register_page.passwords_dont_match'))
+            toast.error(t('register_page.error.passwords_dont_match'))
+            setLoading(false)
             return
         }
 
         try {
             await dispatch(register({ email, password, name, surname })).unwrap()
+            toast.success(t('register_page.success'))
             navigate('/login')
-        } catch (err) {
-            setError(err instanceof Error ? err.message : t('register_page.registration_failed'))
+        } catch (err: any) {
+            toast.error(err.response?.data?.error || err.message || t('register_page.error.registration_failed'))
+        } finally {
+            setLoading(false)
         }
     }
 
@@ -46,8 +57,6 @@ const Register: React.FC = () => {
 
             <GradientDiv className="register-form__wrapper">
                 <form className="register-form" onSubmit={handleSubmit}>
-                    {error && <div className="error-message">{error}</div>}
-
                     <div className="register-form-group">
                         <label htmlFor="name">{t('register_page.name')}</label>
                         <input
@@ -108,8 +117,8 @@ const Register: React.FC = () => {
                         />
                     </div>
 
-                    <Button variant="default" className="register-form__button">
-                        {t('register_page.button')}
+                    <Button variant="default" type="submit" className="register-form__button" disabled={loading}>
+                        {loading ? t('register_page.loading') : t('register_page.button')}
                     </Button>
                 </form>
             </GradientDiv>

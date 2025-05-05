@@ -4,7 +4,10 @@ import {
     addHousehold,
     deleteHousehold,
     fetchHouseholds,
+    inviteMember,
     leaveHousehold,
+    makeOwner,
+    removeMember,
     updateHousehold,
 } from '../services/householdsApi'
 
@@ -72,6 +75,39 @@ export const leaveHouseholdAction = createAsyncThunk('households/leave', async (
         return rejectWithValue(error instanceof Error ? error.message : 'Chyba pri opustení domácnosti')
     }
 })
+
+export const inviteMemberAction = createAsyncThunk(
+    'households/invite',
+    async ({ householdId, userId }: { householdId: string; userId: string }, { rejectWithValue }) => {
+        try {
+            return await inviteMember(householdId, userId)
+        } catch (error) {
+            return rejectWithValue(error instanceof Error ? error.message : 'Chyba pri pozvaní člena')
+        }
+    },
+)
+
+export const removeMemberAction = createAsyncThunk(
+    'households/removeMember',
+    async ({ householdId, memberId }: { householdId: string; memberId: string }, { rejectWithValue }) => {
+        try {
+            return await removeMember(householdId, memberId)
+        } catch (error) {
+            return rejectWithValue(error instanceof Error ? error.message : 'Chyba pri odstránení člena')
+        }
+    },
+)
+
+export const makeOwnerAction = createAsyncThunk(
+    'households/makeOwner',
+    async ({ householdId, newOwnerId }: { householdId: string; newOwnerId: string }, { rejectWithValue }) => {
+        try {
+            return await makeOwner(householdId, newOwnerId)
+        } catch (error) {
+            return rejectWithValue(error instanceof Error ? error.message : 'Chyba pri zmene vlastníka')
+        }
+    },
+)
 
 const householdsSlice = createSlice({
     name: 'households',
@@ -147,6 +183,48 @@ const householdsSlice = createSlice({
                 state.loading = false
             })
             .addCase(leaveHouseholdAction.rejected, (state, action) => {
+                state.loading = false
+                state.error = action.payload as string
+            })
+            .addCase(inviteMemberAction.pending, state => {
+                state.loading = true
+                state.error = null
+            })
+            .addCase(inviteMemberAction.fulfilled, state => {
+                state.loading = false
+                state.error = null
+            })
+            .addCase(inviteMemberAction.rejected, (state, action) => {
+                state.loading = false
+                state.error = action.payload as string
+            })
+            .addCase(removeMemberAction.pending, state => {
+                state.loading = true
+                state.error = null
+            })
+            .addCase(removeMemberAction.fulfilled, (state, action: PayloadAction<Household>) => {
+                const index = state.households.findIndex(h => h.id === action.payload.id)
+                if (index !== -1) {
+                    state.households[index] = action.payload
+                }
+                state.loading = false
+            })
+            .addCase(removeMemberAction.rejected, (state, action) => {
+                state.loading = false
+                state.error = action.payload as string
+            })
+            .addCase(makeOwnerAction.pending, state => {
+                state.loading = true
+                state.error = null
+            })
+            .addCase(makeOwnerAction.fulfilled, (state, action: PayloadAction<Household>) => {
+                const index = state.households.findIndex(h => h.id === action.payload.id)
+                if (index !== -1) {
+                    state.households[index] = action.payload
+                }
+                state.loading = false
+            })
+            .addCase(makeOwnerAction.rejected, (state, action) => {
                 state.loading = false
                 state.error = action.payload as string
             })

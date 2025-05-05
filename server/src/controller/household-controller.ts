@@ -87,9 +87,12 @@ export const householdController = {
   },
   invite: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const invite = request.body as Params
-      await householdInviteAbl(invite, reply)
+      console.log('Invite request body:', request.body)
+      const { id, invited_user_id } = request.body as { id: string; invited_user_id: string }
+      console.log('Extracted data:', { id, invited_user_id })
+      await householdInviteAbl({ id, invited_user_id }, reply)
     } catch (error) {
+      console.error('Error in invite controller:', error)
       sendError(reply, error)
     }
   },
@@ -111,11 +114,13 @@ export const householdController = {
   },
   decision: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const updatedHousehold = request.body as Params
-      const user_id = (request.user as { user?: { id?: string } })?.user?.id as string
-
-      await householdDecisionAbl(updatedHousehold, user_id, reply)
+      console.log('Decision request body:', request.body)
+      const { id, decision } = request.body as { id: string; decision: boolean }
+      const user_id = request.user?.user_id
+      console.log('Extracted data:', { id, decision, user_id })
+      await householdDecisionAbl({ id, decision }, user_id, reply)
     } catch (error) {
+      console.error('Error in decision controller:', error)
       sendError(reply, error)
     }
   },

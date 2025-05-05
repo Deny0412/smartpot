@@ -7,9 +7,12 @@ import Loader from '../../components/Loader/Loader'
 import { H3 } from '../../components/Text/Heading/Heading'
 import { Paragraph } from '../../components/Text/Paragraph/Paragraph'
 import { TranslationFunction } from '../../i18n'
-import { clearFlowerpots, loadFlowerpots, loadInactiveFlowerpots } from '../../redux/slices/flowerpotsSlice'
+import { selectUser } from '../../redux/selectors/authSelectors'
+import { selectHouseholdById } from '../../redux/selectors/houseHoldSelectors'
+import { selectSmartPots } from '../../redux/selectors/smartPotSelectors'
+import { clearSmartPots, fetchInactiveSmartPots, fetchSmartPots } from '../../redux/slices/smartPotsSlice'
 import { AppDispatch, RootState } from '../../redux/store/store'
-import { Household } from '../../types/householdTypes'
+import AddSmartPot from './AddSmartPot/AddSmartPot'
 import SmartPotItem from './SmartPotItem/SmartPotItem'
 import './SmartPotList.sass'
 
@@ -20,23 +23,18 @@ const SmartPotList: React.FC = () => {
     const navigate = useNavigate()
     const { t } = useTranslation() as { t: TranslationFunction }
     const { householdId } = useParams<{ householdId: string }>()
-    const { user } = useSelector((state: RootState) => state.auth)
-    const {
-        flowerpots,
-        inactiveFlowerpots,
-        loading: flowerpotsLoading,
-        error: flowerpotsError,
-    } = useSelector((state: RootState) => state.flowerpots)
-    const { households } = useSelector((state: RootState) => state.households)
-    const householdName = households.find((h: Household) => h.id === householdId)?.name
+    const user = useSelector(selectUser)
+    const smartPots = useSelector(selectSmartPots)
+    const smartPotsLoading = useSelector((state: RootState) => state.smartPots.loading)
+    const smartPotsError = useSelector((state: RootState) => state.smartPots.error)
+    const currentHousehold = useSelector((state: RootState) => selectHouseholdById(state, householdId || ''))
 
     const [filterType, setFilterType] = useState<FilterType>('all')
     const [isOwner, setIsOwner] = useState(false)
+    const [showAddModal, setShowAddModal] = useState(false)
 
-    const householdFlowerpots = Array.isArray(flowerpots)
-        ? flowerpots.filter(pot => pot.household_id === householdId)
-        : []
-    const emptyFlowerpots = householdFlowerpots.length === 0
+    const householdSmartPots = Array.isArray(smartPots) ? smartPots.filter(pot => pot.household_id === householdId) : []
+    const emptySmartPots = householdSmartPots.length === 0
 
     useEffect(() => {
         if (!householdId) {
@@ -44,37 +42,41 @@ const SmartPotList: React.FC = () => {
             return
         }
 
-        dispatch(clearFlowerpots())
+        dispatch(clearSmartPots())
 
-        try {
-            dispatch(loadFlowerpots(householdId))
-            dispatch(loadInactiveFlowerpots(householdId))
-        } catch (error: any) {
-            if (error.response?.status === 404) {
-                // 404 znamená že nie sú žiadne flowerpoty, čo je v poriadku
-                return
+        const loadSmartPots = async () => {
+            try {
+                await Promise.all([
+                    dispatch(fetchSmartPots(householdId)).unwrap(),
+                    dispatch(fetchInactiveSmartPots(householdId)).unwrap(),
+                ])
+            } catch (error: any) {
+                // 404 je v poriadku, znamená to že nie sú žiadne smart poty
+                if (error.response?.status !== 404) {
+                    console.error('Error loading flowerpots:', error)
+                }
             }
-            console.error('Error loading flowerpots:', error)
         }
+
+        loadSmartPots()
     }, [dispatch, householdId, navigate])
 
     useEffect(() => {
-        if (user && householdId && households.length > 0) {
-            const currentHousehold = households.find((h: Household) => h.id === householdId)
-            setIsOwner(currentHousehold?.owner === user.id)
+        if (user && currentHousehold) {
+            setIsOwner(currentHousehold.owner === user.id)
         }
-    }, [households, householdId, user])
+    }, [currentHousehold, user])
 
     if (!householdId) {
         return null
     }
 
     const handleAddSmartPot = () => {
-        navigate(`/household/${householdId}/flowerpots/add`)
+        setShowAddModal(true)
     }
 
-    const filteredFlowerpots = householdFlowerpots.filter(flowerpot => {
-        const hasFlower = flowerpot.active_flower_id !== null
+    const filteredSmartPots = householdSmartPots.filter(pot => {
+        const hasFlower = pot.active_flower_id !== null
 
         switch (filterType) {
             case 'active':
@@ -86,14 +88,19 @@ const SmartPotList: React.FC = () => {
         }
     })
 
-    if (flowerpotsLoading) {
+    if (smartPotsLoading) {
         return <Loader />
+    }
+
+    // Ignorujeme 404 chybu, pretože je to očakávané správanie keď nie sú žiadne smart poty
+    if (smartPotsError && !smartPotsError.toString().includes('404')) {
+        return <div>Error: {smartPotsError}</div>
     }
 
     return (
         <div className="smart-pot-list-container">
             <H3 variant="secondary" className="main-title">
-                {t('smart_pot_list.title')} {householdName}
+                {t('smart_pot_list.title')} {currentHousehold?.name}
             </H3>
 
             <div className="filter-buttons">
@@ -109,14 +116,14 @@ const SmartPotList: React.FC = () => {
             </div>
 
             <div className="smart-pots-list">
-                {!emptyFlowerpots ? (
-                    filteredFlowerpots.map(flowerpot => (
+                {!emptySmartPots ? (
+                    filteredSmartPots.map(pot => (
                         <SmartPotItem
-                            key={flowerpot._id}
-                            serialNumber={flowerpot.serial_number}
-                            id={flowerpot._id}
-                            activeFlowerId={flowerpot.active_flower_id}
-                            householdId={householdId}
+                            key={pot._id}
+                            serialNumber={pot.serial_number}
+                            id={pot._id}
+                            activeFlowerId={pot.active_flower_id}
+                            householdId={householdId || ''}
                         />
                     ))
                 ) : (
@@ -131,6 +138,8 @@ const SmartPotList: React.FC = () => {
                     {t('smart_pot_list.actions.add')}
                 </Button>
             </div>
+
+            {showAddModal && <AddSmartPot onClose={() => setShowAddModal(false)} />}
         </div>
     )
 }

@@ -1,22 +1,20 @@
-import mongoose from "mongoose";
-import { FastifyPluginAsync } from "fastify";
+import { FastifyPluginAsync } from 'fastify'
+import mongoose from 'mongoose'
+import { appConfig } from './config'
 
 export const dbPlugin: FastifyPluginAsync = async (fastify) => {
   try {
-    const url = process.env.MONGODB_URL || 'mongodb://localhost:27017/smart-pot';
+    await mongoose.connect(appConfig.MONGODB_URI)
 
-    
-    await mongoose.connect(url);
-    
-    fastify.log.info('MongoDB connected successfully');
-    
+    fastify.log.info('MongoDB connected successfully')
+
     // Close MongoDB connection when fastify closes
     fastify.addHook('onClose', async () => {
-      await mongoose.connection.close();
-      fastify.log.info('MongoDB connection closed');
-    });
+      await mongoose.connection.close()
+      fastify.log.info('MongoDB connection closed')
+    })
   } catch (err) {
-    fastify.log.error('MongoDB connection error:', err);
-    throw err;
+    fastify.log.error('MongoDB connection error:', err)
+    throw err
   }
-}; 
+}

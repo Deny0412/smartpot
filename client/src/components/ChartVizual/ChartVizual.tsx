@@ -16,7 +16,6 @@ interface ChartVizualProps {
 const ChartVizual: React.FC<ChartVizualProps> = ({ data, dataKey, color = '#3498db', minValue, maxValue }) => {
     const [windowWidth, setWindowWidth] = useState(window.innerWidth)
 
-
     useEffect(() => {
         const handleResize = () => {
             setWindowWidth(window.innerWidth)
@@ -27,10 +26,7 @@ const ChartVizual: React.FC<ChartVizualProps> = ({ data, dataKey, color = '#3498
     }, [])
 
     const aggregatedData = useMemo(() => {
-    
-
         if (!data || data.length === 0) {
-            
             return []
         }
 
@@ -38,9 +34,8 @@ const ChartVizual: React.FC<ChartVizualProps> = ({ data, dataKey, color = '#3498
         const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
         const thirtyDaysAgo = new Date(now.getTime() - 31 * 24 * 60 * 60 * 1000)
 
-        // Ak sú všetky dáta z posledných 7 dní, vrátime ich bez agregácie
-        if (data.every(item => new Date(item.timestamp) >= sevenDaysAgo)) {
         
+        if (data.every(item => new Date(item.timestamp) >= sevenDaysAgo)) {
             return data.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
         }
 
@@ -48,14 +43,12 @@ const ChartVizual: React.FC<ChartVizualProps> = ({ data, dataKey, color = '#3498
 
         data.forEach(item => {
             const date = new Date(item.timestamp)
-            const dateKey = date.toISOString().split('T')[0] // YYYY-MM-DD
+            const dateKey = date.toISOString().split('T')[0]
 
-            // Určíme počet intervalov pre daný deň
-            let intervalsPerDay = 1 // predvolená hodnota pre >30 dní
-            if (date >= sevenDaysAgo) {
-                intervalsPerDay = 4 // posledných 7 dní
-            } else if (date >= thirtyDaysAgo) {
-                intervalsPerDay = 10 // 8-30 dní
+           
+            let intervalsPerDay = 1 
+            if (date >= thirtyDaysAgo) {
+                intervalsPerDay = 10 
             }
 
             if (!groupedData.has(dateKey)) {
@@ -65,7 +58,6 @@ const ChartVizual: React.FC<ChartVizualProps> = ({ data, dataKey, color = '#3498
             const dayData = groupedData.get(dateKey)!
 
             if (intervalsPerDay === 1) {
-                // Pre >30 dní - jeden interval za deň
                 if (!dayData.has(0)) {
                     dayData.set(0, { sum: 0, count: 0 })
                 }
@@ -73,7 +65,6 @@ const ChartVizual: React.FC<ChartVizualProps> = ({ data, dataKey, color = '#3498
                 intervalData.sum += item.value
                 intervalData.count += 1
             } else {
-                // Pre 7-30 dní - viac intervalov za deň
                 const intervalLength = 24 / intervalsPerDay
                 const intervalIndex = Math.floor(date.getHours() / intervalLength)
 
@@ -86,7 +77,7 @@ const ChartVizual: React.FC<ChartVizualProps> = ({ data, dataKey, color = '#3498
             }
         })
 
-        // Prevedieme zoskupené dáta do požadovaného formátu
+        
         const result: Array<{ timestamp: string; value: number }> = []
 
         groupedData.forEach((intervals, date) => {
@@ -94,11 +85,11 @@ const ChartVizual: React.FC<ChartVizualProps> = ({ data, dataKey, color = '#3498
                 const dateObj = new Date(date)
 
                 if (intervals.size === 1) {
-                    // Pre >30 dní - nastavíme čas na poludnie
+                   
                     dateObj.setHours(12, 0, 0, 0)
                 } else {
-                    // Pre 7-30 dní - nastavíme čas podľa intervalu
-                    const intervalLength = intervals.size === 4 ? 6 : 2.4
+                   
+                    const intervalLength = 2.4
                     const hours = intervalIndex * intervalLength
                     dateObj.setHours(hours, 0, 0, 0)
                 }
@@ -110,9 +101,7 @@ const ChartVizual: React.FC<ChartVizualProps> = ({ data, dataKey, color = '#3498
             })
         })
 
-        
         const sortedResult = result.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-     
         return sortedResult
     }, [data])
 
@@ -143,14 +132,12 @@ const ChartVizual: React.FC<ChartVizualProps> = ({ data, dataKey, color = '#3498
         const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
 
         if (date < thirtyDaysAgo) {
-            // Pre >30 dní - zobrazíme len dátum
             return date.toLocaleString('sk-SK', {
                 day: '2-digit',
                 month: '2-digit',
                 year: 'numeric',
             })
         } else {
-            // Pre 7-30 dní - zobrazíme dátum a čas
             return date.toLocaleString('sk-SK', {
                 day: '2-digit',
                 month: '2-digit',

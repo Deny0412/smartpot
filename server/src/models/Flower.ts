@@ -4,8 +4,9 @@ export interface IFlower extends Document {
   profile_id: string
   name: string
   household_id: string
-  serial_number: string
+  serial_number: string | null
   avatar: string
+  keepSmartPot?: boolean
   profile: {
     humidity: {
       min: number | null

@@ -12,10 +12,12 @@
 
     @media (max-width: 768px)
         flex-direction: row
-        padding: 1.5rem
+        align-items: center
+        padding: 1rem
         width: 100%
         max-width: 100%
         margin: 0 auto
+        gap: 0.5rem
 
     .flower-item-content
         flex: 1
@@ -29,6 +31,7 @@
 
         .flower-item-header
             margin-bottom: 0
+            width: 100%
 
             .flower-item-header-content
                 display: flex
@@ -37,10 +40,9 @@
                 flex-wrap: wrap
 
                 @media (max-width: 768px)
-                    justify-content: flex-start
                     flex-direction: row
                     align-items: center
-                    gap: 1rem
+                    gap: 0.3rem
 
                 .flower-item-name
                     color: #ffffff
@@ -49,7 +51,8 @@
                     line-height: 1.2
 
                     @media (max-width: 768px)
-                        margin-bottom: 0.5rem
+                        font-size: 1rem
+                        margin-bottom: 0
 
                 .flower-item-profile-label
                     padding: 0.25rem 1rem
@@ -62,6 +65,10 @@
                     align-items: center
                     height: fit-content
                     line-height: 1.2
+
+                    @media (max-width: 768px)
+                        font-size: 0.7rem
+                        padding: 0.12rem 0.5rem
 
                     &.flower-item-own-settings
                         color: #999999
@@ -124,15 +131,20 @@
         height: 80px
 
         @media (max-width: 768px)
-            margin-left: 1rem
-            width: 60px
-            height: 60px
+            margin: 0 0 0 0.5rem
+            width: 40px
+            height: 40px
 
         .flower-item-image-img
             width: 100%
             height: 100%
             object-fit: cover
             border-radius: 50%
+            opacity: 0
+            transition: opacity 0.3s ease-in-out
+
+            &.loaded
+                opacity: 1
 
 .flower-item-flowerpot-label
     padding: 0.25rem 1rem
@@ -145,6 +157,10 @@
     align-items: center
     height: fit-content
     line-height: 1.2
+
+    @media (max-width: 768px)
+        font-size: 0.7rem
+        padding: 0.12rem 0.5rem
 
     &.flower-item-no-flowerpot
         color: #999999

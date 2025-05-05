@@ -4,8 +4,9 @@ import { useTranslation } from 'react-i18next'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { TranslationFunction } from '../../i18n'
+import { selectIsAuthenticated, selectUser, selectUserFullName } from '../../redux/selectors/authSelectors'
 import { logout } from '../../redux/slices/authSlice'
-import { AppDispatch, RootState } from '../../redux/store/store'
+import { AppDispatch } from '../../redux/store/store'
 import './Navigation.sass'
 
 import logo_img from '../../assets/plant 2.png'
@@ -16,7 +17,9 @@ const Navigation: React.FC = () => {
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
     const menuRef = useRef<HTMLDivElement>(null)
     const dispatch = useDispatch<AppDispatch>()
-    const { isAuthenticated, user } = useSelector((state: RootState) => state.auth)
+    const isAuthenticated = useSelector(selectIsAuthenticated)
+    const user = useSelector(selectUser)
+    const userFullName = useSelector(selectUserFullName)
     const { t, i18n } = useTranslation() as { t: TranslationFunction; i18n: any }
 
     const changeLanguage = (lng: string) => {
@@ -83,11 +86,7 @@ const Navigation: React.FC = () => {
             </div>
 
             <div className="navbar__actions">
-                {isAuthenticated && user && (
-                    <div className="navbar__user-info">
-                        {user.name} {user.surname}
-                    </div>
-                )}
+                {isAuthenticated && user && <div className="navbar__user-info">{userFullName}</div>}
                 <button
                     className="navbar__menu-btn"
                     onClick={() => setIsMenuOpen(!isMenuOpen)}
