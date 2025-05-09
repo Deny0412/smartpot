@@ -5,7 +5,7 @@ import { toast } from 'react-toastify'
 import Button from '../../../components/Button/Button'
 import GradientDiv from '../../../components/GradientDiv/GradientDiv'
 import { H5 } from '../../../components/Text/Heading/Heading'
-import { updateSchedule } from '../../../redux/slices/scheduleSlice'
+import { loadSchedule, updateSchedule } from '../../../redux/slices/scheduleSlice'
 import { AppDispatch } from '../../../redux/store/store'
 import { Schedule } from '../../../types/flowerTypes'
 import './EditFlowerSchedule.sass'
@@ -38,7 +38,6 @@ const EditFlowerSchedule: React.FC<EditFlowerScheduleProps> = ({ isOpen, onClose
     const dispatch = useDispatch<AppDispatch>()
     const [scheduleData, setScheduleData] = useState<ScheduleData>(currentSchedule)
     const [loading, setLoading] = useState(false)
-    
 
     const dayTranslations: Record<string, string> = {
         monday: t('flower_detail.days.monday'),
@@ -76,7 +75,6 @@ const EditFlowerSchedule: React.FC<EditFlowerScheduleProps> = ({ isOpen, onClose
             e.preventDefault()
         }
         setLoading(true)
-        
 
         // 1. Kontrola časov
         for (const day of Object.keys(scheduleData)) {
@@ -97,7 +95,7 @@ const EditFlowerSchedule: React.FC<EditFlowerScheduleProps> = ({ isOpen, onClose
         })
         if (!atLeastOneDay) {
             toast.error(t('flower_detail.edit_schedule.at_least_one_day'))
-            
+
             setLoading(false)
             return
         }
@@ -113,10 +111,13 @@ const EditFlowerSchedule: React.FC<EditFlowerScheduleProps> = ({ isOpen, onClose
                     schedule: scheduleToUpdate,
                 }),
             ).unwrap()
+
+            // Načítame nový rozvrh po úspešnej aktualizácii
+            await dispatch(loadSchedule(flowerId)).unwrap()
+
             onClose()
             toast.success('Schedule updated successfully')
         } catch (err) {
-           
             toast.error('Error updating schedule')
         } finally {
             setLoading(false)
@@ -198,8 +199,6 @@ const EditFlowerSchedule: React.FC<EditFlowerScheduleProps> = ({ isOpen, onClose
                             })}
                         </div>
                     </div>
-
-                   
 
                     <Button variant="default" onClick={handleSubmit} disabled={loading}>
                         {loading ? t('flower_detail.saving') : t('flower_detail.save')}

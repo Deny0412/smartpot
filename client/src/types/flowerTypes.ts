@@ -120,3 +120,25 @@ export interface SmartPot {
     createdAt: string
     updatedAt: string
 }
+
+export interface Measurements {
+    water: MeasurementValue[]
+    temperature: MeasurementValue[]
+    light: MeasurementValue[]
+    humidity: MeasurementValue[]
+    battery: MeasurementValue[]
+}
+
+export interface MeasurementsState {
+    measurements: {
+        [flowerId: string]: Measurements
+    }
+    loading: boolean
+    error: string | null
+    activeWebSocketFlowerId: string | null
+    lastChange: {
+        flowerId: string
+        type: MeasurementType
+        timestamp: string
+    } | null
+}

@@ -29,6 +29,7 @@ import { loadFlowerProfiles } from '../../redux/slices/flowerProfilesSlice'
 import { loadFlowerDetails, removeFlower } from '../../redux/slices/flowersSlice'
 import {
     clearMeasurements,
+    fetchMeasurementsForFlower,
     startWebSocketConnection,
     stopWebSocketConnection,
 } from '../../redux/slices/measurementsSlice'
@@ -133,7 +134,7 @@ const FlowerDetail: React.FC = () => {
     // Pridáme kontrolu stavu batérie
     const batteryStatus = useMemo(() => {
         if (!measurements?.battery || measurements.battery.length === 0) return null
-        const lastBatteryValue = measurements.battery[0].battery
+        const lastBatteryValue = Number(measurements.battery[0].value)
         return {
             value: lastBatteryValue,
             hasWarning: lastBatteryValue < 30 || lastBatteryValue > 100,
@@ -191,47 +192,43 @@ const FlowerDetail: React.FC = () => {
     }, [dispatch, flowerId])
 
     useEffect(() => {
-        if (!flowerId || !householdId) {
-            return
-        }
-        const loadData = async () => {
-            try {
-                setIsLoading(true)
-                await Promise.all([
-                    dispatch(loadFlowerDetails(flowerId)).unwrap(),
-                    dispatch(loadFlowerProfiles()).unwrap(),
-                    dispatch(fetchSmartPots(householdId)).unwrap(),
-                    dispatch(fetchInactiveSmartPots(householdId)).unwrap(),
-                ])
+        if (flowerId && householdId) {
+            const loadData = async () => {
+                try {
+                    setIsLoading(true)
+                    // Načítame všetky historické dáta
+                    const dateFrom = '2020-01-01'
+                    const dateTo = new Date().toISOString().split('T')[0]
 
-                setIsInitialLoad(false)
-                setIsLoading(false)
-            } catch (error) {
-                console.error('Chyba pri načítaní dát:', error)
-                setIsLoading(false)
+                    await Promise.all([
+                        dispatch(loadFlowerDetails(flowerId)),
+                        dispatch(fetchMeasurementsForFlower({ flowerId, householdId, dateFrom, dateTo })),
+                        dispatch(fetchSmartPots(householdId)),
+                        dispatch(fetchInactiveSmartPots(householdId)),
+                        dispatch(loadFlowerProfiles()),
+                    ])
+
+                    // Inicializujeme WebSocket pripojenie
+                    dispatch(startWebSocketConnection(flowerId))
+
+                    setIsLoading(false)
+                    setIsInitialLoad(false)
+                } catch (error) {
+                    console.error('Chyba pri načítaní dát:', error)
+                    setIsLoading(false)
+                    setIsInitialLoad(false)
+                }
             }
-        }
 
-        loadData()
+            loadData()
 
-        // Cleanup funkcia
-        return () => {
-            dispatch(clearMeasurements())
-        }
-    }, [dispatch, flowerId, householdId])
-
-    // Pridaný nový useEffect pre WebSocket pripojenie
-    useEffect(() => {
-        if (flowerId) {
-            // Spustíme WebSocket pripojenie pre túto kvetinu
-            dispatch(startWebSocketConnection(flowerId))
-
-            // Cleanup funkcia - zatvoríme WebSocket pripojenie keď komponent unmount
+            // Cleanup funkcia
             return () => {
                 dispatch(stopWebSocketConnection())
+                dispatch(clearMeasurements())
             }
         }
-    }, [dispatch, flowerId])
+    }, [dispatch, flowerId, householdId])
 
     const handleTimeRangeChange = (range: 'day' | 'week' | 'month' | 'custom') => {
         setTimeRange(range)
@@ -287,11 +284,7 @@ const FlowerDetail: React.FC = () => {
                             <Paragraph>
                                 {t('flower_detail.signed_into', { serialNumber: flower?.serial_number })}
                             </Paragraph>
-                            {measurements?.humidity && measurements.humidity.length > 0 && (
-                                <Paragraph>
-                                    {t('flower_detail.water_level')}: {measurements.humidity[0].humidity}%
-                                </Paragraph>
-                            )}
+
                             {batteryStatus?.hasWarning ? (
                                 <WarningCircle size={32} color="#f93333" />
                             ) : (
@@ -302,6 +295,12 @@ const FlowerDetail: React.FC = () => {
                         <Paragraph>No smartpot assigned</Paragraph>
                     )}
                 </div>
+
+                {measurements?.water && measurements.water.length > 0 && (
+                    <Paragraph>
+                        {t('flower_detail.water_level')}: {measurements.water[0].value.toString().toUpperCase()}
+                    </Paragraph>
+                )}
 
                 {connectedSmartPot && (
                     <Button
@@ -349,6 +348,9 @@ const FlowerDetail: React.FC = () => {
                                 return null
                             }
                             const timeSlot = times as { from: string | null; to: string | null }
+                            if (!timeSlot.from && !timeSlot.to) {
+                                return null
+                            }
                             return (
                                 <div key={day} className="schedule-day">
                                     <H5>{dayTranslations[day]}</H5>

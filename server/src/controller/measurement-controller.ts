@@ -1,5 +1,5 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
-import measurementHistoryAbl from '../abl/measurement/measurement-history-abl'
+import measurementHistoryAbl, { getLatestMeasurementsAbl } from '../abl/measurement/measurement-history-abl'
 import { sendError } from '../middleware/response-handler'
 
 interface RequestBody {
@@ -30,5 +30,9 @@ export const measurementController = {
     } catch (error) {
       sendError(reply, error)
     }
+  },
+
+  getLatest: async (request: FastifyRequest, reply: FastifyReply) => {
+    await getLatestMeasurementsAbl(request.body as any, reply)
   },
 }

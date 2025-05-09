@@ -21,9 +21,11 @@ interface InviteMemberProps {
     isOpen: boolean
     onClose: () => void
     householdId: string
+    existingMembers: string[]
+    invitedUsers: string[]
 }
 
-const InviteMember: React.FC<InviteMemberProps> = ({ isOpen, onClose, householdId }) => {
+const InviteMember: React.FC<InviteMemberProps> = ({ isOpen, onClose, householdId, existingMembers, invitedUsers }) => {
     const { t } = useTranslation()
     const dispatch = useDispatch<AppDispatch>()
     const [searchQuery, setSearchQuery] = useState('')
@@ -41,7 +43,10 @@ const InviteMember: React.FC<InviteMemberProps> = ({ isOpen, onClose, householdI
 
             try {
                 const response = await api.get(`/user/search?query=${encodeURIComponent(searchQuery)}`)
-                setSearchResults(response.data.data)
+                const filteredUsers = response.data.data.filter(
+                    (user: User) => !existingMembers.includes(user.id) && !invitedUsers.includes(user.id),
+                )
+                setSearchResults(filteredUsers)
             } catch (err) {
                 console.error('Error searching users:', err)
                 setSearchResults([])
@@ -50,7 +55,7 @@ const InviteMember: React.FC<InviteMemberProps> = ({ isOpen, onClose, householdI
 
         const timeoutId = setTimeout(searchUsers, 300)
         return () => clearTimeout(timeoutId)
-    }, [searchQuery])
+    }, [searchQuery, existingMembers, invitedUsers])
 
     const handleSubmit = async (e?: React.FormEvent) => {
         if (e) {
@@ -62,14 +67,20 @@ const InviteMember: React.FC<InviteMemberProps> = ({ isOpen, onClose, householdI
             return
         }
 
+        if (existingMembers.includes(selectedUser.id)) {
+            setError('Tento používateľ už je členom domácnosti')
+            return
+        }
+
+        if (invitedUsers.includes(selectedUser.id)) {
+            setError('Tento používateľ už bol pozvaný')
+            return
+        }
+
         setLoading(true)
         setError(null)
 
         try {
-            console.log('Sending invite with data:', {
-                householdId,
-                userId: selectedUser.id,
-            })
             await dispatch(inviteMemberAction({ householdId, userId: selectedUser.id })).unwrap()
             toast.success('Pozvánka bola odoslaná!')
             setSearchQuery('')
@@ -90,49 +101,55 @@ const InviteMember: React.FC<InviteMemberProps> = ({ isOpen, onClose, householdI
     return (
         <div className="invite-member-container">
             <GradientDiv className="invite-member-step-container">
-                <H5 variant="primary" className="invite-member-title">{t('manage_household.manage_members.add_member.invite_member')}</H5>
+                <H5 variant="primary" className="invite-member-title">
+                    {t('manage_household.manage_members.add_member.invite_member')}
+                </H5>
                 <button className="invite-member-close-button" onClick={onClose}>
                     ×
                 </button>
 
                 <form onSubmit={handleSubmit} className="invite-member-form">
                     <div className="invite-member-form-group">
-                        <input
-                            type="text"
-                            className="invite-member-input"
-                            placeholder="Zadajte meno používateľa..."
-                            value={searchQuery}
-                            onChange={e => {
-                                setSearchQuery(e.target.value)
-                                setSelectedUser(null)
-                            }}
-                        />
-                        {searchResults.length > 0 && !selectedUser && (
-                            <div className="search-results">
-                                {searchResults.map(user => (
-                                    <div
-                                        key={user.id}
-                                        className="search-result-item"
-                                        onClick={() => {
-                                            setSelectedUser(user)
-                                            setSearchQuery(`${user.name} ${user.surname}`)
-                                            setSearchResults([])
-                                        }}>
-                                        <div style={{ fontWeight: 'bold' }}>
-                                            {user.name} {user.surname}
+                        <div className="input-wrapper">
+                            <input
+                                type="text"
+                                className="invite-member-input"
+                                placeholder="Zadajte meno používateľa..."
+                                value={searchQuery}
+                                onChange={e => {
+                                    setSearchQuery(e.target.value)
+                                    setSelectedUser(null)
+                                }}
+                            />
+                            {searchResults.length > 0 && !selectedUser && (
+                                <div className="search-results">
+                                    {searchResults.map(user => (
+                                        <div
+                                            key={user.id}
+                                            className="search-result-item"
+                                            onClick={() => {
+                                                setSelectedUser(user)
+                                                setSearchQuery(`${user.name} ${user.surname}`)
+                                                setSearchResults([])
+                                            }}>
+                                            <div style={{ fontWeight: 'bold' }}>
+                                                {user.name} {user.surname}
+                                            </div>
+                                            <div style={{ fontSize: '0.9em', color: '#999' }}>{user.email}</div>
                                         </div>
-                                        <div style={{ fontSize: '0.9em', color: '#999' }}>{user.email}</div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        <Button
+                            variant="default"
+                            onClick={handleSubmit}
+                            disabled={loading || !selectedUser}
+                            type="submit">
+                            {loading ? 'Posielam...' : 'Pozvať'}
+                        </Button>
                     </div>
-
                     {error && <div className="invite-member-error-message">{error}</div>}
-
-                    <Button variant="default" onClick={handleSubmit} disabled={loading || !selectedUser}>
-                        {loading ? 'Posielam...' : 'Pozvať'}
-                    </Button>
                 </form>
             </GradientDiv>
         </div>

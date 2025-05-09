@@ -231,7 +231,7 @@ const smartPotsSlice = createSlice({
 
 export const { clearError, clearSmartPots } = smartPotsSlice.actions
 
-// Selektory
+
 export const selectInactiveSmartPots = (state: RootState) => state.smartPots.inactiveSmartPots
 
 export const selectActiveSmartPots = (state: RootState) =>

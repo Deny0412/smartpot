@@ -10,14 +10,18 @@ import { selectFlower } from '../../../redux/selectors/flowerDetailSelectors'
 import {
     selectChartData,
     selectFilteredMeasurements,
+    selectLastChange,
     selectMeasurementLimits,
     selectMeasurementsError,
     selectMeasurementsLoading,
     selectProcessedMeasurements,
 } from '../../../redux/selectors/measurementSelectors'
 import { AppDispatch, RootState } from '../../../redux/store/store'
-import { Flower, FlowerProfile } from '../../../types/flowerTypes'
+import { Flower, FlowerProfile, MeasurementValue } from '../../../types/flowerTypes'
 import './FlowerpotMeasurment.sass'
+
+type TimeRange = 'day' | 'week' | 'month' | 'custom'
+type FlowerpotMeasurementType = 'humidity' | 'temperature' | 'light' | 'battery'
 
 interface FlowerpotMeasurmentProps {
     flowerId: string
@@ -50,9 +54,6 @@ interface FlowerpotMeasurmentProps {
     onCustomDateRangeChange: (range: { from: string; to: string }) => void
 }
 
-type TimeRange = 'day' | 'week' | 'month' | 'custom'
-type MeasurementType = 'humidity' | 'temperature' | 'light' | 'battery'
-
 interface MeasurementLimits {
     min: number
     max: number
@@ -82,6 +83,7 @@ type MeasurementData = {
     humidity?: number
     temperature?: number
     light?: number
+    battery?: number
 }
 
 const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
@@ -99,11 +101,11 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
     const error = useSelector(selectMeasurementsError)
     const flower = useSelector(selectFlower) as Flower | null
     const { t } = useTranslation() as { t: TranslationFunction }
+    const measurements = useSelector((state: RootState) => selectProcessedMeasurements(state, flowerId))
+    const lastChange = useSelector(selectLastChange)
 
-    const [measurementType, setMeasurementType] = useState<MeasurementType>('humidity')
+    const [measurementType, setMeasurementType] = useState<FlowerpotMeasurementType>('humidity')
     const [selectedDate, setSelectedDate] = useState<string>('')
-
-    const processedMeasurements = useSelector((state: RootState) => selectProcessedMeasurements(state, flowerId))
 
     const filteredMeasurements = useSelector((state: RootState) =>
         selectFilteredMeasurements(state, flowerId, measurementType, selectedDate),
@@ -114,6 +116,9 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
     )
 
     const limits = useSelector((state: RootState) => selectMeasurementLimits(state, flowerId, measurementType))
+    const humidityLimits = useSelector((state: RootState) => selectMeasurementLimits(state, flowerId, 'humidity'))
+    const temperatureLimits = useSelector((state: RootState) => selectMeasurementLimits(state, flowerId, 'temperature'))
+    const lightLimits = useSelector((state: RootState) => selectMeasurementLimits(state, flowerId, 'light'))
 
     const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
@@ -203,7 +208,7 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
             case 'temperature':
                 return '°C'
             case 'light':
-                return '%'
+                return 'Lux'
             case 'battery':
                 return '%'
             default:
@@ -211,7 +216,7 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
         }
     }
 
-    const getMeasurementValue = (data: MeasurementData, type: MeasurementType): number => {
+    const getMeasurementValue = (data: MeasurementData, type: FlowerpotMeasurementType): number => {
         switch (type) {
             case 'humidity':
                 return data.humidity || 0
@@ -219,6 +224,8 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
                 return data.temperature || 0
             case 'light':
                 return data.light || 0
+            case 'battery':
+                return data.battery || 0
             default:
                 return 0
         }
@@ -233,7 +240,6 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
             return 'Neplatný dátum'
         }
 
-        // Formátujeme dátum v lokálnom čase
         return new Intl.DateTimeFormat('sk-SK', {
             day: '2-digit',
             month: '2-digit',
@@ -260,16 +266,16 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
         }
     }
 
-    // Funkcia na získanie poslednej hodnoty
-    const getLastValue = (arr: any[], key: string) => {
-        if (!arr || arr.length === 0) return null
-        const lastValue = arr[0][key]
-        console.log(`Posledná hodnota pre ${key}:`, lastValue)
-        return lastValue
+    const getLastValue = (
+        measurements: MeasurementValue[] | undefined,
+        type: FlowerpotMeasurementType,
+    ): number | null => {
+        if (!measurements || measurements.length === 0) return null
+        const value = measurements[0].value
+        return typeof value === 'string' ? parseFloat(value) : value
     }
 
-    // Funkcia na generovanie statusu pre daný typ merania
-    const getStatusText = (type: MeasurementType, value: number | null) => {
+    const getStatusText = (type: FlowerpotMeasurementType, value: number | null) => {
         if (value === null || value === undefined)
             return { text: t('flower_measurments.status_unknown'), className: '' }
 
@@ -279,22 +285,39 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
             return { text: t('flower_measurments.status_ok'), className: 'good' }
         }
 
-        if (value < limits.min) return { text: t(`flower_measurments.status_low_${type}`), className: 'low' }
-        if (value > limits.max) return { text: t(`flower_measurments.status_high_${type}`), className: 'high' }
+        const currentLimits =
+            type === 'humidity'
+                ? humidityLimits
+                : type === 'temperature'
+                ? temperatureLimits
+                : type === 'light'
+                ? lightLimits
+                : { min: 0, max: 100 }
+
+        if (value < currentLimits.min) return { text: t(`flower_measurments.status_low_${type}`), className: 'low' }
+        if (value > currentLimits.max) return { text: t(`flower_measurments.status_high_${type}`), className: 'high' }
         return { text: t('flower_measurments.status_ok'), className: 'good' }
     }
 
-    const lastHumidity = getLastValue(processedMeasurements.humidity, 'humidity')
-    const lastTemperature = getLastValue(processedMeasurements.temperature, 'temperature')
-    const lastLight = getLastValue(processedMeasurements.light, 'light')
-    const lastBattery = getLastValue(processedMeasurements.battery, 'battery')
+    if (!measurements) {
+        return <div>{t('common.loading')}</div>
+    }
+
+    const lastHumidity = getLastValue(measurements.humidity, 'humidity')
+    const lastTemperature = getLastValue(measurements.temperature, 'temperature')
+    const lastLight = getLastValue(measurements.light, 'light')
+    const lastBattery = getLastValue(measurements.battery, 'battery')
 
     if (loading) {
         return <div>{t('common.loading')}</div>
     }
 
     if (error) {
-        return <div>Chyba pri načítaní meraní: {error}</div>
+        return (
+            <div>
+                {t('common.error')}: {error}
+            </div>
+        )
     }
 
     if (!flowerpotData) {
@@ -343,7 +366,7 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
                         </div>
                         <div className="status-item light">
                             <span>{t('flower_measurments.measurments.light')}: </span>
-                            <b>{lastLight !== null ? `${lastLight.toFixed(1)} %` : '-'}</b>
+                            <b>{lastLight !== null ? `${lastLight.toFixed(1)} Lux` : '-'}</b>
                             <span className={`status-text ${getStatusText('light', lastLight).className}`}>
                                 {getStatusText('light', lastLight).text}
                             </span>
@@ -434,7 +457,7 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
                                 key={type}
                                 className={`icon-button ${measurementType === type ? 'active' : ''}`}
                                 onClick={() => {
-                                    setMeasurementType(type as MeasurementType)
+                                    setMeasurementType(type as FlowerpotMeasurementType)
                                 }}>
                                 {icon}
                             </button>

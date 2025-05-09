@@ -25,7 +25,7 @@
         flex-direction: column
         justify-content: center
         align-items: center
-        
+
         gap: 1rem
 
     &-close-button
@@ -45,12 +45,15 @@
         align-items: stretch
 
     &-form-group
-        position: relative
+        display: flex
+        flex-direction: row
+        align-items: center
+        gap: 1rem
         margin-bottom: 1rem
         width: 100%
 
     &-input
-        width: 100%
+        flex: 1
         padding: 0.75rem
         border: 1px solid #333
         border-radius: 0.5rem
@@ -70,12 +73,15 @@
         margin-bottom: 1rem
         font-size: 0.875rem
 
+.input-wrapper
+    position: relative
+    flex: 1
+
 .search-results
     position: absolute
     top: 100%
     left: 0
-    width: auto
-    
+    width: 100%
     background: #1a1a1a
     border: 1px solid #333
     border-radius: 0.5rem
@@ -110,8 +116,8 @@
         background-color: #333
 
 .invite-member-form button
-    align-self: center
     min-width: 150px
+    align-self: unset
 
 .invite-member-title
     text-align: center

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -10,7 +10,7 @@ import { selectFlowers } from '../../redux/selectors/flowerDetailSelectors'
 import { selectMeasurementsForFlower } from '../../redux/selectors/measurementSelectors'
 import { selectSmartPots } from '../../redux/selectors/smartPotSelectors'
 import { loadFlowers } from '../../redux/slices/flowersSlice'
-import { fetchMeasurementsForFlower } from '../../redux/slices/measurementsSlice'
+import { fetchLatestMeasurements } from '../../redux/slices/measurementsSlice'
 import { fetchSmartPots } from '../../redux/slices/smartPotsSlice'
 import { AppDispatch, RootState } from '../../redux/store/store'
 import DisconnectSmarpotModal from './DisconnectSmarpotModal/DisconnectSmarpotModal'
@@ -51,6 +51,45 @@ const SmartPotDetail: React.FC = () => {
 
     const batteryLevel = measurements?.battery?.[0]?.value ? Number(measurements.battery[0].value) : null
 
+    const [isLoadingMeasurements, setIsLoadingMeasurements] = useState(false)
+    const [hasMoreMeasurements, setHasMoreMeasurements] = useState(true)
+    const [measurementPage, setMeasurementPage] = useState(1)
+
+    const loadMoreMeasurements = useCallback(async () => {
+        if (!smartPot?.active_flower_id || !householdId || isLoadingMeasurements || !hasMoreMeasurements) return
+
+        try {
+            setIsLoadingMeasurements(true)
+            const now = new Date()
+            const startDate = new Date(now)
+            startDate.setMonth(now.getMonth() - measurementPage)
+
+            const endDate = new Date(now)
+            endDate.setMonth(now.getMonth() - (measurementPage - 1))
+
+            const result = await dispatch(
+                fetchLatestMeasurements({
+                    flowerId: smartPot.active_flower_id,
+                    householdId,
+                }),
+            ).unwrap()
+
+            if (
+                !result ||
+                (typeof result === 'object' &&
+                    Object.values(result).every(arr => Array.isArray(arr) && arr.length === 0))
+            ) {
+                setHasMoreMeasurements(false)
+            } else {
+                setMeasurementPage(prev => prev + 1)
+            }
+        } catch (error) {
+            console.error('Chyba pri načítaní meraní:', error)
+        } finally {
+            setIsLoadingMeasurements(false)
+        }
+    }, [dispatch, smartPot?.active_flower_id, householdId, measurementPage, isLoadingMeasurements, hasMoreMeasurements])
+
     useEffect(() => {
         if (householdId) {
             dispatch(fetchSmartPots(householdId))
@@ -59,37 +98,15 @@ const SmartPotDetail: React.FC = () => {
     }, [dispatch, householdId])
 
     useEffect(() => {
-        if (!smartPotId || !householdId) return
-
-        const loadData = async () => {
-            try {
-                setIsLoading(true)
-                // Načítaj merania len ak nie sú v store a smart pot má priradenú kvetinu
-                if (smartPot?.active_flower_id) {
-                    const now = new Date()
-                    const startDate = new Date(now)
-                    startDate.setFullYear(now.getFullYear() - 1)
-
-                    await dispatch(
-                        fetchMeasurementsForFlower({
-                            flowerId: smartPot.active_flower_id,
-                            householdId,
-                            dateFrom: startDate.toISOString().split('T')[0],
-                            dateTo: now.toISOString().split('T')[0],
-                        }),
-                    ).unwrap()
-                }
-
-                setIsLoading(false)
-            } catch (error) {
-                console.error('Chyba pri načítaní dát:', error)
-                setError('Chyba pri načítaní dát smart potu')
-                setIsLoading(false)
-            }
+        if (flower && householdId) {
+            dispatch(
+                fetchLatestMeasurements({
+                    flowerId: flower._id,
+                    householdId,
+                }),
+            )
         }
-
-        loadData()
-    }, [dispatch, smartPotId, householdId, smartPot?.active_flower_id])
+    }, [dispatch, flower, householdId])
 
     if (smartPotsLoading) {
         return <Loader />

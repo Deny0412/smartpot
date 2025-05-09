@@ -1,21 +1,54 @@
-import { Measurements } from '../../types/flowerDetailTypes'
-import { RootState } from '../store/rootReducer'
+import { createSelector } from '@reduxjs/toolkit'
+import { MeasurementsState } from '../../types/flowerTypes'
+import { RootState } from '../store/store'
 
-export const selectMeasurementsForFlower = (state: RootState, flowerId: string): Measurements => {
-    return (
-        state.measurements.measurements[flowerId] || {
+// Základný selektor pre merania
+const selectMeasurementsState = (state: RootState) => state.measurements
+
+// Memoizovaný selektor pre merania konkrétnej kvetiny
+export const selectMeasurementsForFlower = createSelector(
+    [selectMeasurementsState, (_, flowerId: string) => flowerId],
+    (measurementsState, flowerId) => measurementsState.measurements[flowerId] || null,
+)
+
+// Memoizovaný selektor pre spracované merania
+export const selectProcessedMeasurements = createSelector([selectMeasurementsForFlower], measurements => {
+    if (!measurements) {
+        return {
             humidity: [],
             temperature: [],
             light: [],
             battery: [],
             water: [],
         }
-    )
-}
+    }
 
-export const selectMeasurementsLoading = (state: RootState) => state.measurements.loading
+    return {
+        humidity: measurements.humidity || [],
+        temperature: measurements.temperature || [],
+        light: measurements.light || [],
+        battery: measurements.battery || [],
+        water: measurements.water || [],
+    }
+})
 
-export const selectMeasurementsError = (state: RootState) => state.measurements.error
+// Memoizovaný selektor pre načítavanie
+export const selectMeasurementsLoading = createSelector([selectMeasurementsState], state => state.loading)
+
+// Memoizovaný selektor pre chyby
+export const selectMeasurementsError = createSelector([selectMeasurementsState], state => state.error)
+
+// Memoizovaný selektor pre aktívne WebSocket pripojenie
+export const selectActiveWebSocketFlowerId = createSelector(
+    [selectMeasurementsState],
+    (state: MeasurementsState) => state.activeWebSocketFlowerId,
+)
+
+// Memoizovaný selektor pre poslednú zmenu
+export const selectLastChange = createSelector(
+    [selectMeasurementsState],
+    (state: MeasurementsState) => state.lastChange,
+)
 
 export const selectAllMeasurements = (state: RootState) => state.measurements.measurements
 
@@ -35,39 +68,6 @@ export const selectLatestMeasurement = (state: RootState, flowerId: string) => {
         light: latestLight,
         battery: latestBattery,
         water: latestWater,
-    }
-}
-
-// Nové selektory pre FlowerpotMeasurment
-export const selectProcessedMeasurements = (state: RootState, flowerId: string) => {
-    const measurements = state.measurements.measurements[flowerId]
-    if (!measurements) {
-        return {
-            humidity: [],
-            temperature: [],
-            light: [],
-            battery: [],
-        }
-    }
-
-    return {
-        humidity: measurements.humidity.map(m => ({
-            timestamp: m.createdAt,
-            humidity: Number(m.value),
-        })),
-        temperature: measurements.temperature.map(m => ({
-            timestamp: m.createdAt,
-            temperature: Number(m.value),
-        })),
-        light: measurements.light.map(m => ({
-            timestamp: m.createdAt,
-            light: Number(m.value),
-        })),
-        battery:
-            measurements.battery?.map(m => ({
-                timestamp: m.createdAt,
-                battery: Number(m.value),
-            })) || [],
     }
 }
 

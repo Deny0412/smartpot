@@ -4,7 +4,7 @@ const ajv = new Ajv()
 addFormats(ajv)
 
 import { FastifyReply } from 'fastify'
-import measurementHistoryDao from '../../dao/measurement/measurement-history-dao'
+import measurementHistoryDao, { getLatestMeasurementsDao } from '../../dao/measurement/measurement-history-dao'
 import { sendClientError, sendError, sendNotFound, sendSuccess } from '../../middleware/response-handler'
 
 interface MeasurementHistoryRequest {
@@ -54,4 +54,37 @@ async function measurementHistoryAbl(data: MeasurementHistoryRequest, reply: Fas
   }
 }
 
+async function getLatestMeasurementsAbl(data: { id: string; householdId: string }, reply: FastifyReply) {
+  try {
+    const validate = ajv.compile({
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+        householdId: { type: 'string' },
+      },
+      required: ['id', 'householdId'],
+      additionalProperties: false,
+    })
+    const valid = validate(data)
+
+    if (!valid) {
+      sendClientError(reply, JSON.stringify(validate.errors?.map((error) => error.message)))
+      return
+    }
+
+    const latestMeasurements = await getLatestMeasurementsDao(data.id)
+
+    if (!latestMeasurements || Object.values(latestMeasurements).every((measurement) => measurement === null)) {
+      sendNotFound(reply, 'Žiadne merania neboli nájdené')
+      return
+    }
+
+    sendSuccess(reply, latestMeasurements, 'Posledné merania boli úspešne načítané')
+  } catch (error) {
+    console.error('Chyba pri spracovaní posledných meraní:', error)
+    sendError(reply, error)
+  }
+}
+
+export { getLatestMeasurementsAbl }
 export default measurementHistoryAbl

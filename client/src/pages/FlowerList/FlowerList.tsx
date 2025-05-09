@@ -20,7 +20,7 @@ import { selectInactiveSmartPots, selectSmartPots } from '../../redux/selectors/
 import { loadFlowerProfiles } from '../../redux/slices/flowerProfilesSlice'
 import { loadFlowers } from '../../redux/slices/flowersSlice'
 import { loadHouseholds } from '../../redux/slices/householdsSlice'
-import { fetchMeasurementsForFlower } from '../../redux/slices/measurementsSlice'
+import { fetchLatestMeasurements } from '../../redux/slices/measurementsSlice'
 import { fetchInactiveSmartPots } from '../../redux/slices/smartPotsSlice'
 import { AppDispatch, RootState } from '../../redux/store/store'
 import AddFlower from '../AddFlower/AddFlower'
@@ -77,17 +77,11 @@ const FlowerList: React.FC = () => {
 
     useEffect(() => {
         if (householdId && flowers.length > 0) {
-            const now = new Date()
-            const startDate = new Date(now)
-            startDate.setFullYear(now.getFullYear() - 1)
-
             flowers.forEach(flower => {
                 dispatch(
-                    fetchMeasurementsForFlower({
+                    fetchLatestMeasurements({
                         flowerId: flower._id,
                         householdId,
-                        dateFrom: startDate.toISOString().split('T')[0],
-                        dateTo: now.toISOString().split('T')[0],
                     }),
                 )
             })

@@ -50,7 +50,6 @@ const HouseholdInvite: React.FC<HouseholdInviteProps> = ({
         <div className="invite-content">
             <div className="invite-header">
                 <span className="invite-household">{household_name}</span>
-                <span className="invite-inviter">Pozývateľ: {inviter_name}</span>
                 <span className="invite-timestamp">{formatDate(timestamp)}</span>
             </div>
 

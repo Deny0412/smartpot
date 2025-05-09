@@ -10,6 +10,7 @@ import { TranslationFunction } from '../../i18n'
 import { selectUser } from '../../redux/selectors/authSelectors'
 import { selectHouseholdById } from '../../redux/selectors/houseHoldSelectors'
 import { selectSmartPots } from '../../redux/selectors/smartPotSelectors'
+import { fetchLatestMeasurements } from '../../redux/slices/measurementsSlice'
 import { clearSmartPots, fetchInactiveSmartPots, fetchSmartPots } from '../../redux/slices/smartPotsSlice'
 import { AppDispatch, RootState } from '../../redux/store/store'
 import AddSmartPot from './AddSmartPot/AddSmartPot'
@@ -66,6 +67,21 @@ const SmartPotList: React.FC = () => {
             setIsOwner(currentHousehold.owner === user.id)
         }
     }, [currentHousehold, user])
+
+    useEffect(() => {
+        if (householdId && householdSmartPots.length > 0) {
+            householdSmartPots.forEach(pot => {
+                if (pot.active_flower_id) {
+                    dispatch(
+                        fetchLatestMeasurements({
+                            flowerId: pot.active_flower_id,
+                            householdId,
+                        }),
+                    )
+                }
+            })
+        }
+    }, [dispatch, householdId, householdSmartPots])
 
     if (!householdId) {
         return null

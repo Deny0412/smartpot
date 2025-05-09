@@ -95,3 +95,65 @@ export default async function measurementHistoryDao(data: MeasurementHistoryRequ
 
   return combinedRecords.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
 }
+
+export async function getLatestMeasurementsDao(flowerId: string) {
+  const query = { flower_id: new Types.ObjectId(flowerId) }
+
+  const [waterRecord, humidityRecord, lightRecord, temperatureRecord, batteryRecord] = await Promise.all([
+    WaterMeasurementModel.findOne(query).sort({ createdAt: -1 }).lean(),
+    HumidityMeasurementModel.findOne(query).sort({ createdAt: -1 }).lean(),
+    LightMeasurementModel.findOne(query).sort({ createdAt: -1 }).lean(),
+    TemperatureMeasurementModel.findOne(query).sort({ createdAt: -1 }).lean(),
+    BatteryMeasurementModel.findOne(query).sort({ createdAt: -1 }).lean(),
+  ])
+
+  const latestMeasurements = {
+    water: waterRecord
+      ? {
+          _id: waterRecord._id,
+          flower_id: waterRecord.flower_id,
+          value: waterRecord.value,
+          createdAt: waterRecord.createdAt,
+          type: 'water' as const,
+        }
+      : null,
+    humidity: humidityRecord
+      ? {
+          _id: humidityRecord._id,
+          flower_id: humidityRecord.flower_id,
+          value: humidityRecord.value,
+          createdAt: humidityRecord.createdAt,
+          type: 'humidity' as const,
+        }
+      : null,
+    light: lightRecord
+      ? {
+          _id: lightRecord._id,
+          flower_id: lightRecord.flower_id,
+          value: lightRecord.value,
+          createdAt: lightRecord.createdAt,
+          type: 'light' as const,
+        }
+      : null,
+    temperature: temperatureRecord
+      ? {
+          _id: temperatureRecord._id,
+          flower_id: temperatureRecord.flower_id,
+          value: temperatureRecord.value,
+          createdAt: temperatureRecord.createdAt,
+          type: 'temperature' as const,
+        }
+      : null,
+    battery: batteryRecord
+      ? {
+          _id: batteryRecord._id,
+          flower_id: batteryRecord.flower_id,
+          value: batteryRecord.value,
+          createdAt: batteryRecord.createdAt,
+          type: 'battery' as const,
+        }
+      : null,
+  }
+
+  return latestMeasurements
+}

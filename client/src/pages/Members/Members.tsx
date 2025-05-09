@@ -7,7 +7,7 @@ import { toast } from 'react-toastify'
 import Button from '../../components/Button/Button'
 import GradientDiv from '../../components/GradientDiv/GradientDiv'
 import Loader from '../../components/Loader/Loader'
-import { H3 } from '../../components/Text/Heading/Heading'
+import { H3, H4 } from '../../components/Text/Heading/Heading'
 import { TranslationFunction } from '../../i18n'
 import { selectUser } from '../../redux/selectors/authSelectors'
 import {
@@ -58,7 +58,6 @@ const Members: React.FC = () => {
         try {
             await dispatch(removeMemberAction({ householdId, memberId })).unwrap()
             toast.success('Člen bol úspešne odstránený')
-            // Aktualizujeme dáta
             dispatch(loadHouseholds())
             if (household?.id) {
                 dispatch(fetchUsers(household.id))
@@ -74,7 +73,6 @@ const Members: React.FC = () => {
         try {
             await dispatch(makeOwnerAction({ householdId, newOwnerId: memberId })).unwrap()
             toast.success('Vlastník bol úspešne zmenený')
-            // Aktualizujeme dáta
             dispatch(loadHouseholds())
             if (household?.id) {
                 dispatch(fetchUsers(household.id))
@@ -117,6 +115,9 @@ const Members: React.FC = () => {
 
             <GradientDiv className="manage-members-content">
                 <div className="members-section">
+                    <H4 variant="primary" className="section-title">
+                        Aktívni členovia
+                    </H4>
                     <div className="section-content">
                         <div className="members-list">
                             {household.members.map((memberId: string) => (
@@ -151,6 +152,26 @@ const Members: React.FC = () => {
                                 </div>
                             ))}
                         </div>
+                    </div>
+                </div>
+
+                <div className="members-section">
+                    <H4 variant="primary" className="section-title">
+                        Pozvaní používatelia
+                    </H4>
+                    <div className="section-content">
+                        <div className="members-list">
+                            {household.invites.map((invitedUser: any) => (
+                                <div key={invitedUser.id} className="member-item">
+                                    <div className="member-info">
+                                        <span className="member-name">
+                                            {invitedUser.name} {invitedUser.surname}
+                                        </span>
+                                        <span className="invited-tag">Pozvaný</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                         <div className="add-member-icon" onClick={() => setIsInviteModalOpen(true)}>
                             <UserCirclePlus size={32} color="#bfbfbf" />
                         </div>
@@ -162,6 +183,8 @@ const Members: React.FC = () => {
                 isOpen={isInviteModalOpen}
                 onClose={() => setIsInviteModalOpen(false)}
                 householdId={householdId || ''}
+                existingMembers={household.members}
+                invitedUsers={household.invites.map((user: any) => user.id)}
             />
         </div>
     )

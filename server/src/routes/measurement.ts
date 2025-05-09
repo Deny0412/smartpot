@@ -16,6 +16,16 @@ export default async function measurementRoutes(fastify: FastifyInstance) {
     },
     measurementController.history
   )
+
+  fastify.post(
+    '/latest',
+    {
+      onRequest: [authMiddleware],
+      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])],
+    },
+    measurementController.getLatest
+  )
+
   /* fastify.post(
     "/create",
     

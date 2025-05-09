@@ -12,8 +12,8 @@ const flowerRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post(
     '/add',
     {
-      onRequest: [authMiddleware], // Authenticate first
-      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
+      onRequest: [authMiddleware],
+      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])],
     },
     flowerController.create
   )
@@ -21,32 +21,32 @@ const flowerRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.delete(
     '/delete/:id',
     {
-      onRequest: [authMiddleware], // Authenticate first
-      preHandler: [householdAuthMidlleware([OWNER_ROLE])], // Then check household auth
+      onRequest: [authMiddleware],
+      preHandler: [householdAuthMidlleware([OWNER_ROLE])],
     },
     flowerController.delete
   )
   fastify.get(
     '/get/:id',
     {
-      onRequest: [authMiddleware], // Authenticate first
-      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
+      onRequest: [authMiddleware],
+      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])],
     },
     flowerController.get
   )
   fastify.get(
     '/list',
     {
-      onRequest: [authMiddleware], // Authenticate first
-      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
+      onRequest: [authMiddleware],
+      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])],
     },
     flowerController.list
   )
   fastify.put(
     '/update',
     {
-      onRequest: [authMiddleware], // Authenticate first
-      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
+      onRequest: [authMiddleware],
+      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])],
     },
     flowerController.update
   )
@@ -54,24 +54,24 @@ const flowerRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get(
     '/listactive',
     {
-      onRequest: [authMiddleware], // Authenticate first
-      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
+      onRequest: [authMiddleware],
+      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])],
     },
     flowerController.listActive
   )
   fastify.get(
     '/schedule/:id',
     {
-      onRequest: [authMiddleware], // Authenticate first
-      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
+      onRequest: [authMiddleware],
+      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])],
     },
     flowerController.getSchedule
   )
   fastify.put(
     '/schedule/:id',
     {
-      onRequest: [authMiddleware], // Authenticate first
-      preHandler: [householdAuthMidlleware([OWNER_ROLE])], // Then check household auth
+      onRequest: [authMiddleware],
+      preHandler: [householdAuthMidlleware([OWNER_ROLE])],
     },
     flowerController.updateSchedule
   )
