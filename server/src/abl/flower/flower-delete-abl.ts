@@ -20,7 +20,7 @@ async function deleteFlowerHandler(id: string, reply: FastifyReply) {
     if (!deletedFlower) {
       return sendNotFound(reply, "Flower not found");
     }
-    return sendNoContent(reply);
+    return sendNoContent(reply, "Flower deleted successfully");
   } catch (error) {
     sendError(reply, error);
   }

@@ -2,12 +2,7 @@ import { FastifyRequest, FastifyReply } from "fastify";
 import scheduleCreateAbl from "../abl/schedule/schedule-create-abl";
 import scheduleGetAbl from "../abl/schedule/schedule-get-abl";
 import scheduleUpdateAbl from "../abl/schedule/schedule-update-abl";
-import {
-  sendSuccess,
-  sendCreated,
-  sendError,
-  sendInternalServerError,
-} from "../middleware/response-handler";
+import { sendError } from "../middleware/response-handler";
 import { ISchedule } from "../models/Schedule";
 
 interface Params {
@@ -17,8 +12,7 @@ export const scheduleController = {
   create: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const data = request.body as ISchedule;
-      const response = await scheduleCreateAbl(data, reply);
-      sendCreated(reply, response, "Schedule created successfully");
+      await scheduleCreateAbl(data, reply);
     } catch (error) {
       sendError(reply, error);
     }
@@ -26,16 +20,14 @@ export const scheduleController = {
   get: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const id = (request.params as Params).id;
-      const response = await scheduleGetAbl(id, reply);
-      sendSuccess(reply, response, "Schedule retrieved successfully");
+      await scheduleGetAbl(id, reply);
     } catch (error) {
       sendError(reply, error);
     }
   },
   update: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const response = await scheduleUpdateAbl(request.body as ISchedule, reply);
-      sendSuccess(reply, response, "Schedule updated successfully");
+      await scheduleUpdateAbl(request.body as ISchedule, reply);
     } catch (error) {
       sendError(reply, error);
     }
