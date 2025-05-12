@@ -33,7 +33,6 @@ import {
     startWebSocketConnection,
     stopWebSocketConnection,
 } from '../../redux/slices/measurementsSlice'
-import { loadSchedule } from '../../redux/slices/scheduleSlice'
 import { fetchInactiveSmartPots, fetchSmartPots } from '../../redux/slices/smartPotsSlice'
 import { AppDispatch, RootState } from '../../redux/store/store'
 import { MeasurementValue, Schedule } from '../../types/flowerTypes'
@@ -179,19 +178,6 @@ const FlowerDetail: React.FC = () => {
     }
 
     useEffect(() => {
-        if (!flowerId) return
-        console.log('Načítavam rozvrh pre kvetinu:', flowerId)
-        dispatch(loadSchedule(flowerId))
-            .unwrap()
-            .then(response => {
-                console.log('Rozvrh načítaný:', response)
-            })
-            .catch(error => {
-                console.error('Chyba pri načítaní rozvrhu:', error)
-            })
-    }, [dispatch, flowerId])
-
-    useEffect(() => {
         if (flowerId && householdId) {
             const loadData = async () => {
                 try {
@@ -207,9 +193,6 @@ const FlowerDetail: React.FC = () => {
                         dispatch(fetchInactiveSmartPots(householdId)),
                         dispatch(loadFlowerProfiles()),
                     ])
-
-                    // Inicializujeme WebSocket pripojenie
-                    dispatch(startWebSocketConnection(flowerId))
 
                     setIsLoading(false)
                     setIsInitialLoad(false)
@@ -229,6 +212,17 @@ const FlowerDetail: React.FC = () => {
             }
         }
     }, [dispatch, flowerId, householdId])
+
+    // Samostatný useEffect pre WebSocket pripojenie
+    useEffect(() => {
+        if (flowerId) {
+            console.log('Reštartujem WebSocket pre kvetinu:', flowerId, 'sériové číslo:', flower?.serial_number)
+            dispatch(stopWebSocketConnection())
+            setTimeout(() => {
+                dispatch(startWebSocketConnection(flowerId))
+            }, 1000) // Pridáme malé oneskorenie pre istotu
+        }
+    }, [dispatch, flowerId, flower?.serial_number])
 
     const handleTimeRangeChange = (range: 'day' | 'week' | 'month' | 'custom') => {
         setTimeRange(range)
@@ -296,12 +290,6 @@ const FlowerDetail: React.FC = () => {
                     )}
                 </div>
 
-                {measurements?.water && measurements.water.length > 0 && (
-                    <Paragraph>
-                        {t('flower_detail.water_level')}: {measurements.water[0].value.toString().toUpperCase()}
-                    </Paragraph>
-                )}
-
                 {connectedSmartPot && (
                     <Button
                         onClick={() => {
@@ -309,6 +297,13 @@ const FlowerDetail: React.FC = () => {
                         }}>
                         {t('flower_detail.view_smartpot')}
                     </Button>
+                )}
+            </div>
+            <div className='water_level_info'>
+                {measurements?.water && measurements.water.length > 0 && (
+                    <Paragraph size='xl'>
+                        {t('flower_detail.water_level')}: {measurements.water[0].value.toString().toUpperCase()}
+                    </Paragraph>
                 )}
             </div>
 
@@ -492,10 +487,7 @@ const FlowerDetail: React.FC = () => {
             </div>
             <div className="transplant-container">
                 <div className="flower-detail-transplant-title-container">
-                    <H4>{t('flower_detail.transplant')}</H4>
-                    <div className="flower-detail-transplant-info">
-                        {t('flower_detail.current_household')}: {currentHousehold?.name}
-                    </div>
+                    <H4>{t('flower_detail.transplant')} </H4>
                     <PencilSimple
                         size={20}
                         color="#bfbfbf"

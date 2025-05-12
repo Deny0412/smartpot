@@ -205,6 +205,14 @@ class WebSocketService {
                 return
             }
 
+            console.log('WebSocket: Pridávam meranie do Redux store:', {
+                flowerId: flower_id,
+                type,
+                value,
+                createdAt,
+                _id,
+            })
+
             const now = new Date().toISOString()
 
             // Pridanie merania do Redux store

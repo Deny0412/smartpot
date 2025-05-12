@@ -73,7 +73,7 @@ const InviteMember: React.FC<InviteMemberProps> = ({ isOpen, onClose, householdI
         }
 
         if (invitedUsers.includes(selectedUser.id)) {
-            setError('Tento používateľ už bol pozvaný')
+            setError('Tento používateľ už má pozvánku')
             return
         }
 

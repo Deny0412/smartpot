@@ -9,6 +9,7 @@ import { selectFlowers } from '../../../redux/selectors/flowerDetailSelectors'
 import { selectHouseholds } from '../../../redux/selectors/houseHoldSelectors'
 import { selectSmartPots } from '../../../redux/selectors/smartPotSelectors'
 import {
+    loadFlowerDetails,
     loadFlowers,
     transplantFlowerToSmartPotThunk,
     transplantFlowerWithSmartPotThunk,
@@ -92,6 +93,7 @@ const EditFlowerHousehold: React.FC<EditFlowerHouseholdProps> = ({
                 ).unwrap()
 
                 await dispatch(fetchSmartPots(currentHouseholdId))
+                await dispatch(loadFlowerDetails(flowerId))
             } else {
                 if (!selectedHouseholdId) {
                     throw new Error('No household selected')
@@ -116,9 +118,10 @@ const EditFlowerHousehold: React.FC<EditFlowerHouseholdProps> = ({
                 }
 
                 await dispatch(fetchSmartPots(currentHouseholdId))
-                await dispatch(fetchSmartPots(selectedHouseholdId))
-                await dispatch(loadFlowers(currentHouseholdId))
-                await dispatch(loadFlowers(selectedHouseholdId))
+                if (selectedHouseholdId !== currentHouseholdId) {
+                    await dispatch(fetchSmartPots(selectedHouseholdId))
+                }
+                await dispatch(loadFlowerDetails(flowerId))
             }
 
             toast.success(t('flower_detail.transplant_success'))

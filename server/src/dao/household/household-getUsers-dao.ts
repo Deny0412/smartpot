@@ -9,7 +9,9 @@ export const getHouseholdUsers = async (householdId: string, reply: FastifyReply
       return reply.status(404).send({ error: 'Domácnosť nebola nájdená' })
     }
 
-    const users = await User.find({ _id: { $in: household.members } })
+    // Načítame všetkých používateľov (členov aj pozvaných)
+    const allUserIds = [...household.members, ...household.invites]
+    const users = await User.find({ _id: { $in: allUserIds } })
 
     // Transformujeme údaje do formátu { userId: userData }
     const usersMap = users.reduce((acc, user) => {

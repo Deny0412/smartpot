@@ -128,7 +128,7 @@ export const registerMeasurementWebSocket: FastifyPluginAsync = async (fastify: 
     connection.socket.on('message', async (message) => {
       try {
         const data = JSON.parse(message.toString())
-        console.log('Prijatá správa od klienta:', data)
+        console.log('WebSocket server: Prijatá správa:', JSON.stringify(data, null, 2))
 
         // Spracovanie heartbeat správy
         if (data.type === 'heartbeat') {
@@ -163,12 +163,19 @@ export const registerMeasurementWebSocket: FastifyPluginAsync = async (fastify: 
             return
           }
 
+          console.log('WebSocket server: Spracovávam operáciu:', {
+            type: data.type,
+            operation: data.operation,
+            data: data.data,
+          })
+
           switch (data.operation) {
             case 'insert': {
               const newMeasurement = await (model as any).create({
                 flower_id: new Types.ObjectId(flowerId),
                 value: data.data.value,
               })
+              console.log('WebSocket server: Vytvorené nové meranie:', newMeasurement)
               connection.socket.send(
                 JSON.stringify({
                   type: data.type,

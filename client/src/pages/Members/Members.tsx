@@ -19,7 +19,7 @@ import { selectUsers, selectUsersLoading } from '../../redux/selectors/userSelec
 import { loadHouseholds, makeOwnerAction, removeMemberAction } from '../../redux/slices/householdsSlice'
 import { fetchUsers } from '../../redux/slices/usersSlice'
 import { AppDispatch, RootState } from '../../redux/store/store'
-import InviteMember from './InviteMember/InviteMember'
+import InviteMember from './InviteMember/InviteMemberModal'
 import './Members.sass'
 
 const Members: React.FC = () => {
@@ -161,16 +161,21 @@ const Members: React.FC = () => {
                     </H4>
                     <div className="section-content">
                         <div className="members-list">
-                            {household.invites.map((invitedUser: any) => (
-                                <div key={invitedUser.id} className="member-item">
-                                    <div className="member-info">
-                                        <span className="member-name">
-                                            {invitedUser.name} {invitedUser.surname}
-                                        </span>
-                                        <span className="invited-tag">Pozvaný</span>
+                            {household.invites.map((invitedUserId: string) => {
+                                const invitedUser = users[invitedUserId]
+                                return (
+                                    <div key={invitedUserId} className="member-item">
+                                        <div className="member-info">
+                                            <span className="member-name">
+                                                {invitedUser
+                                                    ? `${invitedUser.name} ${invitedUser.surname}`
+                                                    : 'Načítavam...'}
+                                            </span>
+                                            <span className="invited-tag">Pozvaný</span>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                )
+                            })}
                         </div>
                         <div className="add-member-icon" onClick={() => setIsInviteModalOpen(true)}>
                             <UserCirclePlus size={32} color="#bfbfbf" />
