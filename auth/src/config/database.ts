@@ -1,9 +1,11 @@
 import mongoose from "mongoose";
-import dotenv from "dotenv";
+import { config } from "dotenv";
+import path from "path";
 
-dotenv.config();
-
-const url = process.env.MONGODB_URI || "mongodb://localhost:27017/smart-pot";
+if (process.env.NODE_ENV !== "production") {
+  config({ path: path.resolve(__dirname, "../../../.env") });
+}
+const url = process.env.MONGO_URI || "mongodb://localhost:27017/smart-pot";
 
 export async function connectToDatabase() {
   try {
