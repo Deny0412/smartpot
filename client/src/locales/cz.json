@@ -6,7 +6,8 @@
         "save": "Uložit",
         "cancel": "Zrušit",
         "delete": "Smazat",
-        "edit": "Upravit"
+        "edit": "Upravit",
+        "loading_text": "Načítání..."
     },
     "not_found": {
         "title": "404",
@@ -79,8 +80,39 @@
                 "email": "Email",
                 "email_placeholder": "Zadejte emailovou adresu",
                 "send": "Odeslat pozvánku",
-                "sending": "Odesílání..."
-            }
+                "sending": "Odesílání...",
+                "error": {
+                    "select_user": "Vyberte prosím uživatele",
+                    "user_already_member": "Tento uživatel již je členem domácnosti",
+                    "user_already_invited": "Tento uživatel již má pozvánku",
+                    "invite_send_failed": "Chyba při odesílání pozvánky. Zkuste to prosím znovu."
+                },
+                "toast": {
+                    "invite_sent_success": "Pozvánka byla odeslána!"
+                },
+                "console": {
+                    "error_details_prefix": "Detaily chyby:"
+                },
+                "search_placeholder": "Zadejte jméno uživatele...",
+                "sending_button": "Odesílání...",
+                "invite_button": "Pozvat"
+            },
+            "toast": {
+                "remove_member_success": "Člen byl úspěšně odstraněn",
+                "remove_member_error": "Nepodařilo se odstranit člena",
+                "make_owner_success": "Vlastník byl úspěšně změněn",
+                "make_owner_error": "Nepodařilo se změnit vlastníka"
+            },
+            "console": {
+                "remove_member_error_prefix": "Chyba při odstranění člena:",
+                "make_owner_error_prefix": "Chyba při změně vlastníka:"
+            },
+            "unknown_user": "Neznámý uživatel",
+            "household_not_found": "Domácnost nebyla nalezena",
+            "no_permission": "Nemáte oprávnění ke správě této domácnosti",
+            "active_members": "Aktivní členové",
+            "invited_users": "Pozvaní uživatelé",
+            "invited_tag": "Pozvaný"
         },
         "manage_flowers": {
             "title": "Správa květin v",
@@ -145,7 +177,8 @@
         "role": {
             "owner": "Vlastník",
             "member": "Člen"
-        }
+        },
+        "access_denied_toast": "K této domácnosti již nemáte přístup."
     },
     "flower_list": {
         "title": "Květiny v",

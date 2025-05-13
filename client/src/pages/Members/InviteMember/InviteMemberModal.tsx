@@ -63,17 +63,17 @@ const InviteMember: React.FC<InviteMemberProps> = ({ isOpen, onClose, householdI
         }
 
         if (!selectedUser) {
-            setError('Vyberte prosím používateľa')
+            setError(t('manage_household.manage_members.add_member.error.select_user'))
             return
         }
 
         if (existingMembers.includes(selectedUser.id)) {
-            setError('Tento používateľ už je členom domácnosti')
+            setError(t('manage_household.manage_members.add_member.error.user_already_member'))
             return
         }
 
         if (invitedUsers.includes(selectedUser.id)) {
-            setError('Tento používateľ už má pozvánku')
+            setError(t('manage_household.manage_members.add_member.error.user_already_invited'))
             return
         }
 
@@ -82,13 +82,13 @@ const InviteMember: React.FC<InviteMemberProps> = ({ isOpen, onClose, householdI
 
         try {
             await dispatch(inviteMemberAction({ householdId, userId: selectedUser.id })).unwrap()
-            toast.success('Pozvánka bola odoslaná!')
+            toast.success(t('manage_household.manage_members.add_member.toast.invite_sent_success'))
             setSearchQuery('')
             setSelectedUser(null)
             onClose()
         } catch (err) {
-            console.error('Error details:', err)
-            const errorMessage = 'Chyba pri odosielaní pozvánky. Skúste to prosím znova.'
+            console.error(t('manage_household.manage_members.add_member.console.error_details_prefix'), err)
+            const errorMessage = t('manage_household.manage_members.add_member.error.invite_send_failed')
             setError(errorMessage)
             toast.error(errorMessage)
         } finally {
@@ -114,7 +114,7 @@ const InviteMember: React.FC<InviteMemberProps> = ({ isOpen, onClose, householdI
                             <input
                                 type="text"
                                 className="invite-member-input"
-                                placeholder="Zadajte meno používateľa..."
+                                placeholder={t('manage_household.manage_members.add_member.search_placeholder')}
                                 value={searchQuery}
                                 onChange={e => {
                                     setSearchQuery(e.target.value)
@@ -146,7 +146,9 @@ const InviteMember: React.FC<InviteMemberProps> = ({ isOpen, onClose, householdI
                             onClick={handleSubmit}
                             disabled={loading || !selectedUser}
                             type="submit">
-                            {loading ? 'Posielam...' : 'Pozvať'}
+                            {loading
+                                ? t('manage_household.manage_members.add_member.sending_button')
+                                : t('manage_household.manage_members.add_member.invite_button')}
                         </Button>
                     </div>
                     {error && <div className="invite-member-error-message">{error}</div>}

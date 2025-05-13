@@ -3,7 +3,7 @@ import i18next from 'i18next'
 import { MeasurementType, MeasurementValue } from '../../types/flowerTypes'
 import { api } from '../services/api'
 import { getMeasurementsForFlower } from '../services/measurmentApi'
-import { AppDispatch } from '../store/store'
+import { AppDispatch, RootState } from '../store/store'
 
 const WebSocketStates = {
     CONNECTING: 0,
@@ -40,7 +40,7 @@ export interface MeasurementsState {
     loading: boolean
     error: string | null
     activeWebSocketFlowerId: string | null
-    webSocketStatus: WebSocketConnectionStatus // Nový stav pre WebSocket
+    webSocketStatus: WebSocketConnectionStatus
     lastChange: {
         flowerId: string
         type: MeasurementType
@@ -53,7 +53,7 @@ const initialState: MeasurementsState = {
     loading: false,
     error: null,
     activeWebSocketFlowerId: null,
-    webSocketStatus: 'idle', // Počiatočný stav pre WebSocket
+    webSocketStatus: 'idle',
     lastChange: null,
 }
 
@@ -65,7 +65,7 @@ class WebSocketService {
     private reconnectTimeout = 3000
     private flowerId: string | null = null
     private token: string | null = null
-    private dispatch: AppDispatch | null = null // Upravený typ pre dispatch
+    private dispatch: AppDispatch | null = null
     private isIntentionalDisconnect = false
 
     constructor() {
@@ -271,7 +271,6 @@ class WebSocketService {
                 if (this.isIntentionalDisconnect && this.dispatch) {
                     this.dispatch(measurementsSlice.actions.setWebSocketStatus('idle'))
                     this.dispatch(measurementsSlice.actions.setActiveWebSocketFlowerId(null))
-                    this.isIntentionalDisconnect = false
                 }
             }
             this.ws = null
@@ -286,6 +285,75 @@ class WebSocketService {
 }
 
 export const webSocketService = new WebSocketService()
+
+// Thunks - najprv definované ako lokálne konštanty
+const startWebSocketConnectionThunk = createAsyncThunk(
+    'measurements/startWebSocketConnection',
+    async (flowerId: string, { dispatch, getState }) => {
+        const state = getState() as RootState
+        const measurementsState = state.measurements
+
+        if (
+            measurementsState.activeWebSocketFlowerId !== flowerId ||
+            ['idle', 'disconnected', 'error', 'closing'].includes(measurementsState.webSocketStatus)
+        ) {
+            if (
+                measurementsState.activeWebSocketFlowerId &&
+                measurementsState.activeWebSocketFlowerId !== flowerId &&
+                !['idle', 'disconnected', 'error', 'closing'].includes(measurementsState.webSocketStatus)
+            ) {
+                console.log(
+                    i18next.t('flower_detail.console.websocket_switching_flower', {
+                        oldFlowerId: measurementsState.activeWebSocketFlowerId,
+                        newFlowerId: flowerId,
+                    }),
+                )
+                webSocketService.prepareForIntentionalDisconnect()
+                webSocketService.disconnect()
+            }
+
+            dispatch(measurementsSlice.actions.setActiveWebSocketFlowerId(flowerId))
+            dispatch(measurementsSlice.actions.setWebSocketStatus('connecting'))
+            webSocketService.connect(flowerId)
+        } else if (
+            measurementsState.activeWebSocketFlowerId === flowerId &&
+            measurementsState.webSocketStatus === 'connected'
+        ) {
+            console.log(i18next.t('flower_detail.console.websocket_already_connected_to_flower', { flowerId }))
+        }
+    },
+)
+
+const stopWebSocketConnectionThunk = createAsyncThunk(
+    'measurements/stopWebSocketConnection',
+    async (_, { dispatch, getState }) => {
+        const state = getState() as RootState
+        const measurementsState = state.measurements
+
+        if (
+            measurementsState.activeWebSocketFlowerId &&
+            measurementsState.webSocketStatus !== 'idle' &&
+            measurementsState.webSocketStatus !== 'closing'
+        ) {
+            console.log(
+                i18next.t('flower_detail.console.websocket_stopping_connection_for_flower', {
+                    flowerId: measurementsState.activeWebSocketFlowerId,
+                }),
+            )
+            dispatch(measurementsSlice.actions.setWebSocketStatus('closing'))
+            webSocketService.prepareForIntentionalDisconnect()
+            webSocketService.disconnect()
+        } else {
+            console.log(
+                i18next.t('flower_detail.console.websocket_stop_called_on_inactive', {
+                    status: measurementsState.webSocketStatus,
+                }),
+            )
+            dispatch(measurementsSlice.actions.setActiveWebSocketFlowerId(null))
+            dispatch(measurementsSlice.actions.setWebSocketStatus('idle'))
+        }
+    },
+)
 
 export const fetchMeasurementsForFlower = createAsyncThunk(
     'measurements/fetchForFlower',
@@ -377,61 +445,11 @@ export const measurementsSlice = createSlice({
         },
         clearMeasurements: state => {
             state.measurements = {}
-        },
-        startWebSocketConnection: (state, action: PayloadAction<string>) => {
-            if (
-                state.activeWebSocketFlowerId !== action.payload ||
-                ['idle', 'disconnected', 'error', 'closing'].includes(state.webSocketStatus)
-            ) {
-                if (
-                    state.activeWebSocketFlowerId &&
-                    state.activeWebSocketFlowerId !== action.payload &&
-                    !['idle', 'disconnected', 'error', 'closing'].includes(state.webSocketStatus)
-                ) {
-                    console.log(
-                        i18next.t('flower_detail.console.websocket_switching_flower', {
-                            oldFlowerId: state.activeWebSocketFlowerId,
-                            newFlowerId: action.payload,
-                        }),
-                    )
-                    webSocketService.prepareForIntentionalDisconnect()
-                    webSocketService.disconnect()
-                }
-
-                state.activeWebSocketFlowerId = action.payload
-                state.webSocketStatus = 'connecting'
-                webSocketService.connect(action.payload)
-            } else if (state.activeWebSocketFlowerId === action.payload && state.webSocketStatus === 'connected') {
-                console.log(
-                    i18next.t('flower_detail.console.websocket_already_connected_to_flower', {
-                        flowerId: action.payload,
-                    }),
-                )
-            }
-        },
-        stopWebSocketConnection: state => {
-            if (
-                state.activeWebSocketFlowerId &&
-                state.webSocketStatus !== 'idle' &&
-                state.webSocketStatus !== 'closing'
-            ) {
-                console.log(
-                    i18next.t('flower_detail.console.websocket_stopping_connection_for_flower', {
-                        flowerId: state.activeWebSocketFlowerId,
-                    }),
-                )
-                state.webSocketStatus = 'closing'
-                webSocketService.prepareForIntentionalDisconnect()
-                webSocketService.disconnect()
-            } else {
-                console.log(
-                    i18next.t('flower_detail.console.websocket_stop_called_on_inactive', {
-                        status: state.webSocketStatus,
-                    }),
-                )
-                state.activeWebSocketFlowerId = null // Ensure cleanup
-                state.webSocketStatus = 'idle' // Ensure cleanup
-            }
+            state.activeWebSocketFlowerId = null
+            state.webSocketStatus = 'idle'
+            state.error = null
+            state.loading = false
+            state.lastChange = null
         },
         setMeasurements: (state, action: PayloadAction<{ flowerId: string; measurements: Measurements }>) => {
             const { flowerId, measurements } = action.payload
@@ -655,8 +673,6 @@ export const measurementsSlice = createSlice({
 
 export const {
     clearMeasurements,
-    startWebSocketConnection,
-    stopWebSocketConnection,
     setMeasurements,
     addMeasurement,
     updateMeasurement,
@@ -671,3 +687,9 @@ export const initializeWebSocket = (dispatch: AppDispatch) => {
 }
 
 export default measurementsSlice.reducer
+
+// Explicitný export thunkov s novými názvami konštánt
+export {
+    startWebSocketConnectionThunk as startWebSocketConnection,
+    stopWebSocketConnectionThunk as stopWebSocketConnection,
+}

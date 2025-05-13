@@ -28,11 +28,11 @@ const Login: React.FC = () => {
                     navigate('/')
                 }
             } catch (err) {
-                toast.error(t('login_page.error.invalid_credentials'))
+                // toast.error(t('login_page.error.invalid_credentials')) 
             }
         }
         checkAuth()
-    }, [dispatch, navigate])
+    }, [dispatch, navigate, t]) 
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()

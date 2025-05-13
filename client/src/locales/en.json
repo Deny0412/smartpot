@@ -6,7 +6,8 @@
         "save": "Save",
         "cancel": "Cancel",
         "delete": "Delete",
-        "edit": "Edit"
+        "edit": "Edit",
+        "loading_text": "Loading..."
     },
     "navigation": {
         "home": "Home",
@@ -73,8 +74,39 @@
                 "email": "Email",
                 "email_placeholder": "Enter email address",
                 "send": "Send invitation",
-                "sending": "Sending..."
-            }
+                "sending": "Sending...",
+                "error": {
+                    "select_user": "Please select a user",
+                    "user_already_member": "This user is already a member of the household",
+                    "user_already_invited": "This user has already been invited",
+                    "invite_send_failed": "Error sending invitation. Please try again."
+                },
+                "toast": {
+                    "invite_sent_success": "Invitation sent successfully!"
+                },
+                "console": {
+                    "error_details_prefix": "Error details:"
+                },
+                "search_placeholder": "Enter username...",
+                "sending_button": "Sending...",
+                "invite_button": "Invite"
+            },
+            "toast": {
+                "remove_member_success": "Member removed successfully",
+                "remove_member_error": "Failed to remove member",
+                "make_owner_success": "Owner changed successfully",
+                "make_owner_error": "Failed to change owner"
+            },
+            "console": {
+                "remove_member_error_prefix": "Error removing member:",
+                "make_owner_error_prefix": "Error changing owner:"
+            },
+            "unknown_user": "Unknown user",
+            "household_not_found": "Household not found",
+            "no_permission": "You do not have permission to manage this household",
+            "active_members": "Active members",
+            "invited_users": "Invited users",
+            "invited_tag": "Invited"
         },
         "manage_flowers": {
             "title": "Manage flowers in",
@@ -139,7 +171,8 @@
         "role": {
             "owner": "Owner",
             "member": "Member"
-        }
+        },
+        "access_denied_toast": "You no longer have access to this household."
     },
     "flower_list": {
         "title": "Flowers in",

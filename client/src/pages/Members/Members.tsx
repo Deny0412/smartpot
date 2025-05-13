@@ -57,14 +57,14 @@ const Members: React.FC = () => {
         if (!householdId) return
         try {
             await dispatch(removeMemberAction({ householdId, memberId })).unwrap()
-            toast.success('Člen bol úspešne odstránený')
+            toast.success(t('manage_household.manage_members.toast.remove_member_success'))
             dispatch(loadHouseholds())
             if (household?.id) {
                 dispatch(fetchUsers(household.id))
             }
         } catch (error) {
-            console.error('Chyba pri odstránení člena:', error)
-            toast.error('Nepodarilo sa odstrániť člena')
+            console.error(t('manage_household.manage_members.console.remove_member_error_prefix'), error)
+            toast.error(t('manage_household.manage_members.toast.remove_member_error'))
         }
     }
 
@@ -72,27 +72,29 @@ const Members: React.FC = () => {
         if (!householdId) return
         try {
             await dispatch(makeOwnerAction({ householdId, newOwnerId: memberId })).unwrap()
-            toast.success('Vlastník bol úspešne zmenený')
+            toast.success(t('manage_household.manage_members.toast.make_owner_success'))
             dispatch(loadHouseholds())
             if (household?.id) {
                 dispatch(fetchUsers(household.id))
             }
         } catch (error) {
-            console.error('Chyba pri zmene vlastníka:', error)
-            toast.error('Nepodarilo sa zmeniť vlastníka')
+            console.error(t('manage_household.manage_members.console.make_owner_error_prefix'), error)
+            toast.error(t('manage_household.manage_members.toast.make_owner_error'))
         }
     }
 
     const getMemberName = (memberId: string) => {
-        if (householdsLoading || usersLoading) return 'Načítavam...'
+        if (householdsLoading || usersLoading) return t('common.loading_text')
         const user = users[memberId]
-        return user ? `${user.name} ${user.surname}` : 'Neznámy používateľ'
+        return user ? `${user.name} ${user.surname}` : t('manage_household.manage_members.unknown_user')
     }
 
     const getMemberRole = (memberId: string) => {
-        if (householdsLoading || usersLoading) return 'Načítavam...'
+        if (householdsLoading || usersLoading) return t('common.loading_text')
         const user = users[memberId]
-        return user?.role === 'owner' ? 'Vlastník' : 'Člen'
+        return user?.role === 'owner'
+            ? t('manage_household.manage_members.roles.owner')
+            : t('manage_household.manage_members.roles.member')
     }
 
     if (householdsLoading) {
@@ -100,11 +102,11 @@ const Members: React.FC = () => {
     }
 
     if (!household) {
-        return <div>Domácnosť sa nenašla</div>
+        return <div>{t('manage_household.manage_members.household_not_found')}</div>
     }
 
     if (!isOwner) {
-        return <div>Nemáte oprávnenie na správu tejto domácnosti</div>
+        return <div>{t('manage_household.manage_members.no_permission')}</div>
     }
 
     return (
@@ -116,7 +118,7 @@ const Members: React.FC = () => {
             <GradientDiv className="manage-members-content">
                 <div className="members-section">
                     <H4 variant="primary" className="section-title">
-                        Aktívni členovia
+                        {t('manage_household.manage_members.active_members')}
                     </H4>
                     <div className="section-content">
                         <div className="members-list">
@@ -126,11 +128,7 @@ const Members: React.FC = () => {
                                         <span className="member-name">{getMemberName(memberId)}</span>
                                         <span
                                             className={users[memberId]?.role === 'owner' ? 'owner-tag' : 'member-tag'}>
-                                            {t(
-                                                `manage_household.manage_members.roles.${
-                                                    users[memberId]?.role || 'member'
-                                                }`,
-                                            )}
+                                            {getMemberRole(memberId)}
                                         </span>
                                     </div>
                                     {memberId !== household.owner && (
@@ -157,7 +155,7 @@ const Members: React.FC = () => {
 
                 <div className="members-section">
                     <H4 variant="primary" className="section-title">
-                        Pozvaní používatelia
+                        {t('manage_household.manage_members.invited_users')}
                     </H4>
                     <div className="section-content">
                         <div className="members-list">
@@ -169,9 +167,11 @@ const Members: React.FC = () => {
                                             <span className="member-name">
                                                 {invitedUser
                                                     ? `${invitedUser.name} ${invitedUser.surname}`
-                                                    : 'Načítavam...'}
+                                                    : t('common.loading_text')}
                                             </span>
-                                            <span className="invited-tag">Pozvaný</span>
+                                            <span className="invited-tag">
+                                                {t('manage_household.manage_members.invited_tag')}
+                                            </span>
                                         </div>
                                     </div>
                                 )

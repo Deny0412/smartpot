@@ -7,6 +7,7 @@ import {
     registerUser,
     UserData,
 } from '../services/authApi'
+import { clearMeasurements, stopWebSocketConnection } from './measurementsSlice'
 
 interface AuthState {
     isAuthenticated: boolean
@@ -48,8 +49,10 @@ export const login = createAsyncThunk('auth/login', async (credentials: LoginCre
     return await loginUser(credentials.email, credentials.password)
 })
 
-export const logout = createAsyncThunk('auth/logout', async () => {
+export const logout = createAsyncThunk('auth/logout', async (_, { dispatch }) => {
     await logoutUser()
+    dispatch(stopWebSocketConnection())
+    dispatch(clearMeasurements())
 })
 
 export const checkAuthStatus = createAsyncThunk('auth/check', async () => {

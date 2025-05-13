@@ -45,7 +45,7 @@ export const loginUser = async (email: string, password: string): Promise<UserDa
 export const logoutUser = async (): Promise<void> => {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
-    await new Promise(resolve => setTimeout(resolve, 500))
+    //await new Promise(resolve => setTimeout(resolve, 500))
 }
 
 export const checkAuth = async (): Promise<UserData | null> => {
