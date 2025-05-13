@@ -9,11 +9,11 @@ async function getEmptySmartPotHandler(householdId: string, reply: FastifyReply)
     const emptySmartPots = await smartpotGetDao.getEmptySmartPotsByHousehold(householdId)
 
     if (!emptySmartPots || emptySmartPots.length === 0) {
-      sendNotFound(reply, 'Nenašli sa žiadne prázdne smartpots pre danú domácnosť')
+      sendNotFound(reply, 'No empty smartpots found for the household')
       return
     }
 
-    sendSuccess(reply, emptySmartPots, 'Prázdne smartpots boli úspešne nájdené')
+    sendSuccess(reply, emptySmartPots, 'Empty smartpots found successfully')
   } catch (error) {
     sendError(reply, error)
   }

@@ -11,15 +11,15 @@ const smartPotRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post(
     '/create',
     {
-      onRequest: [authMiddleware], 
+      onRequest: [authMiddleware],
     },
     smartpotController.create
   )
   fastify.get(
     '/get/:id',
     {
-      onRequest: [authMiddleware], 
-      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], 
+      onRequest: [authMiddleware],
+      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])],
     },
     smartpotController.get
   )
@@ -27,7 +27,7 @@ const smartPotRoutes: FastifyPluginAsync = async (fastify) => {
     '/update',
     {
       onRequest: [authMiddleware], // Authenticate first
-      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], 
+      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])],
     },
     smartpotController.update
   )
@@ -54,7 +54,6 @@ const smartPotRoutes: FastifyPluginAsync = async (fastify) => {
       smartpotController.getByHousehold
     )
 
-  
   fastify.post(
     '/transplant-with-flower',
     {
@@ -64,14 +63,12 @@ const smartPotRoutes: FastifyPluginAsync = async (fastify) => {
         body: Type.Object({
           smartPotId: Type.String(),
           targetHouseholdId: Type.String(),
-          
         }),
       },
     },
     smartpotController.transplantWithFlower
   )
 
-  
   fastify.post(
     '/transplant-without-flower',
     {
@@ -89,12 +86,11 @@ const smartPotRoutes: FastifyPluginAsync = async (fastify) => {
     smartpotController.transplantWithoutFlower
   )
 
-  
   fastify.post(
     '/transplant-to-flower',
     {
       onRequest: [authMiddleware],
-      preHandler: [householdAuthMidlleware([OWNER_ROLE])],
+      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])],
       schema: {
         body: Type.Object({
           smartPotId: Type.String(),

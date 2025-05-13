@@ -1,5 +1,6 @@
 import { Check, X } from 'phosphor-react'
 import React, { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'react-toastify'
 import Loader from '../../components/Loader/Loader'
 import { H2 } from '../../components/Text/Heading/Heading'
@@ -25,6 +26,7 @@ interface HouseholdInviteProps {
     status: string
     onAccept: (id: string) => void
     onReject: (id: string) => void
+    formatDate: (timestamp: string) => string
 }
 
 const NotificationItem: React.FC<NotificationItemProps> = ({ household, notificationCount, onClick }) => (
@@ -45,6 +47,7 @@ const HouseholdInvite: React.FC<HouseholdInviteProps> = ({
     status,
     onAccept,
     onReject,
+    formatDate,
 }) => (
     <div className="invite-item">
         <div className="invite-content">
@@ -63,47 +66,50 @@ const HouseholdInvite: React.FC<HouseholdInviteProps> = ({
     </div>
 )
 
-const formatDate = (timestamp: string) => {
-    const date = new Date(timestamp)
-    const today = new Date()
-    const yesterday = new Date(today)
-    yesterday.setDate(yesterday.getDate() - 1)
-
-    const timeFormat = new Intl.DateTimeFormat('sk', {
-        hour: '2-digit',
-        minute: '2-digit',
-    }).format(date)
-
-    if (date.toDateString() === today.toDateString()) {
-        return `Dnes ${timeFormat}`
-    }
-
-    if (date.toDateString() === yesterday.toDateString()) {
-        return `Včera ${timeFormat}`
-    }
-
-    if (date.getFullYear() === today.getFullYear()) {
-        return new Intl.DateTimeFormat('sk', {
-            day: '2-digit',
-            month: 'long',
-            hour: '2-digit',
-            minute: '2-digit',
-        }).format(date)
-    }
-
-    return new Intl.DateTimeFormat('sk', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-    }).format(date)
-}
-
 const Notifications: React.FC = () => {
     const dispatch = useAppDispatch()
     const invites = useAppSelector(selectInvites)
     const loading = useAppSelector(selectInvitesLoading)
+    const { t, i18n } = useTranslation()
+
+    const formatDate = (timestamp: string) => {
+        const date = new Date(timestamp)
+        const today = new Date()
+        const yesterday = new Date(today)
+        yesterday.setDate(yesterday.getDate() - 1)
+
+        const currentLanguage = i18n.language.split('-')[0]
+
+        const timeFormat = new Intl.DateTimeFormat(currentLanguage, {
+            hour: '2-digit',
+            minute: '2-digit',
+        }).format(date)
+
+        if (date.toDateString() === today.toDateString()) {
+            return `${t('notifications.format_date.today_prefix')}${timeFormat}`
+        }
+
+        if (date.toDateString() === yesterday.toDateString()) {
+            return `${t('notifications.format_date.yesterday_prefix')}${timeFormat}`
+        }
+
+        if (date.getFullYear() === today.getFullYear()) {
+            return new Intl.DateTimeFormat(currentLanguage, {
+                day: '2-digit',
+                month: 'long',
+                hour: '2-digit',
+                minute: '2-digit',
+            }).format(date)
+        }
+
+        return new Intl.DateTimeFormat(currentLanguage, {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        }).format(date)
+    }
 
     useEffect(() => {
         dispatch(loadInvites())
@@ -112,25 +118,25 @@ const Notifications: React.FC = () => {
     const handleAcceptInvite = async (id: string) => {
         try {
             await dispatch(acceptInvite(id)).unwrap()
-            toast.success('Pozvánka prijatá')
+            toast.success(t('notifications.toast.invite_accepted_success'))
         } catch (error) {
-            toast.error('Nepodarilo sa prijať pozvánku')
+            toast.error(t('notifications.toast.invite_accepted_error'))
         }
     }
 
     const handleRejectInvite = async (id: string) => {
         try {
             await dispatch(rejectInvite(id)).unwrap()
-            toast.success('Pozvánka zamietnutá')
+            toast.success(t('notifications.toast.invite_rejected_success'))
         } catch (error) {
-            toast.error('Nepodarilo sa zamietnuť pozvánku')
+            toast.error(t('notifications.toast.invite_rejected_error'))
         }
     }
 
     if (loading) {
         return (
             <div className="main-notifications-container">
-                <H2 className="main-notifications-title">Notifications</H2>
+                <H2 className="main-notifications-title">{t('notifications.page_title')}</H2>
                 <div className="loading-container">
                     <Loader />
                 </div>
@@ -140,11 +146,11 @@ const Notifications: React.FC = () => {
 
     return (
         <div className="main-notifications-container">
-            <H2 className="main-notifications-title">Notifications</H2>
+            <H2 className="main-notifications-title">{t('notifications.page_title')}</H2>
 
             {invites.length > 0 ? (
                 <div className="invites-section">
-                    <H2 className="invites-title">Pozvánky do domácností</H2>
+                    <H2 className="invites-title">{t('notifications.invites_section.title')}</H2>
                     <div className="invites-list">
                         {invites.map(invite => (
                             <HouseholdInvite
@@ -152,6 +158,7 @@ const Notifications: React.FC = () => {
                                 {...invite}
                                 onAccept={handleAcceptInvite}
                                 onReject={handleRejectInvite}
+                                formatDate={formatDate}
                             />
                         ))}
                     </div>
@@ -159,8 +166,12 @@ const Notifications: React.FC = () => {
             ) : (
                 <div className="no-invites-container">
                     <div className="no-invites-content">
-                        <img src={emptyPhotoMembersAvatar} alt="Žiadne notifikácie" className="no-invites-image" />
-                        <Paragraph>Nemáte žiadne pozvánky do domácností</Paragraph>
+                        <img
+                            src={emptyPhotoMembersAvatar}
+                            alt={t('notifications.invites_section.no_invites_image_alt')}
+                            className="no-invites-image"
+                        />
+                        <Paragraph>{t('notifications.invites_section.no_invites_message')}</Paragraph>
                     </div>
                 </div>
             )}

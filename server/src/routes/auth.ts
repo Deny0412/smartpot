@@ -3,7 +3,7 @@ import { Type } from '@sinclair/typebox'
 import crypto from 'crypto'
 import { FastifyPluginAsync } from 'fastify'
 import jwt from 'jsonwebtoken'
-import { appConfig } from '../config/config'
+import { secrets } from '../config/config'
 import { authMiddleware } from '../middleware/auth-middleware'
 import { User as UserModel } from '../models/User'
 import { ForgotPasswordSchema, LoginSchema, UserSchema } from '../types/auth'
@@ -11,6 +11,13 @@ import { ForgotPasswordSchema, LoginSchema, UserSchema } from '../types/auth'
 function hashPassword(password: string): string {
   return crypto.createHash('sha256').update(password).digest('hex')
 }
+
+// Define schema for the change password request body
+const ChangePasswordSchema = Type.Object({
+  currentPassword: Type.String(),
+  newPassword: Type.String(),
+  confirmNewPassword: Type.String(),
+})
 
 const auth: FastifyPluginAsync = async (fastify) => {
   const server = fastify.withTypeProvider<TypeBoxTypeProvider>()
@@ -83,7 +90,7 @@ const auth: FastifyPluginAsync = async (fastify) => {
           email: user.email,
           user_id: user._id.toString(),
         },
-        appConfig.JWT_SECRET
+        secrets.JWT_SECRET
       )
       return {
         token,
@@ -120,6 +127,75 @@ const auth: FastifyPluginAsync = async (fastify) => {
 
       // In a real application, send password reset email
       return { message: 'Password reset instructions sent to email' }
+    }
+  )
+
+  // Change password endpoint (protected route)
+  server.post(
+    '/change-password',
+    {
+      onRequest: authMiddleware, // Ensure user is logged in
+      schema: {
+        body: ChangePasswordSchema,
+        response: {
+          200: Type.Object({
+            message: Type.String(),
+          }),
+          400: Type.Object({
+            // Bad request (e.g., passwords don't match, missing fields)
+            error: Type.String(),
+          }),
+          401: Type.Object({
+            // Unauthorized (e.g., wrong current password)
+            error: Type.String(),
+          }),
+          500: Type.Object({
+            error: Type.String(),
+          }),
+        },
+      },
+    },
+    async (request: any, reply: any) => {
+      const { currentPassword, newPassword, confirmNewPassword } = request.body
+      const userId = request.user.user_id // Get user ID from authMiddleware
+
+      // Basic validation
+      if (!currentPassword || !newPassword || !confirmNewPassword) {
+        return reply.code(400).send({ error: 'All fields are required.' })
+      }
+
+      if (newPassword !== confirmNewPassword) {
+        return reply.code(400).send({ error: 'New passwords do not match.' })
+      }
+
+      // Optional: Add password complexity requirements here (e.g., length)
+      if (newPassword.length < 6) {
+        return reply.code(400).send({ error: 'New password must be at least 6 characters long.' })
+      }
+
+      try {
+        const user = await UserModel.findById(userId)
+        if (!user) {
+          // This shouldn't happen if authMiddleware works correctly, but check anyway
+          return reply.code(404).send({ error: 'User not found' })
+        }
+
+        // Verify current password
+        const currentPasswordHashed = hashPassword(currentPassword)
+        if (user.password !== currentPasswordHashed) {
+          return reply.code(401).send({ error: 'Incorrect current password.' })
+        }
+
+        // Hash the new password and update the user
+        const newPasswordHashed = hashPassword(newPassword)
+        user.password = newPasswordHashed
+        await user.save()
+
+        return { message: 'Password changed successfully.' }
+      } catch (error) {
+        console.error('Error changing password:', error)
+        return reply.code(500).send({ error: 'An unexpected error occurred while changing password.' })
+      }
     }
   )
 
@@ -182,7 +258,7 @@ const auth: FastifyPluginAsync = async (fastify) => {
       }
 
       try {
-        const decoded = jwt.verify(token, appConfig.JWT_SECRET) as { email: string }
+        const decoded = jwt.verify(token, secrets.JWT_SECRET) as { email: string }
         const user = await UserModel.findOne({ email: decoded.email })
 
         if (!user) {

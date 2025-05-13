@@ -8,24 +8,24 @@ import { validateCreateSchedule } from '../../validation/schedule-validation'
 
 export default async function scheduleCreateAbl(data: ISchedule, reply: FastifyReply) {
   try {
-    // Validácia dát
+ 
     const isValid = validateCreateSchedule(data)
     if (!isValid) {
       return sendClientError(reply, JSON.stringify(validateCreateSchedule.errors?.map((error) => error.message)))
     }
 
     if (!data.flower_id) {
-      return sendError(reply, { message: 'Chýbajúce ID kvetiny' }, 400)
+      return sendError(reply, { message: 'Missing flower ID' }, 400)
     }
 
-    // Validácia formátu ID
+    
     if (!MongoValidator.validateId(data.flower_id)) {
-      return sendClientError(reply, 'Neplatný formát ID kvetiny')
+      return sendClientError(reply, 'Invalid flower ID')
     }
 
     const flower = await getFlower(data.flower_id)
     if (!flower) {
-      return sendError(reply, { message: 'Kvetina nebola nájdená' }, 404)
+      return sendError(reply, { message: 'Flower not found' }, 404)
     }
 
     const schedule = await createSchedule({
@@ -40,9 +40,8 @@ export default async function scheduleCreateAbl(data: ISchedule, reply: FastifyR
       sunday: data.sunday || { from: '', to: '' },
     })
 
-    return sendCreated(reply, schedule, 'Rozvrh bol úspešne vytvorený')
+    return sendCreated(reply, schedule, 'Schedule created successfully')
   } catch (error) {
-    console.error('Chyba pri vytváraní rozvrhu:', error)
     return sendError(reply, error)
   }
 }

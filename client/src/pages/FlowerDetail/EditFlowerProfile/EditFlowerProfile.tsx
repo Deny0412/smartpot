@@ -65,10 +65,6 @@ const EditFlowerProfile: React.FC<EditFlowerProfileProps> = ({ isOpen, onClose, 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        console.log('=== Začiatok aktualizácie ===')
-        console.log('Profile Type:', profileType)
-        console.log('Selected Profile ID:', selectedProfileId)
-
         if (profileType === 'custom' && !validateCustomProfile()) {
             return
         }
@@ -102,17 +98,15 @@ const EditFlowerProfile: React.FC<EditFlowerProfileProps> = ({ isOpen, onClose, 
             },
         }
 
-        console.log('Update Data:', updateData)
-
         try {
             setLoading(true)
             const result = await dispatch(updateFlowerData(updateData)).unwrap()
-            console.log('Update Result:', result)
-            toast.success(t('edit_flower_profile.update_success'))
+            console.log(t('edit_flower_profile.console.update_result_prefix'), result)
+            toast.success(t('edit_flower_profile.success.update_success'))
             onClose()
         } catch (error) {
-            console.error('Chyba pri aktualizácii:', error)
-            toast.error(t('edit_flower_profile.update_error'))
+            console.error(t('edit_flower_profile.console.update_error_prefix'), error)
+            toast.error(t('edit_flower_profile.error.update_error'))
         } finally {
             setLoading(false)
         }
@@ -189,7 +183,7 @@ const EditFlowerProfile: React.FC<EditFlowerProfileProps> = ({ isOpen, onClose, 
                                                 <span className="edit-flower-profile-readonly-value">
                                                     {profiles.find(p => p._id === selectedProfileId)?.temperature.min}
                                                 </span>
-                                                <span> - </span>
+                                                <span>{t('edit_flower_profile.range_separator_display')}</span>
                                                 <span className="edit-flower-profile-readonly-value">
                                                     {profiles.find(p => p._id === selectedProfileId)?.temperature.max}
                                                 </span>
@@ -201,7 +195,7 @@ const EditFlowerProfile: React.FC<EditFlowerProfileProps> = ({ isOpen, onClose, 
                                                 <span className="edit-flower-profile-readonly-value">
                                                     {profiles.find(p => p._id === selectedProfileId)?.humidity.min}
                                                 </span>
-                                                <span> - </span>
+                                                <span>{t('edit_flower_profile.range_separator_display')}</span>
                                                 <span className="edit-flower-profile-readonly-value">
                                                     {profiles.find(p => p._id === selectedProfileId)?.humidity.max}
                                                 </span>
@@ -213,7 +207,7 @@ const EditFlowerProfile: React.FC<EditFlowerProfileProps> = ({ isOpen, onClose, 
                                                 <span className="edit-flower-profile-readonly-value">
                                                     {profiles.find(p => p._id === selectedProfileId)?.light.min}
                                                 </span>
-                                                <span> - </span>
+                                                <span>{t('edit_flower_profile.range_separator_display')}</span>
                                                 <span className="edit-flower-profile-readonly-value">
                                                     {profiles.find(p => p._id === selectedProfileId)?.light.max}
                                                 </span>
@@ -238,9 +232,9 @@ const EditFlowerProfile: React.FC<EditFlowerProfileProps> = ({ isOpen, onClose, 
                                                     parseInt(e.target.value),
                                                 )
                                             }
-                                            placeholder="Min"
+                                            placeholder={t('edit_flower_profile.custom_profile.placeholder_min')}
                                         />
-                                        <span> - </span>
+                                        <span>{t('edit_flower_profile.range_separator_display')}</span>
                                         <input
                                             type="number"
                                             value={customProfile.temperature?.max}
@@ -251,7 +245,7 @@ const EditFlowerProfile: React.FC<EditFlowerProfileProps> = ({ isOpen, onClose, 
                                                     parseInt(e.target.value),
                                                 )
                                             }
-                                            placeholder="Max"
+                                            placeholder={t('edit_flower_profile.custom_profile.placeholder_max')}
                                         />
                                     </div>
                                 </div>
@@ -265,16 +259,16 @@ const EditFlowerProfile: React.FC<EditFlowerProfileProps> = ({ isOpen, onClose, 
                                             onChange={e =>
                                                 handleCustomProfileChange('humidity', 'min', parseInt(e.target.value))
                                             }
-                                            placeholder="Min"
+                                            placeholder={t('edit_flower_profile.custom_profile.placeholder_min')}
                                         />
-                                        <span> - </span>
+                                        <span>{t('edit_flower_profile.range_separator_display')}</span>
                                         <input
                                             type="number"
                                             value={customProfile.humidity?.max}
                                             onChange={e =>
                                                 handleCustomProfileChange('humidity', 'max', parseInt(e.target.value))
                                             }
-                                            placeholder="Max"
+                                            placeholder={t('edit_flower_profile.custom_profile.placeholder_max')}
                                         />
                                     </div>
                                 </div>
@@ -288,16 +282,16 @@ const EditFlowerProfile: React.FC<EditFlowerProfileProps> = ({ isOpen, onClose, 
                                             onChange={e =>
                                                 handleCustomProfileChange('light', 'min', parseInt(e.target.value))
                                             }
-                                            placeholder="Min"
+                                            placeholder={t('edit_flower_profile.custom_profile.placeholder_min')}
                                         />
-                                        <span> - </span>
+                                        <span>{t('edit_flower_profile.range_separator_display')}</span>
                                         <input
                                             type="number"
                                             value={customProfile.light?.max}
                                             onChange={e =>
                                                 handleCustomProfileChange('light', 'max', parseInt(e.target.value))
                                             }
-                                            placeholder="Max"
+                                            placeholder={t('edit_flower_profile.custom_profile.placeholder_max')}
                                         />
                                     </div>
                                 </div>

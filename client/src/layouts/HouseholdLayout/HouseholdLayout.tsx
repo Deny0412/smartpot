@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useDispatch, useSelector } from 'react-redux'
 import { Outlet, useLocation, useParams } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import { selectUserId } from '../../redux/selectors/authSelectors'
 import { selectHouseholds, selectIsHouseholdOwner } from '../../redux/selectors/houseHoldSelectors'
 import { loadHouseholds } from '../../redux/slices/householdsSlice'
@@ -19,13 +21,63 @@ const HouseholdLayout = () => {
     const navigate = useNavigate()
     const [isSettingsOpen, setIsSettingsOpen] = useState(false)
     const dispatch = useDispatch<AppDispatch>()
+    const { t } = useTranslation()
 
     const households = useSelector(selectHouseholds)
     const userId = useSelector(selectUserId)
+    const householdsLoading = useSelector((state: RootState) => state.households.loading)
 
+    // State for access check
+    const [accessStatus, setAccessStatus] = useState<'checking' | 'granted' | 'denied'>('checking')
+
+    // Load households (runs once on mount)
     useEffect(() => {
         dispatch(loadHouseholds())
     }, [dispatch])
+
+    // Check access after households load or householdId changes
+    useEffect(() => {
+        // Ak ešte načítavame domácnosti, počkáme.
+        if (householdsLoading) {
+            // Nastavíme stav na 'checking', ak ešte nie je, aby sa zobrazil Loader
+            if (accessStatus !== 'checking') {
+                setAccessStatus('checking')
+            }
+            return // Nepokračujeme, kým sa nenačíta
+        }
+
+        // Ak nemáme householdId v URL, je to neplatný stav pre tento layout
+        if (!householdId) {
+            // Nastavíme denied a presmerujeme len ak sme neboli už presmerovaní
+            if (accessStatus !== 'denied') {
+                setAccessStatus('denied')
+                navigate('/households', { replace: true })
+            }
+            return
+        }
+
+        // Skontrolujeme, či načítaný zoznam obsahuje dané householdId
+        const currentHouseholdExists = households.some((h: { id: string }) => h.id === householdId)
+
+        if (currentHouseholdExists) {
+            // Ak sme našli a stav nie je 'granted', nastavíme ho
+            if (accessStatus !== 'granted') {
+                setAccessStatus('granted')
+            }
+        } else {
+            // Domácnosť sa nenašla v zozname používateľa
+            console.warn(`User does not have access to household ${householdId} or it doesn't exist. Redirecting.`)
+            // Nastavíme denied a presmerujeme len ak sme neboli už presmerovaní
+            if (accessStatus !== 'denied') {
+                toast.error(t('households.access_denied_toast'))
+                setAccessStatus('denied')
+                navigate('/households', { replace: true })
+            }
+        }
+
+        // Závislosti: efekt sa spustí, keď sa zmení stav načítania, ID v URL,
+        // zoznam domácností, alebo funkcia navigate (čo by nemalo).
+    }, [householdsLoading, householdId, households, navigate, accessStatus, t]) // Pridal som accessStatus ako závislosť
 
     const household = households.find((h: { id: string }) => h.id === householdId)
     const isOwner = useSelector((state: RootState) => selectIsHouseholdOwner(state, householdId || ''))

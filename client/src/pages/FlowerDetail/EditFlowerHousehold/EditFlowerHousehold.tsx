@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDispatch, useSelector } from 'react-redux'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import GradientDiv from '../../../components/GradientDiv/GradientDiv'
 import { H5 } from '../../../components/Text/Heading/Heading'
@@ -38,11 +39,9 @@ const EditFlowerHousehold: React.FC<EditFlowerHouseholdProps> = ({
     hasSmartPot,
     smartPotId,
 }) => {
-    console.log('=== EditFlowerHousehold - Props ===')
-    console.log('Props:', { isOpen, flowerId, currentHouseholdId, hasSmartPot, smartPotId })
-
     const { t } = useTranslation()
     const dispatch = useDispatch<AppDispatch>()
+    const navigate = useNavigate()
     const [selectedHouseholdId, setSelectedHouseholdId] = useState<string>('')
     const [keepSmartPot, setKeepSmartPot] = useState<boolean>(true)
     const [assignSmartPot, setAssignSmartPot] = useState<boolean>(false)
@@ -82,7 +81,7 @@ const EditFlowerHousehold: React.FC<EditFlowerHouseholdProps> = ({
         try {
             if (transplantType === 'same_household') {
                 if (!selectedSmartPotId) {
-                    throw new Error('No smart pot selected')
+                    throw new Error(t('flower_detail.error.no_smart_pot_selected'))
                 }
 
                 await dispatch(
@@ -96,7 +95,7 @@ const EditFlowerHousehold: React.FC<EditFlowerHouseholdProps> = ({
                 await dispatch(loadFlowerDetails(flowerId))
             } else {
                 if (!selectedHouseholdId) {
-                    throw new Error('No household selected')
+                    throw new Error(t('flower_detail.error.no_household_selected'))
                 }
 
                 if (hasSmartPot && keepSmartPot && smartPotId) {
@@ -125,9 +124,19 @@ const EditFlowerHousehold: React.FC<EditFlowerHouseholdProps> = ({
             }
 
             toast.success(t('flower_detail.transplant_success'))
+            if (
+                transplantType === 'different_household' &&
+                selectedHouseholdId &&
+                selectedHouseholdId !== currentHouseholdId
+            ) {
+                navigate(`/households/${selectedHouseholdId}/flowers`)
+            } else {
+                await dispatch(loadFlowerDetails(flowerId))
+                await dispatch(fetchSmartPots(currentHouseholdId))
+            }
             onClose()
         } catch (error) {
-            console.error('Transplant error:', error)
+            console.error(t('flower_detail.error.transplant_error_console'), error)
             toast.error(t('flower_detail.transplant_error'))
         } finally {
             setLoading(false)

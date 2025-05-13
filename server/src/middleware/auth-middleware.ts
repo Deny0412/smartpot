@@ -1,6 +1,6 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import jwt from 'jsonwebtoken'
-import { appConfig } from '../config/config'
+import { secrets } from '../config/config'
 import { User } from '../models/User'
 
 // Extend FastifyRequest to include a user property
@@ -23,7 +23,7 @@ export async function authMiddleware(request: FastifyRequest, reply: FastifyRepl
   }
 
   try {
-    const decoded = jwt.verify(token, appConfig.JWT_SECRET) as { email: string; user_id: string }
+    const decoded = jwt.verify(token, secrets.JWT_SECRET) as { email: string; user_id: string }
     console.log('Decoded token:', decoded)
 
     if (!decoded.user_id) {

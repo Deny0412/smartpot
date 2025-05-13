@@ -1,6 +1,7 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import measurementHistoryAbl, { getLatestMeasurementsAbl } from '../abl/measurement/measurement-history-abl'
 import { sendError } from '../middleware/response-handler'
+import measurementCreateAbl from '../abl/measurement/measurement-create-abl'
 
 interface RequestBody {
   id: string
@@ -10,12 +11,21 @@ interface RequestBody {
 }
 
 export const measurementController = {
+  create: async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const data = request.body as Object;
+      const user = request.user as Object;
+      await measurementCreateAbl(data, reply, user);
+    } catch (error) {
+      sendError(reply, error);
+    }
+  },
   history: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const body = request.body as RequestBody
 
       if (!body.householdId) {
-        throw new Error('Chýba householdId v tele požiadavky')
+        throw new Error('Missing householdId')
       }
 
       await measurementHistoryAbl(

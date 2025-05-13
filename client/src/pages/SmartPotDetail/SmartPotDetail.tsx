@@ -108,6 +108,14 @@ const SmartPotDetail: React.FC = () => {
         }
     }, [dispatch, flower, householdId])
 
+   
+    const handleCloseDisconnectModal = () => {
+        setShowDisconnectModal(false)
+        if (householdId) {
+            dispatch(loadFlowers(householdId))
+        }
+    }
+
     if (smartPotsLoading) {
         return <Loader />
     }
@@ -199,7 +207,7 @@ const SmartPotDetail: React.FC = () => {
 
             {showDisconnectModal && smartPotData.activeFlowerId && (
                 <DisconnectSmarpotModal
-                    onClose={() => setShowDisconnectModal(false)}
+                    onClose={handleCloseDisconnectModal}
                     smartPotId={smartPotId || ''}
                     householdId={householdId || ''}
                     serialNumber={smartPotData.serialNumber}

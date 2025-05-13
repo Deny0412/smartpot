@@ -28,7 +28,7 @@ const Login: React.FC = () => {
                     navigate('/')
                 }
             } catch (err) {
-                // Ignorujeme chybu pri kontrole autentifikácie
+                toast.error(t('login_page.error.invalid_credentials'))
             }
         }
         checkAuth()
@@ -51,11 +51,8 @@ const Login: React.FC = () => {
             }
         } catch (err: any) {
             toast.error(err.response?.data?.error || err.message || t('login_page.error.invalid_credentials'))
+            return
         }
-    }
-
-    const handleButtonClick = () => {
-        handleSubmit({ preventDefault: () => {}, stopPropagation: () => {} } as React.FormEvent<HTMLFormElement>)
     }
 
     return (
@@ -90,12 +87,7 @@ const Login: React.FC = () => {
                         />
                     </div>
 
-                    <Button
-                        type="button"
-                        variant="default"
-                        className="login-form__button"
-                        disabled={loading}
-                        onClick={handleButtonClick}>
+                    <Button type="submit" variant="default" className="login-form__button" disabled={loading}>
                         {loading ? t('login_page.loading') : t('login_page.button')}
                     </Button>
                 </form>

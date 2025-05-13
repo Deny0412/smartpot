@@ -1,20 +1,19 @@
-import { Document, Schema, Types, model } from 'mongoose'
+import { Schema, model, Document, Types } from "mongoose";
 
 export interface ITemperatureMeasurement extends Document {
-  flower_id: Types.ObjectId
-  value: number
-  createdAt: Date
-  updatedAt: Date
+    flower_id: Types.ObjectId;
+    value: number;
 }
 
 const TEMPERATURE_SCHEMA = new Schema<ITemperatureMeasurement>(
-  {
-    flower_id: { type: Schema.Types.ObjectId, ref: 'Flower', required: true },
-    value: { type: Number, required: true },
-  },
-  { timestamps: true }
-) // createdAt = zápis do DB, timestamp = čas měření
+    {
+        flower_id: { type: Schema.Types.ObjectId, ref: "Flower", required: true },
+        value: { type: Number, required: false },
 
-const TEMPERATURE_MODEL = model<ITemperatureMeasurement>('TemperatureMeasurement', TEMPERATURE_SCHEMA)
+    },
+    { timestamps: true }
+); // createdAt = zápis do DB, timestamp = čas měření
 
-export default TEMPERATURE_MODEL
+const TEMPERATURE_MODEL = model<ITemperatureMeasurement>("temperatureMeasurement", TEMPERATURE_SCHEMA);
+
+export default TEMPERATURE_MODEL;

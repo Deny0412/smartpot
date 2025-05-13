@@ -76,25 +76,25 @@ const EditFlowerSchedule: React.FC<EditFlowerScheduleProps> = ({ isOpen, onClose
         }
         setLoading(true)
 
-        // 1. Kontrola časov
+       
         for (const day of Object.keys(scheduleData)) {
             if (day === 'active') continue
             const dayData = scheduleData[day as keyof ScheduleData] as ScheduleDay
             if (dayData && dayData.from && dayData.to && dayData.from > dayData.to) {
-                toast.error(t('flower_detail.edit_schedule.invalid_time'))
+                toast.error(t('flower_detail.edit_schedule.error.invalid_time'))
                 setLoading(false)
                 return
             }
         }
 
-        // 2. Kontrola aspoň jedného dňa
+        
         const atLeastOneDay = Object.keys(scheduleData).some(day => {
             if (day === 'active') return false
             const dayData = scheduleData[day as keyof ScheduleData] as ScheduleDay
             return !!(dayData && (dayData.from || dayData.to))
         })
         if (!atLeastOneDay) {
-            toast.error(t('flower_detail.edit_schedule.at_least_one_day'))
+            toast.error(t('flower_detail.edit_schedule.error.at_least_one_day'))
 
             setLoading(false)
             return
@@ -112,13 +112,13 @@ const EditFlowerSchedule: React.FC<EditFlowerScheduleProps> = ({ isOpen, onClose
                 }),
             ).unwrap()
 
-            // Načítame nový rozvrh po úspešnej aktualizácii
+           
             await dispatch(loadSchedule(flowerId)).unwrap()
 
             onClose()
-            toast.success('Schedule updated successfully')
+            toast.success(t('flower_detail.edit_schedule.success.schedule_updated'))
         } catch (err) {
-            toast.error('Error updating schedule')
+            toast.error(t('flower_detail.edit_schedule.error.update_failed'))
         } finally {
             setLoading(false)
         }
@@ -140,7 +140,7 @@ const EditFlowerSchedule: React.FC<EditFlowerScheduleProps> = ({ isOpen, onClose
     return (
         <div className="edit-flower-schedule-container">
             <GradientDiv className="edit-flower-schedule-step-container">
-                <H5 variant="primary">{t('flower_detail.edit_schedule')}</H5>
+                <H5 variant="primary">{t('flower_detail.edit_schedule.title')}</H5>
                 <button className="edit-flower-schedule-close-button" onClick={onClose}>
                     ×
                 </button>

@@ -1,6 +1,8 @@
+import { createSelector } from '@reduxjs/toolkit'
 import { RootState } from '../store/rootReducer'
+import { selectFlowers } from './flowerDetailSelectors' // Import pre závislosť
 
-// Základné selectory
+
 export const selectProfiles = (state: RootState) => state.flowerProfiles.profiles
 
 export const selectProfilesLoading = (state: RootState) => state.flowerProfiles.loading
@@ -8,16 +10,20 @@ export const selectProfilesLoading = (state: RootState) => state.flowerProfiles.
 export const selectProfilesError = (state: RootState) => state.flowerProfiles.error
 
 
-export const selectProfileById = (state: RootState, profileId: string) =>
-    state.flowerProfiles.profiles.find(profile => profile._id === profileId)
+export const selectProfileById = createSelector(
+    [selectProfiles, (state: RootState, profileId: string) => profileId],
+    (profiles, profileId) => profiles.find(profile => profile._id === profileId),
+)
 
 
-export const selectFlowerProfile = (state: RootState, flowerId: string) => {
-    const flower = state.flowers.flowers.find(f => f._id === flowerId)
-    if (!flower || !flower.profile_id) return null
-    return state.flowerProfiles.profiles.find(profile => profile._id === flower.profile_id)
-}
-
+export const selectFlowerProfile = createSelector(
+    [selectFlowers, selectProfiles, (state: RootState, flowerId: string) => flowerId],
+    (flowers, profiles, flowerId) => {
+        const flower = flowers.find(f => f._id === flowerId)
+        if (!flower || !flower.profile_id) return null
+        return profiles.find(profile => profile._id === flower.profile_id)
+    },
+)
 
 export const selectIsValidProfile = (state: RootState, profileId: string) => {
     const profile = selectProfileById(state, profileId)
@@ -31,15 +37,18 @@ export const selectIsValidProfile = (state: RootState, profileId: string) => {
         humidity?.max != null &&
         light?.min != null &&
         light?.max != null &&
-        temperature.min <= temperature.max &&
+        temperature.min <= temperature.max && 
         humidity.min <= humidity.max &&
         light.min <= light.max
     )
 }
 
+// Memoizovaný selector pre globálne profily
+export const selectGlobalProfiles = createSelector([selectProfiles], profiles =>
+    profiles.filter(profile => profile.is_global),
+)
 
-export const selectGlobalProfiles = (state: RootState) =>
-    state.flowerProfiles.profiles.filter(profile => profile.is_global)
-
-export const selectCustomProfiles = (state: RootState) =>
-    state.flowerProfiles.profiles.filter(profile => !profile.is_global)
+// Memoizovaný selector pre vlastné profily
+export const selectCustomProfiles = createSelector([selectProfiles], profiles =>
+    profiles.filter(profile => !profile.is_global),
+)

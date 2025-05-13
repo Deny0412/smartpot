@@ -32,10 +32,16 @@ api.interceptors.response.use(
     error => {
         console.error('API Error:', error)
         if (error.response?.status === 401) {
-            console.warn('Unauthorized - Removing token and redirecting to login')
-            localStorage.removeItem('token')
-            localStorage.removeItem('user')
-            window.location.href = '/login'
+            if (window.location.pathname !== '/login') {
+                console.warn('Unauthorized - Removing token and redirecting to login')
+                localStorage.removeItem('token')
+                localStorage.removeItem('user')
+                window.location.href = '/login'
+            } else {
+                localStorage.removeItem('token')
+                localStorage.removeItem('user')
+                console.warn('Unauthorized on login page - Token/User removed.')
+            }
         }
         return Promise.reject(error)
     },

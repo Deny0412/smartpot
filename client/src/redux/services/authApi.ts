@@ -70,3 +70,25 @@ export const checkAuth = async (): Promise<UserData | null> => {
         return null
     }
 }
+
+// Function to change password
+export const changePassword = async (passwords: {
+    currentPassword: string
+    newPassword: string
+    confirmNewPassword: string // Backend already validates this, but good to send
+}) => {
+    const token = localStorage.getItem('token')
+    if (!token) {
+        throw new Error('Authentication token not found')
+    }
+
+    try {
+        const response = await api.post('/auth/change-password', passwords, {
+          
+        })
+
+        return { message: response.data.message || 'Password changed successfully' }
+    } catch (error: any) {
+        throw new Error(error.response?.data?.error || 'Failed to change password')
+    }
+}

@@ -43,13 +43,13 @@ async function measurementHistoryAbl(data: MeasurementHistoryRequest, reply: Fas
     })
 
     if (!history || history.length === 0) {
-      sendNotFound(reply, 'História meraní neexistuje')
+      sendNotFound(reply, 'History not found')
       return
     }
 
-    sendSuccess(reply, history, 'História meraní bola úspešne načítaná')
+    sendSuccess(reply, history, 'History retrieved successfully')
   } catch (error) {
-    console.error('Chyba pri spracovaní histórie meraní:', error)
+    
     sendError(reply, error)
   }
 }
@@ -75,13 +75,13 @@ async function getLatestMeasurementsAbl(data: { id: string; householdId: string 
     const latestMeasurements = await getLatestMeasurementsDao(data.id)
 
     if (!latestMeasurements || Object.values(latestMeasurements).every((measurement) => measurement === null)) {
-      sendNotFound(reply, 'Žiadne merania neboli nájdené')
+      sendNotFound(reply, 'No measurements found')
       return
     }
 
-    sendSuccess(reply, latestMeasurements, 'Posledné merania boli úspešne načítané')
+    sendSuccess(reply, latestMeasurements, 'Latest measurements retrieved successfully')
   } catch (error) {
-    console.error('Chyba pri spracovaní posledných meraní:', error)
+    console.error('Error while retrieving latest measurements', error)
     sendError(reply, error)
   }
 }

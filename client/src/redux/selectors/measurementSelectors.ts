@@ -36,13 +36,10 @@ export const selectProcessedMeasurements = createSelector([selectMeasurementsFor
 export const selectMeasurementsLoading = createSelector([selectMeasurementsState], state => state.loading)
 
 // Memoizovaný selektor pre chyby
-export const selectMeasurementsError = createSelector([selectMeasurementsState], state => state.error)
+export const selectMeasurementsError = (state: RootState) => state.measurements.error
 
 // Memoizovaný selektor pre aktívne WebSocket pripojenie
-export const selectActiveWebSocketFlowerId = createSelector(
-    [selectMeasurementsState],
-    (state: MeasurementsState) => state.activeWebSocketFlowerId,
-)
+export const selectActiveWebSocketFlowerId = (state: RootState) => state.measurements.activeWebSocketFlowerId
 
 // Memoizovaný selektor pre poslednú zmenu
 export const selectLastChange = createSelector(
@@ -196,3 +193,6 @@ export const selectMeasurementLimits = (
     }
     return defaults[measurementType]
 }
+
+// Nový selektor pre stav WebSocketu
+export const selectWebSocketStatus = (state: RootState) => state.measurements.webSocketStatus

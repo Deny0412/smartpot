@@ -5,8 +5,8 @@ export const householdGetMembersAbl = async (householdId: string, reply: Fastify
   try {
     await getHouseholdUsers(householdId, reply)
   } catch (error) {
-    console.error('Chyba v ABL vrstve pre získavanie členov domácnosti:', error)
-    return reply.status(500).send({ error: 'Interná chyba servera' })
+    
+    return reply.status(500).send({ error: 'Internal server error' })
   }
 }
 

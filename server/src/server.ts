@@ -7,7 +7,8 @@ import mongoose from 'mongoose'
 import { dbPlugin } from './config/database'
 import routes from './routes' // Import your API routes
 //import { websocketPlugin } from "./server-socket"; // Import the WebSocket plugin
-import { registerMeasurementWebSocket } from './abl/measurement/measurement-websocket-abl'
+import { measurementService } from './abl/measurement/measurement-service'
+import { websocketPlugin } from './plugins/websocket/index' // Import the WebSocket plugin
 
 const fastify = Fastify({
   logger: true,
@@ -21,9 +22,10 @@ fastify.register(cors, {
 fastify.register(dbPlugin)
 //fastify.register(swaggerPlugin);
 fastify.register(routes, { prefix: '/api' })
+fastify.register(websocketPlugin) // Register the WebSocket plugin
 
-// Registrácia WebSocket pluginu
-fastify.register(registerMeasurementWebSocket, { prefix: '' })
+// Inicializácia measurement service
+measurementService.setFastify(fastify)
 
 // Start server
 const start = async () => {

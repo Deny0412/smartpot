@@ -60,7 +60,7 @@ const TransplantSmartPot: React.FC<TransplantSmartPotProps> = ({
         [flowers, currentHouseholdId],
     )
 
-    // Kontrola či máme všetky potrebné dáta
+  
     const hasAllData = useMemo(() => {
         return households.length > 0 && flowers.length > 0 && smartPots.length > 0
     }, [households, flowers, smartPots])
@@ -71,7 +71,7 @@ const TransplantSmartPot: React.FC<TransplantSmartPotProps> = ({
                 try {
                     const promises = []
 
-                    // Načítaj len chýbajúce dáta
+                   
                     if (households.length === 0) {
                         promises.push(dispatch(loadHouseholds()))
                     }

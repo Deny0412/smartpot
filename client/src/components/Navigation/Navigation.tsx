@@ -1,11 +1,13 @@
-import { Bell, X } from '@phosphor-icons/react'
+import { Bell, CaretCircleUp, X } from '@phosphor-icons/react'
 import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { TranslationFunction } from '../../i18n'
 import { selectIsAuthenticated, selectUser, selectUserFullName } from '../../redux/selectors/authSelectors'
+import { selectInvites, selectInvitesLoading } from '../../redux/selectors/invitesSelectors'
 import { logout } from '../../redux/slices/authSlice'
+import { loadInvites } from '../../redux/slices/invitesSlice'
 import { AppDispatch } from '../../redux/store/store'
 import './Navigation.sass'
 
@@ -21,6 +23,9 @@ const Navigation: React.FC = () => {
     const user = useSelector(selectUser)
     const userFullName = useSelector(selectUserFullName)
     const { t, i18n } = useTranslation() as { t: TranslationFunction; i18n: any }
+    const invites = useSelector(selectInvites)
+    const invitesLoading = useSelector(selectInvitesLoading)
+    const [showScrollTopButton, setShowScrollTopButton] = useState(false)
 
     const changeLanguage = (lng: string) => {
         i18n.changeLanguage(lng)
@@ -52,6 +57,25 @@ const Navigation: React.FC = () => {
         }
     }, [isMenuOpen])
 
+    useEffect(() => {
+        if (isAuthenticated) {
+            dispatch(loadInvites())
+        }
+    }, [dispatch, isAuthenticated])
+
+    useEffect(() => {
+        const checkScrollTop = () => {
+            if (!showScrollTopButton && window.scrollY > 300) {
+                setShowScrollTopButton(true)
+            } else if (showScrollTopButton && window.scrollY <= 300) {
+                setShowScrollTopButton(false)
+            }
+        }
+
+        window.addEventListener('scroll', checkScrollTop)
+        return () => window.removeEventListener('scroll', checkScrollTop)
+    }, [showScrollTopButton])
+
     const handleNavigation = (path: string) => {
         navigate(path)
         setIsMenuOpen(false)
@@ -76,6 +100,13 @@ const Navigation: React.FC = () => {
               { path: '/', label: t('navigation.home') },
           ]
 
+    const scrollTop = () => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth',
+        })
+    }
+
     return (
         <nav className="navbar">
             <div className="navbar__logo" onClick={() => handleNavigation('/')}>
@@ -98,12 +129,17 @@ const Navigation: React.FC = () => {
                     </div>
                 </button>
                 {isAuthenticated && (
-                    <Bell
-                        size={25}
-                        className="navbar__bell-icon"
-                        onClick={() => handleNavigation('/notifications')}
-                        style={{ cursor: 'pointer' }}
-                    />
+                    <div className="navbar__bell-wrapper">
+                        <Bell
+                            size={25}
+                            className="navbar__bell-icon"
+                            onClick={() => handleNavigation('/notifications')}
+                            style={{ cursor: 'pointer' }}
+                        />
+                        {!invitesLoading && invites.length > 0 && (
+                            <span className="navbar__notification-badge">{invites.length}</span>
+                        )}
+                    </div>
                 )}
             </div>
 
@@ -144,6 +180,10 @@ const Navigation: React.FC = () => {
                     </li>
                 </ul>
             </div>
+
+            {showScrollTopButton && (
+                <CaretCircleUp size={40} className="navbar__scroll-top-button" onClick={scrollTop} />
+            )}
         </nav>
     )
 }

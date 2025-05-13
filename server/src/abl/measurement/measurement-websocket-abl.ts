@@ -1,263 +1,70 @@
-import fastifyWebsocket from '@fastify/websocket'
-import { FastifyInstance, FastifyPluginAsync } from 'fastify'
-import { Types } from 'mongoose'
+import { FastifyInstance } from 'fastify'
 import { WebSocket } from 'ws'
-import BatteryModel from '../../models/BatteryMeasurement'
-import HumidityModel from '../../models/HumidityMeasurement'
-import LightModel from '../../models/LightMeasurement'
-import TemperatureModel from '../../models/TemperatureMeasurement'
-import WaterModel from '../../models/WaterMeasurement'
+import { AuthenticatedWebSocket, userConnections } from '../../plugins/websocket/userConnections'
+import { measurementService } from './measurement-service'
 
-// Mapovanie typov meraní na modely
-const measurementModels = {
-  humidity: HumidityModel,
-  temperature: TemperatureModel,
-  light: LightModel,
-  water: WaterModel,
-  battery: BatteryModel,
-} as const
-
-type MeasurementType = keyof typeof measurementModels
-
-// Mapa pre ukladanie WebSocket pripojení
-const connections = new Map<string, Set<WebSocket>>()
-
-// Funkcia pre sledovanie zmien v databáze
-async function watchDatabaseChanges() {
-  console.log('Inicializujem Change Streams...')
-
-  for (const [type, model] of Object.entries(measurementModels)) {
-    console.log(`Nastavujem Change Stream pre ${type}...`)
-
-    try {
-      const changeStream = (model as any).watch([], {
-        fullDocument: 'updateLookup',
-      })
-
-      changeStream.on('change', (change: any) => {
-        console.log(`Zmena v kolekcii ${type}:`, {
-          operationType: change.operationType,
-          documentId: change.documentKey?._id,
-          fullDocument: change.fullDocument,
-          timestamp: new Date().toISOString(),
-        })
-
-        const flowerId = change.fullDocument?.flower_id?.toString()
-        if (!flowerId) {
-          console.log('Chýba flower_id v dokumente')
-          return
-        }
-
-        const connectionsForFlower = connections.get(flowerId)
-        if (!connectionsForFlower) {
-          console.log(`Žiadne pripojenia pre flowerId: ${flowerId}`)
-          return
-        }
-
-        // Zjednodušená správa pre klienta
-        const message = {
-          data: {
-            flower_id: flowerId,
-            type: type,
-            value: change.fullDocument.value,
-            createdAt: change.fullDocument.createdAt || new Date().toISOString(),
-            _id: change.fullDocument._id,
-          },
-        }
-
-        console.log('Posielam správu klientom:', {
-          flowerId,
-          message,
-          connectionsCount: connectionsForFlower.size,
-          timestamp: new Date().toISOString(),
-        })
-
-        // Poslanie správy všetkým pripojeným klientom pre daný flowerId
-        connectionsForFlower.forEach((socket) => {
-          if (socket.readyState === WebSocket.OPEN) {
-            try {
-              socket.send(JSON.stringify(message))
-              console.log('Správa úspešne odoslaná klientovi')
-            } catch (error) {
-              console.error('Chyba pri odosielaní správy klientovi:', error)
-            }
-          }
-        })
-      })
-
-      changeStream.on('error', (error: any) => {
-        console.error(`Chyba v Change Stream pre ${type}:`, error)
-      })
-
-      console.log(`Change Stream pre ${type} úspešne inicializovaný`)
-    } catch (error) {
-      console.error(`Chyba pri inicializácii Change Stream pre ${type}:`, error)
-    }
+export async function registerMeasurementWebSocket(fastify: FastifyInstance) {
+  if (!fastify.wss) {
+    throw new Error('WebSocket server is not initialized')
   }
-}
 
-// Funkcia pre spracovanie WebSocket pripojení
-export const registerMeasurementWebSocket: FastifyPluginAsync = async (fastify: FastifyInstance) => {
-  // Registrácia WebSocket pluginu
-  await fastify.register(fastifyWebsocket)
+  fastify.wss.on('connection', (ws: WebSocket, req) => {
+    const userId = req.headers['user-id'] as string
+    const flowerId = req.headers['flower-id'] as string
 
-  // Spustenie sledovania zmien v databáze
-  watchDatabaseChanges()
-
-  fastify.get('/ws/measurements/:flowerId', { websocket: true }, (connection, req) => {
-    const flowerId = req.params?.flowerId || req.url.split('/').pop()
-
-    if (!flowerId || !Types.ObjectId.isValid(flowerId)) {
-      console.error('Neplatné flowerId:', flowerId)
-      connection.socket.close()
+    if (!userId || !flowerId) {
+      ws.close(1008, 'Missing user ID or flower ID')
       return
     }
 
-    console.log(`Nové WebSocket pripojenie pre flowerId: ${flowerId}`)
+    const authenticatedWs = ws as AuthenticatedWebSocket
+    authenticatedWs.id = Math.random().toString(36).substring(7)
+    authenticatedWs.userId = userId
+    authenticatedWs.flowerId = flowerId
 
-    // Pridanie pripojenia do mapy
-    if (!connections.has(flowerId)) {
-      connections.set(flowerId, new Set())
-    }
-    connections.get(flowerId)?.add(connection.socket as unknown as WebSocket)
-    console.log(
-      `Pridané nové pripojenie pre flowerId: ${flowerId}, celkový počet pripojení: ${connections.get(flowerId)?.size}`
-    )
+    
+    userConnections.addConnection(userId, flowerId, authenticatedWs)
 
-    // Spracovanie správ od klienta
-    connection.socket.on('message', async (message) => {
+    ws.on('message', async (data: string) => {
       try {
-        const data = JSON.parse(message.toString())
-        console.log('WebSocket server: Prijatá správa:', JSON.stringify(data, null, 2))
+        const message = JSON.parse(data)
+        
 
-        // Spracovanie heartbeat správy
-        if (data.type === 'heartbeat') {
-          connection.socket.send(JSON.stringify({ type: 'heartbeat' }))
-          return
-        }
-
-        // Spracovanie init správy
-        if (data.type === 'init') {
-          connection.socket.send(
+        if (message.type === 'get_measurements') {
+          const measurements = await measurementService.getMeasurements(flowerId)
+          const measurementsWithType = {
+            battery: measurements.battery.map((m) => ({ ...m, type: 'battery' })),
+            humidity: measurements.humidity.map((m) => ({ ...m, type: 'humidity' })),
+            light: measurements.light.map((m) => ({ ...m, type: 'light' })),
+            temperature: measurements.temperature.map((m) => ({ ...m, type: 'temperature' })),
+            water: measurements.water.map((m) => ({ ...m, type: 'water' })),
+          }
+          ws.send(
             JSON.stringify({
-              type: 'init',
-              status: 'success',
-              data: {
-                flowerId,
-                timestamp: new Date().toISOString(),
-              },
+              type: 'measurements',
+              data: measurementsWithType,
             })
           )
-          return
-        }
-
-        // Spracovanie ostatných správ
-        if (data.type && data.operation && data.data) {
-          const model = measurementModels[data.type as MeasurementType]
-          if (!model) {
-            console.warn('Neznámy typ merania:', {
-              type: data.type,
-              flowerId,
-              timestamp: new Date().toISOString(),
-            })
-            return
-          }
-
-          console.log('WebSocket server: Spracovávam operáciu:', {
-            type: data.type,
-            operation: data.operation,
-            data: data.data,
-          })
-
-          switch (data.operation) {
-            case 'insert': {
-              const newMeasurement = await (model as any).create({
-                flower_id: new Types.ObjectId(flowerId),
-                value: data.data.value,
-              })
-              console.log('WebSocket server: Vytvorené nové meranie:', newMeasurement)
-              connection.socket.send(
-                JSON.stringify({
-                  type: data.type,
-                  operation: 'insert',
-                  data: newMeasurement,
-                })
-              )
-              break
-            }
-
-            case 'update': {
-              if (data.data._id) {
-                const updatedMeasurement = await (model as any).findByIdAndUpdate(
-                  data.data._id,
-                  { value: data.data.value },
-                  { new: true }
-                )
-                if (updatedMeasurement) {
-                  connection.socket.send(
-                    JSON.stringify({
-                      type: data.type,
-                      operation: 'update',
-                      data: updatedMeasurement,
-                    })
-                  )
-                }
-              }
-              break
-            }
-
-            case 'delete': {
-              if (data.data._id) {
-                await (model as any).findByIdAndDelete(data.data._id)
-                connection.socket.send(
-                  JSON.stringify({
-                    type: data.type,
-                    operation: 'delete',
-                    data: { _id: data.data._id },
-                  })
-                )
-              }
-              break
-            }
-          }
-        } else {
-          console.warn('Správa bez dát:', {
-            flowerId,
-            message: data,
-            timestamp: new Date().toISOString(),
-          })
         }
       } catch (error) {
-        console.error('Chyba pri spracovaní WebSocket správy:', {
-          error,
-          flowerId,
-          timestamp: new Date().toISOString(),
-        })
+        
+        ws.send(
+          JSON.stringify({
+            type: 'error',
+            message: 'Error while processing message',
+          })
+        )
       }
     })
 
-    // Spracovanie zatvorenia pripojenia
-    connection.socket.on('close', () => {
-      console.log('WebSocket pripojenie zatvorené pre flowerId:', flowerId)
-      // Odstránenie pripojenia z mapy
-      connections.get(flowerId)?.delete(connection.socket as unknown as WebSocket)
-      if (connections.get(flowerId)?.size === 0) {
-        connections.delete(flowerId)
-      }
-      console.log(
-        `Odstránené pripojenie pre flowerId: ${flowerId}, zostávajúce pripojenia: ${
-          connections.get(flowerId)?.size || 0
-        }`
-      )
+    ws.on('close', () => {
+    
+      userConnections.removeConnection(userId)
     })
 
-    // Spracovanie chýb
-    connection.socket.on('error', (error) => {
-      console.error('WebSocket chyba pre flowerId:', {
-        error,
-        flowerId,
-        timestamp: new Date().toISOString(),
-      })
+    ws.on('error', (error) => {
+  
+      userConnections.removeConnection(userId)
     })
   })
 }

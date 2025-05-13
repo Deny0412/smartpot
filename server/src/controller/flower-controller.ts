@@ -56,23 +56,16 @@ export const flowerController = {
   },
   list: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      console.log('List flowers - Query params:', request.query)
       await flowerListAbl(request, reply)
     } catch (error) {
-      console.error('List flowers - Error:', error)
       sendError(reply, error)
     }
   },
   update: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      console.log('=== Controller - Aktualizácia kvetiny ===')
-      console.log('Request body:', request.body)
-
       const data = request.body as IFlower
       await flowerUpdateAbl(data, reply)
     } catch (error) {
-      console.error('=== Controller - Chyba pri aktualizácii ===')
-      console.error('Chyba:', error)
       sendError(reply, error)
     }
   },
@@ -143,7 +136,6 @@ export const flowerController = {
     try {
       const { flowerId, targetSmartPotId } = request.body as { flowerId: string; targetSmartPotId: string }
 
-      // Validácia vstupných parametrov
       if (!flowerId || !targetSmartPotId) {
         return sendError(reply, new Error('Flower ID and target smart pot ID are required'))
       }

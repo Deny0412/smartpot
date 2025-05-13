@@ -194,3 +194,55 @@
     background: #4CAF50
     color: white
     border-color: #4CAF50
+
+.navbar__bell-wrapper
+  position: relative
+  display: flex
+  align-items: center
+  justify-content: center
+  gap: 5px
+
+.navbar__notification-badge
+  background-color: #4CAF50
+  color: white
+  border-radius: 50%
+  padding: 0
+  font-size: 0.7rem
+  font-weight: bold
+  width: 18px
+  height: 18px
+  display: flex
+  align-items: center
+  justify-content: center
+  border: 1px solid white
+
+@media (max-width: 768px)
+  .navbar__user-info
+    display: none
+
+// Štýly pre Scroll to Top tlačidlo
+.navbar__scroll-top-button
+  position: fixed
+  bottom: 50px
+  right: 20px
+  background-color: none
+  color: rgba(76, 175, 80, 0.7)
+  border: none
+  border-radius: 50%
+  padding: 8px // Menší padding pre kruhové tlačidlo
+  cursor: pointer
+  z-index: 1001 // Aby bolo nad ostatným obsahom, ale pod otvoreným mobilným menu (ak by prekážalo)
+  display: flex // Pre centrovanie ikony vnútri
+  align-items: center
+  justify-content: center
+  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out // Animácia pre zobrazenie/skrytie
+
+  &:hover
+    background-color: rgba(76, 175, 80, 1) // Plná zelená pri hoveri
+    color: white
+    transform: scale(1.1) // Mierne zväčšenie pri hoveri
+
+  // Ak by sme chceli explicitne animovať opacity cez CSS namiesto len podmienečného renderovania
+  // &.hidden
+  //   opacity: 0
+  //   transform: translateY(20px) // Príklad jednoduchej animácie skrytia

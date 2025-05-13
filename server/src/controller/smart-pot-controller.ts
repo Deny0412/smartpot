@@ -1,5 +1,5 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
-import SmartPotAblUpdate from '../abl/smartpot/smart-pot-update-abl'
+import SmartPotAblUpdate from '../abl/smartpot/smartPot-update-abl'
 import smartpotCreateAbl from '../abl/smartpot/smartpot-create-abl'
 import smartpotDisconnectAbl from '../abl/smartpot/smartpot-disconnect-abl'
 import smartpotEmptyAbl from '../abl/smartpot/smartpot-empty-abl'
@@ -51,7 +51,7 @@ export const smartpotController = {
     try {
       const householdId = (request.query as { household_id: string }).household_id
       if (!householdId) {
-        return sendClientError(reply, 'Chýbajúci parameter household_id')
+        return sendClientError(reply, "Missing household_id")
       }
       const response = await smartpotEmptyAbl(householdId, reply)
       return response

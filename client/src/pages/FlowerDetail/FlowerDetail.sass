@@ -361,13 +361,31 @@
 
 .disconnect-flower-button
     display: flex
-    margin:0 auto
+    margin: 0 auto
 
 .flower-detail-buttons-container
     display: flex
     align-items: center
     justify-content: center
     gap: 1rem
+    margin: 2rem auto
+    padding: 0 1rem
+    box-sizing: border-box
+
+    @media (max-width: 480px)
+        flex-direction: column
+        align-items: stretch
+        width: 100%
+        max-width: 300px
+        margin-left: auto
+        margin-right: auto
+
+        > button
+            width: 100%
+            margin-bottom: 0.5rem
+
+            &:last-child
+                margin-bottom: 0
 
 .water_level_info
     display: flex
@@ -376,3 +394,32 @@
     gap: 1rem
     max-width: 1200px
     margin: 0 auto
+
+.websocket-status-indicator
+    display: flex
+    align-items: center
+    justify-content: center
+    
+    padding: 0.5rem 1rem
+    margin: 1rem auto
+    max-width: 800px
+    box-sizing: border-box
+
+    p
+        margin: 0
+
+    &.websocket-status-connecting
+        
+        color: #333
+    &.websocket-status-connected
+        
+        color: #256029
+    &.websocket-status-reconnecting
+        
+        color: #744210
+    &.websocket-status-disconnected
+        
+        color: #9b2c2c
+    &.websocket-status-error
+        
+        color: #c53030

@@ -24,7 +24,7 @@ export const getHouseholdUsers = async (householdId: string, reply: FastifyReply
 
     return reply.status(200).send(usersMap)
   } catch (error) {
-    console.error('Chyba pri získavaní členov domácnosti:', error)
-    return reply.status(500).send({ error: 'Interná chyba servera' })
+    
+    return reply.status(500).send({ error: 'Internal server error' })
   }
 }

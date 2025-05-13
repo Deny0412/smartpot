@@ -36,7 +36,7 @@ const FlowerList: React.FC = () => {
     const { t } = useTranslation() as { t: TranslationFunction }
     const { householdId } = useParams<{ householdId: string }>()
 
-    // Selektory
+    
     const user = useSelector(selectUser)
     const flowers = useSelector(selectFlowers)
     const profiles = useSelector(selectProfiles)
@@ -108,6 +108,9 @@ const FlowerList: React.FC = () => {
 
     const handleCloseAddFlowerModal = () => {
         setIsAddFlowerModalOpen(false)
+        if (householdId) {
+            dispatch(loadFlowers(householdId))
+        }
     }
 
     const handleAddFlowerPot = () => {
@@ -135,10 +138,17 @@ const FlowerList: React.FC = () => {
     })
 
     if (measurementsError || profilesError) {
+        let errorMessage = t('flower_list.error.generic_loading_failed')
+        if (measurementsError) {
+            errorMessage = t('flower_list.error.measurements_loading_failed')
+        } else if (profilesError) {
+            errorMessage = t('flower_list.error.profiles_loading_failed')
+        }
+
         return (
             <div className="error-container">
                 <Paragraph variant="primary" size="md">
-                    {measurementsError || profilesError}
+                    {errorMessage}
                 </Paragraph>
             </div>
         )

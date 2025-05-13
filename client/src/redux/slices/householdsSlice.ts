@@ -10,15 +10,18 @@ import {
     removeMember,
     updateHousehold,
 } from '../services/householdsApi'
+import { logout } from './authSlice'
 
 interface HouseholdsState {
     households: Household[]
+    invites: any[]
     loading: boolean
     error: string | null
 }
 
 const initialState: HouseholdsState = {
     households: [],
+    invites: [],
     loading: false,
     error: null,
 }
@@ -227,6 +230,9 @@ const householdsSlice = createSlice({
             .addCase(makeOwnerAction.rejected, (state, action) => {
                 state.loading = false
                 state.error = action.payload as string
+            })
+            .addCase(logout.fulfilled, () => {
+                return initialState
             })
     },
 })

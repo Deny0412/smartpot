@@ -37,12 +37,12 @@ const FlowerItem: React.FC<FlowerItemProps> = ({
     const [showWarning, setShowWarning] = useState(false)
     const [isImageLoaded, setIsImageLoaded] = useState(false)
 
-    // Selektory
+    
     const measurements = useSelector((state: RootState) => selectMeasurementsForFlower(state, id))
     const flower = useSelector((state: RootState) => selectFlower(state))
     const profile = useSelector((state: RootState) => selectProfileById(state, profileId || ''))
 
-    // Funkcia na kontrolu, či hodnota prekročila limity
+    
     const checkMeasurementLimits = (type: 'temperature' | 'humidity' | 'light' | 'battery', value: number): boolean => {
         if (type === 'battery') {
             return value < 30 || value > 100
@@ -54,18 +54,37 @@ const FlowerItem: React.FC<FlowerItemProps> = ({
         return value < limits.min || value > limits.max
     }
 
-    // Kontrola stavu meraní
+    
     useEffect(() => {
-        if (!measurements) return
+        if (!measurements) {
+            setShowWarning(false) 
+            return
+        }
 
-        const hasWarning = Object.entries(measurements).some(([type, values]) => {
-            if (!values || values.length === 0) return false
-            const lastValue = Number(values[0].value)
-            return checkMeasurementLimits(type as 'temperature' | 'humidity' | 'light' | 'battery', lastValue)
+       
+        const relevantWarningTypes: Array<keyof Omit<typeof measurements, 'lastChange'>> = [
+            'temperature',
+            'humidity',
+            'light',
+            'battery',
+        ]
+
+        const hasWarning = relevantWarningTypes.some(type => {
+            const valuesArray = measurements[type]
+            if (!Array.isArray(valuesArray) || valuesArray.length === 0) {
+                return false
+            }
+            const lastValue = Number(valuesArray[0].value)
+
+            
+            if (type === 'temperature' || type === 'humidity' || type === 'light' || type === 'battery') {
+                return checkMeasurementLimits(type, lastValue)
+            }
+            return false 
         })
 
         setShowWarning(hasWarning)
-    }, [measurements, profile, flower])
+    }, [measurements, profile, flower]) 
 
     const handleDetailsClick = () => {
         if (householdId) {

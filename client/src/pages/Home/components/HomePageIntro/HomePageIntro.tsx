@@ -12,12 +12,14 @@ import './HomePageIntro.sass'
 
 import { H3 } from '../../../../components/Text/Heading/Heading'
 import { Paragraph } from '../../../../components/Text/Paragraph/Paragraph'
+import { useNavigate } from 'react-router-dom'
 
 const HomePageIntro: React.FC = () => {
     const { t } = useTranslation() as { t: TranslationFunction }
     const [currentFlower, setCurrentFlower] = useState(0)
     const [isVisible, setIsVisible] = useState(true)
     const flowers = [flower1, flower2, flower3, flower4, flower5, flower6]
+    const navigate = useNavigate()
 
     useEffect(() => {
         const intervalId = setInterval(() => {
@@ -27,6 +29,8 @@ const HomePageIntro: React.FC = () => {
                 setIsVisible(true)
             }, 500)
         }, 15000)
+
+    
 
         return () => clearInterval(intervalId)
     }, [flowers.length])
@@ -48,7 +52,7 @@ const HomePageIntro: React.FC = () => {
                         {t('homepage.homepage_intro.description')}
                     </Paragraph>
 
-                    <Button className="create-button" variant="default">
+                    <Button className="create-button" variant="default" onClick={() => navigate('/households')}>
                         {t('homepage.homepage_intro.button')}
                     </Button>
                 </div>

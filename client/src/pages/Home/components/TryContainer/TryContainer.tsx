@@ -6,11 +6,13 @@ import GradientDiv from '../../../../components/GradientDiv/GradientDiv'
 import { H4 } from '../../../../components/Text/Heading/Heading'
 import { Paragraph } from '../../../../components/Text/Paragraph/Paragraph'
 import { TranslationFunction } from '../../../../i18n'
+import { useNavigate } from 'react-router-dom'
 
 import './TryContainer.sass'
 
 const TryContainer: React.FC = () => {
     const { t } = useTranslation() as { t: TranslationFunction }
+    const navigate = useNavigate()
     return (
         <>
             <GradientDiv className="try-container__wrapper">
@@ -29,7 +31,7 @@ const TryContainer: React.FC = () => {
                     {t('homepage.homepage_try_it.description')}
                     </Paragraph>
 
-                    <Button className="try-container__button" variant="default">
+                    <Button className="try-container__button" variant="default" onClick={() => navigate('/households')}>
                         {t('homepage.homepage_try_it.button')}
                     </Button>
                 </div>

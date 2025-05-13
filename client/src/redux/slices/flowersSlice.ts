@@ -11,6 +11,7 @@ import {
     transplantFlowerWithSmartPot,
     updateFlower,
 } from '../services/flowersApi'
+import { logout } from './authSlice'
 
 interface FlowersState {
     flowers: Flower[]
@@ -147,9 +148,13 @@ const flowersSlice = createSlice({
     },
     extraReducers: builder => {
         builder
+            .addCase(logout.fulfilled, () => {
+                return initialState
+            })
             .addCase(loadFlowers.pending, state => {
                 state.loading = true
                 state.error = null
+                state.flowers = []
             })
             .addCase(loadFlowers.fulfilled, (state, action: PayloadAction<Flower[]>) => {
                 state.flowers = action.payload.map(flower => ({

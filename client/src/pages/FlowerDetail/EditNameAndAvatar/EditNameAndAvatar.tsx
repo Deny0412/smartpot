@@ -59,13 +59,13 @@ const EditNameAndAvatar: React.FC<EditNameAndAvatarProps> = ({
             ).unwrap()
 
             await dispatch(loadFlowerDetails(flowerId)).unwrap()
-            toast.success('Kvetina bola úspešne aktualizovaná!')
+            toast.success(t('flower_detail.edit_name_avatar.success.updated'))
             onClose()
         } catch (err) {
-            const errorMessage = 'Chyba pri aktualizácii kvetiny. Skúste to prosím znova.'
+            const errorMessage = t('flower_detail.edit_name_avatar.error.update_failed')
             setError(errorMessage)
             toast.error(errorMessage)
-            console.error('Error updating flower:', err)
+            console.error(t('flower_detail.edit_name_avatar.console.update_error_prefix'), err)
         } finally {
             setLoading(false)
         }
@@ -76,7 +76,7 @@ const EditNameAndAvatar: React.FC<EditNameAndAvatarProps> = ({
     return (
         <div className="edit-name-avatar-container">
             <GradientDiv className="edit-name-avatar-step-container">
-                <H5 variant="primary">{t('flower_detail.edit_name_avatar')}</H5>
+                <H5 variant="primary">{t('flower_detail.edit_name_avatar.title')}</H5>
                 <button className="edit-name-avatar-close-button" onClick={onClose}>
                     ×
                 </button>
@@ -99,7 +99,7 @@ const EditNameAndAvatar: React.FC<EditNameAndAvatarProps> = ({
                             {avatars.map((avatar, index) => (
                                 <img
                                     src={avatar}
-                                    alt={`Flower avatar ${index + 1}`}
+                                    alt={t('add_flower.avatar_alt_text', { index: index + 1 })}
                                     key={index}
                                     className={`edit-name-avatar-avatar-image ${
                                         selectedAvatar === avatar ? 'edit-name-avatar-avatar-image--selected' : ''

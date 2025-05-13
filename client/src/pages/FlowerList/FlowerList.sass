@@ -35,45 +35,7 @@
             gap: 0.3rem
             padding: 0 0.2rem 0.5rem 0.2rem
 
-        .flower-list-filter-button
-            flex: 0 0 auto
-            width: 120px
-            min-width: 120px
-            max-width: 120px
-            height: 38px
-            box-sizing: border-box
-            text-align: center
-            padding: 0 0.5rem
-            font-size: 0.8rem
-            white-space: nowrap
-            display: flex
-            align-items: center
-            justify-content: center
-            background: transparent
-            border: 1px solid #ffffff
-            border-radius: 16px
-            color: #ffffff
-            cursor: pointer
-            appearance: none
-            transition: all 0.3s ease
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e")
-            background-repeat: no-repeat
-            background-position: right 0.7rem center
-            background-size: 1.5em
-
-            &:hover, &:focus
-                background-color: rgba(255,255,255,0.1)
-                border-color: #ffffff
-                outline: none
-
-            @media (max-width: 768px)
-                font-size: 0.8rem
-                height: 28px
-                padding: 0.5rem 0.5rem
-                min-width: 90px
-                max-width: 120px
-                width: 100px
-
+        .flower-list-filter-button,
         .flower-list-profile-select
             flex: 0 0 auto
             width: 120px
@@ -94,14 +56,7 @@
             background: transparent
             cursor: pointer
             appearance: none
-            -webkit-appearance: none
-            -moz-appearance: none
             transition: all 0.3s ease
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e")
-            background-repeat: no-repeat
-            background-position-x: right 0.7rem
-            background-position-y: center
-            background-size: 1.5em
 
             &:hover, &:focus
                 background-color: rgba(255,255,255,0.1)
@@ -115,6 +70,19 @@
                 min-width: 90px
                 max-width: 120px
                 width: 100px
+
+        .flower-list-filter-button
+            background-image: none
+
+        .flower-list-profile-select
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e")
+            background-repeat: no-repeat
+            background-position: right 0.7rem center
+            background-size: 1.5em
+            padding-right: 2.5em
+
+            @media (max-width: 768px)
+                padding-right: 2em
 
     .flower-list-items
         display: flex

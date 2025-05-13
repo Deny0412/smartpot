@@ -52,7 +52,6 @@ const SmartPotList: React.FC = () => {
                     dispatch(fetchInactiveSmartPots(householdId)).unwrap(),
                 ])
             } catch (error: any) {
-                // 404 je v poriadku, znamená to že nie sú žiadne smart poty
                 if (error.response?.status !== 404) {
                     console.error('Error loading flowerpots:', error)
                 }
@@ -108,7 +107,7 @@ const SmartPotList: React.FC = () => {
         return <Loader />
     }
 
-    // Ignorujeme 404 chybu, pretože je to očakávané správanie keď nie sú žiadne smart poty
+     
     if (smartPotsError && !smartPotsError.toString().includes('404')) {
         return <div>Error: {smartPotsError}</div>
     }

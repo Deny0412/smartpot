@@ -52,8 +52,7 @@ const SCHEMA = {
 
 async function updateFlowerHandler(data: IFlower, reply: FastifyReply) {
   try {
-    console.log('=== ABL - Vstupné dáta ===')
-    console.log('Data:', data)
+  
 
     // Validate input data
     const validate = ajv.compile(SCHEMA)
@@ -110,15 +109,14 @@ async function updateFlowerHandler(data: IFlower, reply: FastifyReply) {
         old_flower.household_id &&
         !new Types.ObjectId(data.household_id).equals(old_flower.household_id)
       ) {
-        // Zachováme serial_number len ak je keepSmartPot true
+       
         if (!data.keepSmartPot) {
           data.serial_number = null
         }
       }
     }
 
-    console.log('=== ABL - Dáta pre aktualizáciu ===')
-    console.log('Update data:', data)
+    
 
     const updatedFlower = await updateFlower(String(data.id), data)
 
@@ -126,8 +124,7 @@ async function updateFlowerHandler(data: IFlower, reply: FastifyReply) {
       return sendNotFound(reply, 'Flower not found')
     }
 
-    console.log('=== ABL - Výsledok aktualizácie ===')
-    console.log('Updated flower:', updatedFlower)
+   
 
     return sendSuccess(reply, updatedFlower, 'Flower updated successfully')
   } catch (error) {

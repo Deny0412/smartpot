@@ -13,17 +13,19 @@ import {
     selectConnectedSmartPot,
     selectFlower,
     selectFlowerpotData,
-    selectInactiveSmartPot,
     selectSmartPot,
 } from '../../redux/selectors/flowerDetailSelectors'
 import { selectFlowerProfile } from '../../redux/selectors/flowerProfilesSelectors'
 import { selectHouseholdById, selectIsHouseholdOwner } from '../../redux/selectors/houseHoldSelectors'
 import {
+    selectActiveWebSocketFlowerId,
     selectMeasurementsError,
     selectMeasurementsLoading,
     selectProcessedMeasurements,
+    selectWebSocketStatus,
 } from '../../redux/selectors/measurementSelectors'
-import { selectSchedule } from '../../redux/selectors/scheduleSelectors'
+import { selectSchedule, selectScheduleLoading } from '../../redux/selectors/scheduleSelectors'
+import { selectInactiveSmartPots } from '../../redux/selectors/smartPotSelectors'
 import { disconnectFlower } from '../../redux/services/flowersApi'
 import { loadFlowerProfiles } from '../../redux/slices/flowerProfilesSlice'
 import { loadFlowerDetails, removeFlower } from '../../redux/slices/flowersSlice'
@@ -33,6 +35,7 @@ import {
     startWebSocketConnection,
     stopWebSocketConnection,
 } from '../../redux/slices/measurementsSlice'
+import { loadSchedule } from '../../redux/slices/scheduleSlice'
 import { fetchInactiveSmartPots, fetchSmartPots } from '../../redux/slices/smartPotsSlice'
 import { AppDispatch, RootState } from '../../redux/store/store'
 import { MeasurementValue, Schedule } from '../../types/flowerTypes'
@@ -99,18 +102,24 @@ const FlowerDetail: React.FC = () => {
     const user = useSelector(selectUser)
     const flower = useSelector(selectFlower)
     const flowerProfileData = useSelector((state: RootState) => selectFlowerProfile(state, flowerId || ''))
-    const measurements = useSelector((state: RootState) => selectProcessedMeasurements(state, flowerId || ''))
+    const allMeasurementsForFlower = useSelector((state: RootState) => state.measurements.measurements[flowerId || ''])
+    const processedMeasurements = useSelector((state: RootState) => selectProcessedMeasurements(state, flowerId || ''))
     const loading = useSelector(selectMeasurementsLoading)
     const error = useSelector(selectMeasurementsError)
     const schedule = useSelector(selectSchedule)
+    const scheduleLoading = useSelector(selectScheduleLoading)
     const smartPot = useSelector((state: RootState) =>
         flower?.serial_number ? selectSmartPot(state, flower.serial_number) : null,
     )
     const connectedSmartPot = useSelector((state: RootState) => selectConnectedSmartPot(state, flowerId || ''))
-    const inactiveSmartPot = useSelector((state: RootState) => selectInactiveSmartPot(state, flowerId || ''))
+    const inactiveSmartPots = useSelector(selectInactiveSmartPots)
     const currentHousehold = useSelector((state: RootState) => selectHouseholdById(state, householdId || ''))
     const isOwner = useSelector((state: RootState) => selectIsHouseholdOwner(state, householdId || ''))
     const flowerpotData = useSelector((state: RootState) => selectFlowerpotData(state, flowerId || ''))
+
+    // Stavy pre WebSocket
+    const webSocketStatus = useSelector(selectWebSocketStatus)
+    const activeWSFlowerId = useSelector(selectActiveWebSocketFlowerId)
 
     const dayTranslations: Record<string, string> = {
         monday: t('flower_detail.days.monday'),
@@ -130,15 +139,15 @@ const FlowerDetail: React.FC = () => {
         if (!schedule) return
     }
 
-    // Pridáme kontrolu stavu batérie
+  
     const batteryStatus = useMemo(() => {
-        if (!measurements?.battery || measurements.battery.length === 0) return null
-        const lastBatteryValue = Number(measurements.battery[0].value)
+        if (!processedMeasurements?.battery || processedMeasurements.battery.length === 0) return null
+        const lastBatteryValue = Number(processedMeasurements.battery[0].value)
         return {
             value: lastBatteryValue,
             hasWarning: lastBatteryValue < 30 || lastBatteryValue > 100,
         }
-    }, [measurements])
+    }, [processedMeasurements])
 
     const handleDisconnectFlower = async () => {
         if (!flowerId || !householdId) return
@@ -146,9 +155,9 @@ const FlowerDetail: React.FC = () => {
         try {
             const response = await disconnectFlower(flowerId)
             if (response.success) {
-                toast.success('Kvetina bola úspešne odpojená od smartpotu')
+                toast.success(t('flower_detail.disconnect_success_toast'))
 
-                // Aktualizácia dát - zachováme profil
+              
                 const currentFlower = await dispatch(loadFlowerDetails(flowerId)).unwrap()
                 if (currentFlower) {
                     await Promise.all([
@@ -158,11 +167,11 @@ const FlowerDetail: React.FC = () => {
                     ])
                 }
             } else {
-                toast.error(response.message || 'Nepodarilo sa odpojiť kvetinu od smartpotu')
+                toast.error(response.message || t('flower_detail.disconnect_error_fallback_toast'))
             }
         } catch (error) {
-            console.error('Chyba pri odpojení kvetiny:', error)
-            toast.error('Nepodarilo sa odpojiť kvetinu od smartpotu')
+            console.error(t('flower_detail.console.disconnect_error_prefix'), error)
+            toast.error(t('flower_detail.disconnect_error_fallback_toast'))
         }
     }
 
@@ -170,57 +179,88 @@ const FlowerDetail: React.FC = () => {
         if (!flowerId) return
         try {
             await dispatch(removeFlower(flowerId)).unwrap()
-            toast.success('Kvetina bola úspešne vymazaná')
+            toast.success(t('flower_detail.delete_success_toast'))
             navigate(`/households/${householdId}/flowers`)
         } catch (error) {
-            toast.error('Nepodarilo sa vymazať kvetinu')
+            toast.error(t('flower_detail.delete_error_toast'))
         }
     }
 
     useEffect(() => {
         if (flowerId && householdId) {
-            const loadData = async () => {
+            const loadInitialOrMissingData = async () => {
                 try {
                     setIsLoading(true)
-                    // Načítame všetky historické dáta
-                    const dateFrom = '2020-01-01'
-                    const dateTo = new Date().toISOString().split('T')[0]
 
-                    await Promise.all([
-                        dispatch(loadFlowerDetails(flowerId)),
-                        dispatch(fetchMeasurementsForFlower({ flowerId, householdId, dateFrom, dateTo })),
+                    const flowerExistsInState = !!flower 
+
+                    const metadataPromises: Promise<any>[] = [
+                     
+                        ...(!flowerExistsInState ? [dispatch(loadFlowerDetails(flowerId))] : []),
                         dispatch(fetchSmartPots(householdId)),
                         dispatch(fetchInactiveSmartPots(householdId)),
                         dispatch(loadFlowerProfiles()),
-                    ])
+                    ]
 
-                    setIsLoading(false)
-                    setIsInitialLoad(false)
+                    let latestTimestamp: string | null = null
+                    if (allMeasurementsForFlower) {
+                        Object.values(allMeasurementsForFlower).forEach(measurementsArray => {
+                            if (Array.isArray(measurementsArray) && measurementsArray.length > 0) {
+                                const currentLatest = measurementsArray[0].createdAt
+                                if (!latestTimestamp || new Date(currentLatest) > new Date(latestTimestamp)) {
+                                    latestTimestamp = currentLatest
+                                }
+                            }
+                        })
+                    }
+
+                    let dateFrom: string
+                    if (latestTimestamp) {
+                        dateFrom = new Date(latestTimestamp).toISOString().split('T')[0]
+                    } else {
+                        const oneYearAgo = new Date()
+                        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
+                        dateFrom = oneYearAgo.toISOString().split('T')[0]
+                    }
+
+                    const dateTo = new Date().toISOString().split('T')[0]
+
+                    metadataPromises.push(
+                        dispatch(fetchMeasurementsForFlower({ flowerId, householdId, dateFrom, dateTo })),
+                    )
+
+                    await Promise.all(metadataPromises)
                 } catch (error) {
-                    console.error('Chyba pri načítaní dát:', error)
+                    console.error(t('flower_detail.console.data_load_error_prefix'), error)
+                } finally {
                     setIsLoading(false)
                     setIsInitialLoad(false)
                 }
             }
 
-            loadData()
+            loadInitialOrMissingData()
 
-            // Cleanup funkcia
             return () => {
-                dispatch(stopWebSocketConnection())
+                console.log(t('flower_detail.console.websocket_cleanup_info'))
                 dispatch(clearMeasurements())
             }
         }
     }, [dispatch, flowerId, householdId])
 
-    // Samostatný useEffect pre WebSocket pripojenie
     useEffect(() => {
-        if (flowerId) {
-            console.log('Reštartujem WebSocket pre kvetinu:', flowerId, 'sériové číslo:', flower?.serial_number)
-            dispatch(stopWebSocketConnection())
-            setTimeout(() => {
-                dispatch(startWebSocketConnection(flowerId))
-            }, 1000) // Pridáme malé oneskorenie pre istotu
+        if (flowerId && !schedule && !scheduleLoading) {
+            console.log('FlowerDetail: Schedule is missing, attempting to load for flowerId:', flowerId)
+            dispatch(loadSchedule(flowerId))
+        }
+    }, [dispatch, flowerId, schedule, scheduleLoading])
+
+    useEffect(() => {
+        if (flowerId && flower?.serial_number) {
+            dispatch(startWebSocketConnection(flowerId))
+
+            return () => {
+                dispatch(stopWebSocketConnection())
+            }
         }
     }, [dispatch, flowerId, flower?.serial_number])
 
@@ -269,7 +309,11 @@ const FlowerDetail: React.FC = () => {
                         />
                     </h1>
                 </div>
-                <img src={flowerpotData.flower_avatar} alt="Flowerpot Avatar" className="flowerpot-avatar" />
+                <img
+                    src={flowerpotData.flower_avatar}
+                    alt={t('flower_detail.avatar_alt')}
+                    className="flowerpot-avatar"
+                />
             </div>
             <div className="smartpot-container">
                 <div className="smartpot-container-warning">
@@ -286,7 +330,7 @@ const FlowerDetail: React.FC = () => {
                             )}
                         </>
                     ) : (
-                        <Paragraph>No smartpot assigned</Paragraph>
+                        <Paragraph>{t('flower_detail.no_smartpot_assigned_text')}</Paragraph>
                     )}
                 </div>
 
@@ -299,10 +343,21 @@ const FlowerDetail: React.FC = () => {
                     </Button>
                 )}
             </div>
-            <div className='water_level_info'>
-                {measurements?.water && measurements.water.length > 0 && (
-                    <Paragraph size='xl'>
-                        {t('flower_detail.water_level')}: {measurements.water[0].value.toString().toUpperCase()}
+            {/* Indikátor stavu WebSocketu */}
+            {flowerId === activeWSFlowerId &&
+                webSocketStatus !== 'idle' &&
+                webSocketStatus !== 'closing' && ( // Nechceme zobrazovať 'closing' ako permanentný stav
+                    <div className={`websocket-status-indicator websocket-status-${webSocketStatus}`}>
+                        <Paragraph variant="secondary" size="sm">
+                            {t(`flower_detail.websocket_status.${webSocketStatus}`)}
+                        </Paragraph>
+                    </div>
+                )}
+            <div className="water_level_info">
+                {processedMeasurements?.water && processedMeasurements.water.length > 0 && (
+                    <Paragraph size="xl">
+                        {t('flower_detail.water_level')}:{' '}
+                        {processedMeasurements.water[0].value.toString().toUpperCase()}
                     </Paragraph>
                 )}
             </div>
@@ -352,11 +407,15 @@ const FlowerDetail: React.FC = () => {
                                     <div className="time-slots">
                                         <div className="time-slot">
                                             <span>{t('add_flower.schedule_from')}:</span>
-                                            <span>{timeSlot.from || '-'}</span>
+                                            <span>
+                                                {timeSlot.from || t('flower_detail.schedule_no_time_placeholder')}
+                                            </span>
                                         </div>
                                         <div className="time-slot">
                                             <span>{t('add_flower.schedule_to')}:</span>
-                                            <span>{timeSlot.to || '-'}</span>
+                                            <span>
+                                                {timeSlot.to || t('flower_detail.schedule_no_time_placeholder')}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -411,22 +470,34 @@ const FlowerDetail: React.FC = () => {
                                 <div className="setting-title">{t('flower_detail.temperature')}</div>
                                 <div className="setting-item">
                                     <span>{t('flower_detail.min')}</span>
-                                    <span>{flowerProfileData.temperature.min}°C</span>
+                                    <span>
+                                        {flowerProfileData.temperature.min}
+                                        {t('flower_detail.unit.celsius')}
+                                    </span>
                                 </div>
                                 <div className="setting-item">
                                     <span>{t('flower_detail.max')}</span>
-                                    <span>{flowerProfileData.temperature.max}°C</span>
+                                    <span>
+                                        {flowerProfileData.temperature.max}
+                                        {t('flower_detail.unit.celsius')}
+                                    </span>
                                 </div>
                             </div>
                             <div className="setting-group">
                                 <div className="setting-title">{t('flower_detail.humidity')}</div>
                                 <div className="setting-item">
                                     <span>{t('flower_detail.min')}</span>
-                                    <span>{flowerProfileData.humidity.min}%</span>
+                                    <span>
+                                        {flowerProfileData.humidity.min}
+                                        {t('flower_detail.unit.percent')}
+                                    </span>
                                 </div>
                                 <div className="setting-item">
                                     <span>{t('flower_detail.max')}</span>
-                                    <span>{flowerProfileData.humidity.max}%</span>
+                                    <span>
+                                        {flowerProfileData.humidity.max}
+                                        {t('flower_detail.unit.percent')}
+                                    </span>
                                 </div>
                             </div>
                             <div className="setting-group">
@@ -451,22 +522,34 @@ const FlowerDetail: React.FC = () => {
                                     <div className="setting-title">{t('flower_detail.temperature')}</div>
                                     <div className="setting-item">
                                         <span>{t('flower_detail.min')}</span>
-                                        <span>{flower.profile.temperature.min}°C</span>
+                                        <span>
+                                            {flower.profile.temperature.min}
+                                            {t('flower_detail.unit.celsius')}
+                                        </span>
                                     </div>
                                     <div className="setting-item">
                                         <span>{t('flower_detail.max')}</span>
-                                        <span>{flower.profile.temperature.max}°C</span>
+                                        <span>
+                                            {flower.profile.temperature.max}
+                                            {t('flower_detail.unit.celsius')}
+                                        </span>
                                     </div>
                                 </div>
                                 <div className="setting-group">
                                     <div className="setting-title">{t('flower_detail.humidity')}</div>
                                     <div className="setting-item">
                                         <span>{t('flower_detail.min')}</span>
-                                        <span>{flower.profile.humidity.min}%</span>
+                                        <span>
+                                            {flower.profile.humidity.min}
+                                            {t('flower_detail.unit.percent')}
+                                        </span>
                                     </div>
                                     <div className="setting-item">
                                         <span>{t('flower_detail.max')}</span>
-                                        <span>{flower.profile.humidity.max}%</span>
+                                        <span>
+                                            {flower.profile.humidity.max}
+                                            {t('flower_detail.unit.percent')}
+                                        </span>
                                     </div>
                                 </div>
                                 <div className="setting-group">
@@ -507,7 +590,7 @@ const FlowerDetail: React.FC = () => {
 
                 {isOwner && (
                     <Button variant="warning" onClick={handleDeleteFlower}>
-                        Delete Flower
+                        {t('flower_detail.delete_flower_button_text')}
                     </Button>
                 )}
             </div>

@@ -1,5 +1,12 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { checkAuth, loginUser, logoutUser, registerUser, UserData } from '../services/authApi'
+import {
+    changePassword as changePasswordApi,
+    checkAuth,
+    loginUser,
+    logoutUser,
+    registerUser,
+    UserData,
+} from '../services/authApi'
 
 interface AuthState {
     isAuthenticated: boolean
@@ -27,6 +34,12 @@ interface RegisterCredentials {
     surname: string
 }
 
+interface ChangePasswordCredentials {
+    currentPassword: string
+    newPassword: string
+    confirmNewPassword: string
+}
+
 export const register = createAsyncThunk('auth/register', async (credentials: RegisterCredentials) => {
     await registerUser(credentials.email, credentials.password, credentials.name, credentials.surname)
 })
@@ -46,6 +59,18 @@ export const checkAuthStatus = createAsyncThunk('auth/check', async () => {
     }
     return user
 })
+
+export const changePassword = createAsyncThunk(
+    'auth/changePassword',
+    async (credentials: ChangePasswordCredentials, { rejectWithValue }) => {
+        try {
+            const response = await changePasswordApi(credentials)
+            return response.message
+        } catch (error: any) {
+            return rejectWithValue(error.message)
+        }
+    },
+)
 
 const authSlice = createSlice({
     name: 'auth',
@@ -88,6 +113,18 @@ const authSlice = createSlice({
             .addCase(checkAuthStatus.rejected, state => {
                 state.isAuthenticated = false
                 state.user = null
+            })
+            .addCase(changePassword.pending, state => {
+                state.loading = true
+                state.error = null
+            })
+            .addCase(changePassword.fulfilled, state => {
+                state.loading = false
+                state.error = null
+            })
+            .addCase(changePassword.rejected, (state, action) => {
+                state.loading = false
+                state.error = action.payload as string
             })
     },
 })

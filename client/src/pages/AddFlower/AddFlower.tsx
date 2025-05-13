@@ -101,21 +101,18 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
         setLoading(true)
         setError(null)
 
-        // Validácia mena
+         
         if (!name.trim()) {
             toast.error(t('add_flower.error.name_required'))
             setLoading(false)
             return
         }
-
-        // Validácia profilu
         if (profileType === 'global' && !selectedProfileId) {
             toast.error(t('add_flower.error.profile_required'))
             setLoading(false)
             return
         }
 
-        // Validácia časových intervalov
         const hasValidSchedule = Object.entries(scheduleData).some(([day, times]) => {
             if (day === 'active') return false
             return times.from && times.to && times.from < times.to
@@ -127,7 +124,7 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
             return
         }
 
-        // Validácia časových intervalov - kontrola či from < to
+       
         const hasInvalidTimeRange = Object.entries(scheduleData).some(([day, times]) => {
             if (day === 'active') return false
             if (times.from && times.to && times.from >= times.to) {
@@ -150,7 +147,7 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
 
             const newFlower = await dispatch(
                 createFlower({
-                    name: name || 'Nový kvetináč',
+                    name: name || t('add_flower.default_flower_name'),
                     household_id: householdId || '',
                     profile_id: profileId || null,
                     avatar: selectedAvatar || '',
@@ -166,7 +163,7 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
             ).unwrap()
 
             if (!newFlower._id) {
-                throw new Error('ID kvetiny nebolo vrátené zo servera')
+                throw new Error(t('add_flower.error.no_flower_id_returned'))
             }
 
             const scheduleResponse = await createSchedule({
@@ -182,17 +179,17 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
             })
 
             if (!scheduleResponse) {
-                throw new Error('Nepodarilo sa vytvoriť rozvrh')
+                throw new Error(t('add_flower.error.schedule_creation_failed'))
             }
 
             await dispatch(loadFlowers(householdId || ''))
 
             onClose()
-            toast.success('Flower added successfully')
+            toast.success(t('add_flower.success.flower_added'))
         } catch (err) {
-            setError('Chyba pri vytváraní kvetináča. Skúste to prosím znova.')
+            setError(t('add_flower.error.creation_failed_message'))
             console.error('Error creating flower:', err)
-            toast.error('Error creating flower')
+            toast.error(t('add_flower.error.creation_failed_toast'))
         } finally {
             setLoading(false)
         }
@@ -273,9 +270,11 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
                                                     parseInt(e.target.value),
                                                 )
                                             }
-                                            placeholder="Min"
+                                            placeholder={t('add_flower.placeholder_min')}
                                         />
-                                        <span className="add-flower-range-separator">až</span>
+                                        <span className="add-flower-range-separator">
+                                            {t('add_flower.range_separator')}
+                                        </span>
                                         <input
                                             type="number"
                                             className="add-flower-range-input"
@@ -287,7 +286,7 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
                                                     parseInt(e.target.value),
                                                 )
                                             }
-                                            placeholder="Max"
+                                            placeholder={t('add_flower.placeholder_max')}
                                         />
                                     </div>
                                 </div>
@@ -302,9 +301,11 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
                                             onChange={e =>
                                                 handleCustomProfileChange('humidity', 'min', parseInt(e.target.value))
                                             }
-                                            placeholder="Min"
+                                            placeholder={t('add_flower.placeholder_min')}
                                         />
-                                        <span className="add-flower-range-separator">až</span>
+                                        <span className="add-flower-range-separator">
+                                            {t('add_flower.range_separator')}
+                                        </span>
                                         <input
                                             type="number"
                                             className="add-flower-range-input"
@@ -312,7 +313,7 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
                                             onChange={e =>
                                                 handleCustomProfileChange('humidity', 'max', parseInt(e.target.value))
                                             }
-                                            placeholder="Max"
+                                            placeholder={t('add_flower.placeholder_max')}
                                         />
                                     </div>
                                 </div>
@@ -327,9 +328,11 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
                                             onChange={e =>
                                                 handleCustomProfileChange('light', 'min', parseInt(e.target.value))
                                             }
-                                            placeholder="Min"
+                                            placeholder={t('add_flower.placeholder_min')}
                                         />
-                                        <span className="add-flower-range-separator">až</span>
+                                        <span className="add-flower-range-separator">
+                                            {t('add_flower.range_separator')}
+                                        </span>
                                         <input
                                             type="number"
                                             className="add-flower-range-input"
@@ -337,7 +340,7 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
                                             onChange={e =>
                                                 handleCustomProfileChange('light', 'max', parseInt(e.target.value))
                                             }
-                                            placeholder="Max"
+                                            placeholder={t('add_flower.placeholder_max')}
                                         />
                                     </div>
                                 </div>
@@ -351,7 +354,7 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
                             {avatars.map((avatar, index) => (
                                 <img
                                     src={avatar}
-                                    alt={`Flower avatar ${index + 1}`}
+                                    alt={t('add_flower.avatar_alt_text', { index: index + 1 })}
                                     key={index}
                                     className={`add-flower-avatar-image ${
                                         selectedAvatar === avatar ? 'add-flower-avatar-image--selected' : ''

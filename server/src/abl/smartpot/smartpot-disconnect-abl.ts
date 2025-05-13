@@ -9,7 +9,7 @@ export const smartpotDisconnectAbl = async (data: { serial_number: string }, rep
 
     if (!data.serial_number) {
       console.error('Missing serial_number')
-      return sendClientError(reply, 'Chýbajúci parameter serial_number')
+      return sendClientError(reply, 'Missing serial_number')
     }
 
     // Najprv skontrolujeme, či smart pot existuje

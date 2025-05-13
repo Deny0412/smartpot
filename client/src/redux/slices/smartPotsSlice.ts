@@ -41,12 +41,12 @@ export const disconnectSmartPot = createAsyncThunk(
     'smartPots/disconnectSmartPot',
     async ({ serialNumber, householdId }: { serialNumber: string; householdId: string }, { dispatch }) => {
         try {
-            console.log('Disconnecting smart pot with serial number:', serialNumber)
+       
             const response = await disconnectSmartPotApi(serialNumber, householdId)
-            console.log('Disconnect response:', response)
+          
             return response
         } catch (error) {
-            console.error('Error in disconnectSmartPot:', error)
+           
             throw error
         }
     },

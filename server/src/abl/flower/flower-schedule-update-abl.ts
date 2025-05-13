@@ -92,7 +92,7 @@ async function updateFlowerScheduleHandler(data: ScheduleData, reply: FastifyRep
       return sendClientError(reply, 'Invalid flower ID format')
     }
 
-    // Skontrolujeme či rozvrh existuje
+    
     const existingSchedule = await getFlowerSchedule(data.flower_id)
     if (!existingSchedule) {
       return sendClientError(reply, 'Schedule not found')

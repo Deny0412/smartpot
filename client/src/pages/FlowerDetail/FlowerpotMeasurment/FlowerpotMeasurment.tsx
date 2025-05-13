@@ -107,18 +107,43 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
     const [measurementType, setMeasurementType] = useState<FlowerpotMeasurementType>('humidity')
     const [selectedDate, setSelectedDate] = useState<string>('')
 
-    const filteredMeasurements = useSelector((state: RootState) =>
-        selectFilteredMeasurements(state, flowerId, measurementType, selectedDate),
+    const filteredMeasurements = useSelector(
+        (state: RootState) => selectFilteredMeasurements(state, flowerId, measurementType, selectedDate),
+        (prev, next) => {
+            if (!prev || !next) return false
+            if (prev.length !== next.length) return false
+            return prev.every((m, i) => m._id === next[i]._id)
+        },
     )
 
-    const chartData = useSelector((state: RootState) =>
-        selectChartData(state, flowerId, measurementType, timeRange, customDateRange),
+    const chartData = useSelector(
+        (state: RootState) => selectChartData(state, flowerId, measurementType, timeRange, customDateRange),
+        (prev, next) => {
+            if (!prev || !next) return false
+            if (prev.length !== next.length) return false
+            return prev.every((d, i) => d.timestamp === next[i].timestamp && d.value === next[i].value)
+        },
     )
 
-    const limits = useSelector((state: RootState) => selectMeasurementLimits(state, flowerId, measurementType))
-    const humidityLimits = useSelector((state: RootState) => selectMeasurementLimits(state, flowerId, 'humidity'))
-    const temperatureLimits = useSelector((state: RootState) => selectMeasurementLimits(state, flowerId, 'temperature'))
-    const lightLimits = useSelector((state: RootState) => selectMeasurementLimits(state, flowerId, 'light'))
+    const limits = useSelector(
+        (state: RootState) => selectMeasurementLimits(state, flowerId, measurementType),
+        (prev, next) => prev.min === next.min && prev.max === next.max,
+    )
+
+    const humidityLimits = useSelector(
+        (state: RootState) => selectMeasurementLimits(state, flowerId, 'humidity'),
+        (prev, next) => prev.min === next.min && prev.max === next.max,
+    )
+
+    const temperatureLimits = useSelector(
+        (state: RootState) => selectMeasurementLimits(state, flowerId, 'temperature'),
+        (prev, next) => prev.min === next.min && prev.max === next.max,
+    )
+
+    const lightLimits = useSelector(
+        (state: RootState) => selectMeasurementLimits(state, flowerId, 'light'),
+        (prev, next) => prev.min === next.min && prev.max === next.max,
+    )
 
     const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
@@ -208,7 +233,7 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
             case 'temperature':
                 return '°C'
             case 'light':
-                return 'Lux'
+                return t('flower_measurments.unit.lux')
             case 'battery':
                 return '%'
             default:
@@ -232,12 +257,12 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
     }
 
     const formatDate = (timestamp: string) => {
-        // Konvertujeme UTC čas na lokálny čas
+        
         const date = new Date(timestamp)
 
         if (isNaN(date.getTime())) {
             console.error('Neplatný dátum:', timestamp)
-            return 'Neplatný dátum'
+            return t('flower_measurments.error.invalid_date_format')
         }
 
         return new Intl.DateTimeFormat('sk-SK', {
@@ -321,7 +346,7 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
     }
 
     if (!flowerpotData) {
-        return <div>Načítavam dáta kvetiny...</div>
+        return <div>{t('flower_measurments.loading_flowerpot_data')}</div>
     }
 
     const measurementIcons = [
@@ -352,28 +377,44 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
                     <div className="status-measurements">
                         <div className="status-item temperature">
                             <span>{t('flower_measurments.measurments.temperature')}: </span>
-                            <b>{lastTemperature !== null ? `${lastTemperature.toFixed(1)} °C` : '-'}</b>
+                            <b>
+                                {lastTemperature !== null
+                                    ? `${lastTemperature.toFixed(1)} °C`
+                                    : t('flower_measurments.no_value_placeholder')}
+                            </b>
                             <span className={`status-text ${getStatusText('temperature', lastTemperature).className}`}>
                                 {getStatusText('temperature', lastTemperature).text}
                             </span>
                         </div>
                         <div className="status-item humidity">
                             <span>{t('flower_measurments.measurments.humidity')}: </span>
-                            <b>{lastHumidity !== null ? `${lastHumidity.toFixed(1)} %` : '-'}</b>
+                            <b>
+                                {lastHumidity !== null
+                                    ? `${lastHumidity.toFixed(1)} %`
+                                    : t('flower_measurments.no_value_placeholder')}
+                            </b>
                             <span className={`status-text ${getStatusText('humidity', lastHumidity).className}`}>
                                 {getStatusText('humidity', lastHumidity).text}
                             </span>
                         </div>
                         <div className="status-item light">
                             <span>{t('flower_measurments.measurments.light')}: </span>
-                            <b>{lastLight !== null ? `${lastLight.toFixed(1)} Lux` : '-'}</b>
+                            <b>
+                                {lastLight !== null
+                                    ? `${lastLight.toFixed(1)} ${t('flower_measurments.unit.lux')}`
+                                    : t('flower_measurments.no_value_placeholder')}
+                            </b>
                             <span className={`status-text ${getStatusText('light', lastLight).className}`}>
                                 {getStatusText('light', lastLight).text}
                             </span>
                         </div>
                         <div className="status-item battery">
                             <span>{t('flower_measurments.measurments.battery')}: </span>
-                            <b>{lastBattery !== null ? `${lastBattery.toFixed(1)} %` : '-'}</b>
+                            <b>
+                                {lastBattery !== null
+                                    ? `${lastBattery.toFixed(1)} %`
+                                    : t('flower_measurments.no_value_placeholder')}
+                            </b>
                             <span className={`status-text ${getStatusText('battery', lastBattery).className}`}>
                                 {getStatusText('battery', lastBattery).text}
                             </span>

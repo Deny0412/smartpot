@@ -30,20 +30,20 @@ async function householdInviteAbl(data: { id: string; invited_user_id: string },
 
     if (!Types.ObjectId.isValid(data.id)) {
       console.log('Invalid household ID:', data.id)
-      sendClientError(reply, 'Neplatné ID domácnosti')
+      sendClientError(reply, 'Invalid household ID')
       return
     }
 
     if (!Types.ObjectId.isValid(data.invited_user_id)) {
       console.log('Invalid user ID:', data.invited_user_id)
-      sendClientError(reply, 'Neplatné ID používateľa')
+      sendClientError(reply, 'Invalid user ID')
       return
     }
 
     const household = await householdGetDao(data.id)
     if (!household) {
       console.log('Household not found:', data.id)
-      sendClientError(reply, 'Domácnosť neexistuje')
+      sendClientError(reply, 'Household not found')
       return
     }
 
@@ -52,19 +52,19 @@ async function householdInviteAbl(data: { id: string; invited_user_id: string },
 
     if (household.members.some((member) => member._id.equals(invitedUserObjectId))) {
       console.log('User is already a member')
-      sendClientError(reply, 'Používateľ je už členom domácnosti')
+      sendClientError(reply, 'User is already a member')
       return
     }
 
     if (household.invites.some((invite) => invite._id.equals(invitedUserObjectId))) {
       console.log('User already has an invite')
-      sendClientError(reply, 'Používateľ už má pozvánku')
+      sendClientError(reply, 'User already has an invite')
       return
     }
 
     if (household.owner.equals(invitedUserObjectId)) {
       console.log('User is the owner')
-      sendClientError(reply, 'Používateľ je už vlastníkom domácnosti')
+      sendClientError(reply, 'User is the owner')
       return
     }
 
@@ -73,14 +73,14 @@ async function householdInviteAbl(data: { id: string; invited_user_id: string },
 
     if (!updatedHousehold) {
       console.log('Failed to update household')
-      sendError(reply, new Error('Nepodarilo sa aktualizovať domácnosť'))
+      sendError(reply, new Error('Failed to update household'))
       return
     }
 
     console.log('Invite sent successfully')
-    sendSuccess(reply, updatedHousehold, 'Pozvánka bola úspešne odoslaná')
+    sendSuccess(reply, updatedHousehold, 'Invite sent successfully')
   } catch (error) {
-    console.error('Error in householdInviteAbl:', error)
+    console.error('Error while sending invite', error)
     sendError(reply, error)
   }
 }
