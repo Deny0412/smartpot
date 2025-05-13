@@ -5,7 +5,7 @@ import flowerProfileGetAbl from "../abl/flower-profile/flowerProfile-get-abl";
 import flowerProfileListAbl from "../abl/flower-profile/flowerProfile-list-abl";
 import flowerProfileUpdateAbl from "../abl/flower-profile/flowerProfile-update-abl";
 
-import { sendInternalServerError } from "../middleware/response-handler";
+import { sendError } from "../middleware/response-handler";
 import { IFlowerProfile } from "../models/FlowerProfile";
 
 interface Params {
@@ -18,7 +18,7 @@ export const flowerProfileController = {
       const reqParam = request.body as IFlowerProfile;
       await flowerProfileCreateAbl(reqParam, reply);
     } catch (error) {
-      sendInternalServerError(reply);
+      sendError(reply, error);
     }
   },
   delete: async (request: FastifyRequest, reply: FastifyReply) => {
@@ -26,7 +26,7 @@ export const flowerProfileController = {
       const id = (request.body as Params).id;
       await flowerProfileDeleteAbl(id, reply);
     } catch (error) {
-      sendInternalServerError(reply);
+      sendError(reply, error);
     }
   },
   get: async (request: FastifyRequest, reply: FastifyReply) => {
@@ -34,14 +34,14 @@ export const flowerProfileController = {
       const id = (request.params as Params).id;
       await flowerProfileGetAbl(id, reply);
     } catch (error) {
-      sendInternalServerError(reply);
+      sendError(reply, error);
     }
   },
   list: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       await flowerProfileListAbl(reply);
     } catch (error) {
-      sendInternalServerError(reply);
+      sendError(reply, error);
     }
   },
   update: async (request: FastifyRequest, reply: FastifyReply) => {
@@ -49,7 +49,7 @@ export const flowerProfileController = {
       const updatedFlowerProfile = request.body as IFlowerProfile;
       await flowerProfileUpdateAbl(updatedFlowerProfile, reply);
     } catch (error) {
-      sendInternalServerError(reply);
+      sendError(reply, error);
     }
   },
 };

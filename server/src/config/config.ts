@@ -1,10 +1,10 @@
 import { Type } from "@sinclair/typebox";
-import { AppConfig } from "../types";
 import { config } from "dotenv";
 import path from "path";
 
-// Load .env from root directory
-config({ path: path.resolve(__dirname, "../../../.env") });
+if (process.env.NODE_ENV !== "production") {
+  config({ path: path.resolve(__dirname, "../../../.env") });
+}
 
 export const ConfigSchema = Type.Object({
   PORT: Type.Number({
@@ -22,24 +22,36 @@ export const ConfigSchema = Type.Object({
   ),
 });
 
-export const appConfig: AppConfig = {
+export const appConfig = {
   PORT: parseInt(process.env.PORT || "3001", 10),
-  NODE_ENV: (process.env.NODE_ENV as AppConfig["NODE_ENV"]) || "development",
+  NODE_ENV:
+    (process.env.NODE_ENV as "development" | "production" | "test") ||
+    "development", // defaults to development
+};
+
+const validEnvs = ["development", "production", "test"];
+if (!validEnvs.includes(appConfig.NODE_ENV)) {
+  throw new Error(
+    `❌ Invalid NODE_ENV: ${
+      appConfig.NODE_ENV
+    }. Must be one of: ${validEnvs.join(", ")}`
+  );
+}
+
+const requireEnv = (key: string): string => {
+  const value = process.env[key];
+  if (!value) {
+    throw new Error(`❌ Missing required environment variable: ${key}`);
+  }
+  return value;
 };
 
 export const secrets = {
-  CLIENT_ID: process.env.CLIENT_ID!,
-  CLIENT_SECRET: process.env.CLIENT_SECRET!,
-  REDIRECT_URI: process.env.REDIRECT_URI!,
-  REFRESH_TOKEN: process.env.REFRESH_TOKEN!,
-  DISCORD_WEBHOOK_URL: process.env.DISCORD_WEBHOOK_URL!,
-  JWT_SECRET: process.env.JWT_SECRET!,
+  CLIENT_ID: requireEnv("CLIENT_ID"),
+  CLIENT_SECRET: requireEnv("CLIENT_SECRET"),
+  REDIRECT_URI: requireEnv("REDIRECT_URI"),
+  REFRESH_TOKEN: requireEnv("REFRESH_TOKEN"),
+  DISCORD_WEBHOOK_URL: requireEnv("DISCORD_WEBHOOK_URL"),
+  JWT_SECRET: requireEnv("JWT_SECRET"),
+  MONGO_URI: requireEnv("MONGO_URI"),
 };
-/*
-console.log("CLIENT_ID:", process.env.CLIENT_ID); // remove after confirming
-console.log("CLIENT_SECRET:", process.env.CLIENT_SECRET); // remove after confirming
-console.log("REDIRECT_URI:", process.env.REDIRECT_URI); // remove after confirming
-console.log("REFRESH_TOKEN:", process.env.REFRESH_TOKEN); // remove after confirming
-console.log("DISCORD_WEBHOOK_URL:", process.env.DISCORD_WEBHOOK_URL); // remove after confirming
-console.log("JWT_SECRET::", process.env.JWT_SECRET); // remove after confirming
-*/
