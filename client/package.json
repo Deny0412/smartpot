@@ -18,7 +18,7 @@
         "@types/react-dom": "^19.0.4",
         "axios": "^1.9.0",
         "chart.js": "^4.4.9",
-        "i18next": "^24.2.3",
+        "i18next": "23.6.0",
         "i18next-browser-languagedetector": "^8.0.4",
         "miragejs": "^0.1.48",
         "phosphor-react": "^1.4.1",
