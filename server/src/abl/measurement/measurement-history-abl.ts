@@ -1,52 +1,90 @@
-import Ajv from "ajv";
-import addFormats from "ajv-formats";
-const ajv = new Ajv();
-addFormats(ajv);
+import Ajv from 'ajv'
+import addFormats from 'ajv-formats'
+const ajv = new Ajv()
+addFormats(ajv)
 
-import { FastifyReply } from "fastify";
-import {
-  sendSuccess,
-  sendError,
-  sendClientError,
-  sendNotFound,
-} from "../../middleware/response-handler";
-import measurementHistoryDao from "../../dao/measurement/measurement-history-dao";
+import { FastifyReply } from 'fastify'
+import measurementHistoryDao, { getLatestMeasurementsDao } from '../../dao/measurement/measurement-history-dao'
+import { sendClientError, sendError, sendNotFound, sendSuccess } from '../../middleware/response-handler'
+
+interface MeasurementHistoryRequest {
+  id: string
+  householdId: string
+  dateFrom?: string
+  dateTo?: string
+}
 
 const schema = {
-  type: "object",
+  type: 'object',
   properties: {
-    id: { type: "string" },
-    typeOfData: {
-      type: "string",
-      enum: ["humidity", "water", "temperature", "light"]
-    },
-    dateFrom: { type: "string", format: "date" },
-    dateTo: { type: "string", format: "date" },
+    id: { type: 'string' },
+    householdId: { type: 'string' },
+    dateFrom: { type: 'string', format: 'date' },
+    dateTo: { type: 'string', format: 'date' },
   },
-  required: ["id", "typeOfData"],
+  required: ['id', 'householdId'],
   additionalProperties: false,
-};
+}
 
-async function measurementHistoryAbl(data: Object, reply: FastifyReply) {
+async function measurementHistoryAbl(data: MeasurementHistoryRequest, reply: FastifyReply) {
   try {
-    console.log(data);
-    const validate = ajv.compile(schema);
-    const valid = validate(data);
+    const validate = ajv.compile(schema)
+    const valid = validate(data)
 
     if (!valid) {
-      sendClientError(
-        reply,
-        JSON.stringify(validate.errors?.map((error) => error.message))
-      );
-      return;
+      sendClientError(reply, JSON.stringify(validate.errors?.map((error) => error.message)))
+      return
     }
-    const history = await measurementHistoryDao(data);
-    if (!history) {
-      sendNotFound(reply, "History does not exist");
+
+    const history = await measurementHistoryDao({
+      id: data.id,
+      dateFrom: data.dateFrom,
+      dateTo: data.dateTo,
+    })
+
+    if (!history || history.length === 0) {
+      sendNotFound(reply, 'History not found')
+      return
     }
-    sendSuccess(reply, history, "Flower history retrieved successfully");
+
+    sendSuccess(reply, history, 'History retrieved successfully')
   } catch (error) {
-    sendError(reply, error);
+    
+    sendError(reply, error)
   }
 }
-export default measurementHistoryAbl;
+
+async function getLatestMeasurementsAbl(data: { id: string; householdId: string }, reply: FastifyReply) {
+  try {
+    const validate = ajv.compile({
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+        householdId: { type: 'string' },
+      },
+      required: ['id', 'householdId'],
+      additionalProperties: false,
+    })
+    const valid = validate(data)
+
+    if (!valid) {
+      sendClientError(reply, JSON.stringify(validate.errors?.map((error) => error.message)))
+      return
+    }
+
+    const latestMeasurements = await getLatestMeasurementsDao(data.id)
+
+    if (!latestMeasurements || Object.values(latestMeasurements).every((measurement) => measurement === null)) {
+      sendNotFound(reply, 'No measurements found')
+      return
+    }
+
+    sendSuccess(reply, latestMeasurements, 'Latest measurements retrieved successfully')
+  } catch (error) {
+    console.error('Error while retrieving latest measurements', error)
+    sendError(reply, error)
+  }
+}
+
+export { getLatestMeasurementsAbl }
+export default measurementHistoryAbl

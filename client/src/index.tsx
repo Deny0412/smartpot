@@ -1,16 +1,14 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { Provider } from 'react-redux';
-import { store } from './redux/store/store';
-import App from './App';
-import './styles/global.sass';
-import { makeServer } from './__mocks__/server'; 
+import ReactDOM from 'react-dom/client'
+import { Provider } from 'react-redux'
 
-makeServer();
+import App from './App'
+import './i18n'
+import { store } from './redux/store/store'
+import './styles/global.sass'
 
-const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
+const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
 root.render(
-  <Provider store={store}>
-    <App />
-  </Provider>
-);
+    <Provider store={store}>
+        <App />
+    </Provider>,
+)

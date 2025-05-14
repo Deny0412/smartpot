@@ -1,54 +1,75 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import Navigation from './components/Navigation/Navigation'
-import Home from './pages/Home/Home'
-
-const App = () => {
-    return (
-        <Router>
-            <Navigation />
-            <Routes>
-                <Route path="/" element={<Home />} />
-            </Routes>
-        </Router>
-    )
-}
-
-export default App
-
-
-/* export default App
 import { useEffect } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { loadFlowerpots } from './redux/slices/flowerpotsSlice'
-import { AppDispatch, RootState } from './redux/store/store'
+import { useDispatch } from 'react-redux'
+import { Route, BrowserRouter as Router, Routes } from 'react-router-dom'
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+import Footer from './components/Footer/Footer'
 import Navigation from './components/Navigation/Navigation'
+import HouseholdLayout from './layouts/HouseholdLayout/HouseholdLayout'
+import FlowerDetail from './pages/FlowerDetail/FlowerDetail'
+import FlowerList from './pages/FlowerList/FlowerList'
 import Home from './pages/Home/Home'
+import HouseholdsMain from './pages/HouseHold/HouseholdsMain/HouseholdsMain'
+import Login from './pages/Login/Login'
+import Members from './pages/Members/Members'
+import NotFound from './pages/NotFound/NotFound'
+import Notifications from './pages/Notifications/Notifications'
+import Register from './pages/Register/Register'
+import SmartPotDetail from './pages/SmartPotDetail/SmartPotDetail'
+import SmartPotList from './pages/SmartPotList/SmartPotList'
+import UserProfile from './pages/UserProfile/UserProfile'
+import { checkAuthStatus } from './redux/slices/authSlice'
+import { initializeWebSocket } from './redux/slices/measurementsSlice'
+import { AppDispatch } from './redux/store/store'
 
 const App = () => {
     const dispatch = useDispatch<AppDispatch>()
 
     useEffect(() => {
-        dispatch(loadFlowerpots())
+        dispatch(checkAuthStatus())
+        initializeWebSocket(dispatch)
     }, [dispatch])
 
-    const flowerpots = useSelector((state: RootState) => state.flowerpots.flowerpots)
-    const loading = useSelector((state: RootState) => state.flowerpots.loading)
-    const error = useSelector((state: RootState) => state.flowerpots.error)
+    return (
+        <Router>
+            <Navigation />
+            <ToastContainer
+                position="top-right"
+                autoClose={3000}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="dark"
+            />
+            <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/login" element={<Login />} />
 
-    return (<>
-    <Navigation/>
-    <div className="app">
-            {loading ? <p>Načítavam dáta...</p> : null}
-            {error ? <p>Chyba: {error}</p> : null}
-            {flowerpots?.length > 0 ? (
-                flowerpots.map(flowerpot => <p key={flowerpot.id}>{flowerpot.name}</p>)
-            ) : (
-                <p>Žiadne dáta</p>
-            )}
-        </div>
-    </>
-        
+                <Route path="/notifications" element={<Notifications />} />
+                <Route path="/userProfile" element={<UserProfile />} />
+
+                <Route path="/households" element={<HouseholdsMain />} />
+
+                <Route path="/households/:householdId" element={<HouseholdLayout />}>
+                    <Route path="flowers" element={<FlowerList />} />
+                    <Route path="flowers/:flowerId" element={<FlowerDetail />} />
+
+                    <Route path="members" element={<Members />} />
+
+                    <Route path="smartPots" element={<SmartPotList />} />
+                    <Route path="smartPots/:smartPotId" element={<SmartPotDetail />} />
+                </Route>
+
+                <Route path="*" element={<NotFound />} />
+            </Routes>
+            <Footer />
+        </Router>
     )
 }
 
-export default App */
+export default App

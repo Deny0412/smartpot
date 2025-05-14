@@ -12,15 +12,10 @@ export const ConfigSchema = Type.Object({
     minimum: 1,
     maximum: 65535,
   }),
-  NODE_ENV: Type.Union(
-    [
-      Type.Literal("development"),
-      Type.Literal("production"),
-      Type.Literal("test"),
-    ],
-    { default: "development" }
-  ),
-});
+  NODE_ENV: Type.Union([Type.Literal('development'), Type.Literal('production'), Type.Literal('test')], {
+    default: 'development',
+  }),
+})
 
 export const appConfig = {
   PORT: parseInt(process.env.PORT || "3001", 10),

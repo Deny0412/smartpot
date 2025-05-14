@@ -1,47 +1,50 @@
-import Ajv from "ajv";
-const ajv = new Ajv();
-import { FastifyReply } from "fastify";
-import { Types } from "mongoose";
+import Ajv from 'ajv'
+import { FastifyReply } from 'fastify'
+import { Types } from 'mongoose'
+import householdDecisionDao from '../../dao/household/household-decision-dao'
+import householdGetDao from '../../dao/household/household-get-dao'
+import { sendClientError, sendError, sendSuccess } from '../../middleware/response-handler'
 
-import {
-  sendError,
-  sendClientError,
-  sendSuccess,
-  //sendNoContent,
-  sendNotFound,
-} from "../../middleware/response-handler";
-import householdDecisionDao from "../../dao/household/household-decision-dao";
-import householdGetDao from "../../dao/household/household-get-dao";
+const ajv = new Ajv()
 
 const schema = {
-  type: "object",
+  type: 'object',
   properties: {
-    id: { type: "string" },
-    decision: { type: "boolean" },
+    id: { type: 'string' },
+    decision: { type: 'boolean' },
   },
-  required: ["id", "decision"],
+  required: ['id', 'decision'],
   additionalProperties: false,
-};
+}
 
-async function householdDecisionAbl(
-  data: Object,
-  user_id: string,
-  reply: FastifyReply
-) {
+async function householdDecisionAbl(data: { id: string; decision: boolean }, user_id: string, reply: FastifyReply) {
   try {
     const validate = ajv.compile(schema);
     const valid = validate(data);
     const logged_user = new Types.ObjectId(user_id);
     if (!valid) {
-      sendClientError(
-        reply,
-        JSON.stringify(validate.errors?.map((error) => error.message))
-      );
-      return;
+      console.log('Validation errors:', validate.errors)
+      sendClientError(reply, JSON.stringify(validate.errors?.map((error) => error.message)))
+      return
     }
-    const household = await householdGetDao(String(data.id));
+
+    if (!Types.ObjectId.isValid(data.id)) {
+      console.log('Invalid household ID:', data.id)
+      sendClientError(reply, 'Invalid household ID')
+      return
+    }
+
+    if (!Types.ObjectId.isValid(user_id)) {
+      console.log('Invalid user ID:', user_id)
+      sendClientError(reply, 'Invalid user ID')
+      return
+    }
+
+    const household = await householdGetDao(data.id)
     if (!household) {
-      sendNotFound(reply, "Household does not exist");
+      console.log('Household not found:', data.id)
+      sendClientError(reply, 'Household not found')
+      return
     }
     if (household?.members.some((member) => member._id.equals(logged_user))) {
       sendClientError(reply, "User is not member");
@@ -61,7 +64,9 @@ async function householdDecisionAbl(
     );
     sendSuccess(reply, updatedHousehold, "User decided successfully");
   } catch (error) {
-    sendError(reply, error);
+    console.error('Error in householdDecisionAbl:', error)
+    sendError(reply, error)
   }
 }
-export default householdDecisionAbl;
+
+export default householdDecisionAbl
