@@ -1,4 +1,11 @@
-import { api } from './api'
+import axios from 'axios'
+
+const authApi = axios.create({
+    baseURL: process.env.REACT_APP_AUTH_API,
+    headers: {
+        'Content-Type': 'application/json',
+    },
+})
 
 export interface UserData {
     id: string
@@ -9,7 +16,7 @@ export interface UserData {
 
 export const registerUser = async (email: string, password: string, name: string, surname: string): Promise<void> => {
     try {
-        await api.post('/auth/register', { email, password, name, surname })
+        await authApi.post('/register', { email, password, name, surname })
     } catch (error: any) {
         throw new Error(error.response?.data?.error || 'Registrácia zlyhala')
     }
@@ -17,7 +24,7 @@ export const registerUser = async (email: string, password: string, name: string
 
 export const loginUser = async (email: string, password: string): Promise<UserData> => {
     try {
-        const response = await api.post('/auth/login', { email, password })
+        const response = await authApi.post('/login', { email, password })
         const { token, user } = response.data
 
         localStorage.setItem('token', token)
@@ -45,7 +52,6 @@ export const loginUser = async (email: string, password: string): Promise<UserDa
 export const logoutUser = async (): Promise<void> => {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
-    //await new Promise(resolve => setTimeout(resolve, 500))
 }
 
 export const checkAuth = async (): Promise<UserData | null> => {
@@ -57,7 +63,7 @@ export const checkAuth = async (): Promise<UserData | null> => {
     }
 
     try {
-        const response = await api.get('/auth/get')
+        const response = await authApi.get('/get')
         return {
             id: JSON.parse(userStr).id,
             email: response.data.email,
@@ -83,10 +89,7 @@ export const changePassword = async (passwords: {
     }
 
     try {
-        const response = await api.post('/auth/change-password', passwords, {
-          
-        })
-
+        const response = await authApi.post('/change-password', passwords)
         return { message: response.data.message || 'Password changed successfully' }
     } catch (error: any) {
         throw new Error(error.response?.data?.error || 'Failed to change password')

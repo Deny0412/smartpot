@@ -3,7 +3,7 @@ import { config } from "dotenv";
 import path from "path";
 
 if (process.env.NODE_ENV !== "production") {
-  config({ path: path.resolve(__dirname, "../../../.env") });
+  config({ path: path.resolve(__dirname, "../../.env") });
 }
 
 export const ConfigSchema = Type.Object({

@@ -109,10 +109,7 @@ class WebSocketService {
             return
         }
 
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-        const hostname = window.location.hostname
-        const port = '3001'
-        const wsUrl = `${protocol}//${hostname}:${port}/ws/measurements/${flowerId}?token=${this.token}`
+        const wsUrl = `${process.env.REACT_APP_WS_URL}/ws/measurements/${flowerId}?token=${this.token}`
 
         try {
             this.ws = new WebSocket(wsUrl)
