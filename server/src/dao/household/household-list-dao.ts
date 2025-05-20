@@ -1,20 +1,13 @@
-import householdDAO from "./household-dao";
+import { Types } from 'mongoose'
+import HOUSEHOLD_MODEL from '../../models/Household'
 
-export async function listHousehold(user_id?: string) {
-  try {
-    const households = user_id
-      ? await householdDAO.list(user_id) // Filtered list
-      : await householdDAO.list(); // Full list
+async function householdListDao(user_id: string) {
+  const userId = new Types.ObjectId(user_id)
 
-    return households;
-  } catch (error) {
-    if (error instanceof Error) {
-      throw { code: "failedToListHouseholds", message: error.message };
-    } else {
-      throw {
-        code: "failedToListHouseholds",
-        message: "Unknown error occurred",
-      };
-    }
-  }
+  const households = await HOUSEHOLD_MODEL.find({
+    $or: [{ owner: userId }, { members: userId }],
+  })
+  return households
 }
+
+export default householdListDao

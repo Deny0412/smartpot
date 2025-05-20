@@ -1,0 +1,167 @@
+.flower-item-container
+    display: flex
+    justify-content: space-between
+    align-items: center
+    border-radius: 12px
+    padding: 2rem
+    transition: transform 0.2s ease-in-out
+    width: 90%
+    max-width: 800px
+    box-sizing: border-box
+    cursor: pointer
+
+    @media (max-width: 768px)
+        flex-direction: row
+        align-items: center
+        padding: 1rem
+        width: 100%
+        max-width: 100%
+        margin: 0 auto
+        gap: 0.5rem
+
+    .flower-item-content
+        flex: 1
+        width: 100%
+        box-sizing: border-box
+        display: flex
+        flex-direction: column
+        justify-content: center
+        align-items: flex-start
+        height: 100%
+
+        .flower-item-header
+            margin-bottom: 0
+            width: 100%
+
+            .flower-item-header-content
+                display: flex
+                align-items: center
+                gap: 1rem
+                flex-wrap: wrap
+
+                @media (max-width: 768px)
+                    flex-direction: row
+                    align-items: center
+                    gap: 0.3rem
+
+                .flower-item-name
+                    color: #ffffff
+                    margin: 0
+                    font-size: 1.75rem
+                    line-height: 1.2
+
+                    @media (max-width: 768px)
+                        font-size: 1rem
+                        margin-bottom: 0
+
+                .flower-item-profile-label
+                    padding: 0.25rem 1rem
+                    border-radius: 4px
+                    border: 1px solid #4CAF50
+                    color: #4CAF50
+                    font-size: 0.875rem
+                    white-space: nowrap
+                    display: inline-flex
+                    align-items: center
+                    height: fit-content
+                    line-height: 1.2
+
+                    @media (max-width: 768px)
+                        font-size: 0.7rem
+                        padding: 0.12rem 0.5rem
+
+                    &.flower-item-own-settings
+                        color: #999999
+                        border: 1px solid #999999
+
+        .flower-item-description
+            margin-bottom: 0
+
+            &.flower-item-signed-flowerpot
+                color: #da8009 !important
+            &.flower-item-no-flowerpot
+                color: #999999 !important
+
+            @media (max-width: 768px)
+                margin-bottom: 0
+
+        .flower-item-actions
+            display: flex
+            gap: 1rem
+            flex-wrap: wrap
+
+            @media (max-width: 768px)
+                justify-content: center
+                flex-direction: column
+                align-items: center
+                gap: 0.75rem
+
+            .flower-item-check-button
+                background: none
+                padding: 0.75rem 2rem
+                width: fit-content
+
+                &:hover
+                    background: #444444
+
+            .flower-item-edit-button, .flower-item-assign-button
+                color: #999999
+                border: 1px solid #999999
+                background: none
+                padding: 0.5rem
+                width: fit-content
+
+                &:hover
+                    color: #ffffff
+
+            .flower-item-assign-button
+                color: green
+                border: 1px solid green
+
+                &:hover
+                    color: green
+                    background: rgba(0, 255, 0, 0.1)
+
+    .flower-item-image
+        margin-left: 2rem
+        display: flex
+        align-items: center
+        justify-content: center
+        width: 80px
+        height: 80px
+
+        @media (max-width: 768px)
+            margin: 0 0 0 0.5rem
+            width: 40px
+            height: 40px
+
+        .flower-item-image-img
+            width: 100%
+            height: 100%
+            object-fit: cover
+            border-radius: 50%
+            opacity: 0
+            transition: opacity 0.3s ease-in-out
+
+            &.loaded
+                opacity: 1
+
+.flower-item-flowerpot-label
+    padding: 0.25rem 1rem
+    border-radius: 4px
+    border: 1px solid #2196F3
+    color: #2196F3
+    font-size: 0.875rem
+    white-space: nowrap
+    display: inline-flex
+    align-items: center
+    height: fit-content
+    line-height: 1.2
+
+    @media (max-width: 768px)
+        font-size: 0.7rem
+        padding: 0.12rem 0.5rem
+
+    &.flower-item-no-flowerpot
+        color: #999999
+        border: 1px solid #999999

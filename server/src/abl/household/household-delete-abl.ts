@@ -1,46 +1,45 @@
 import Ajv from "ajv";
 const ajv = new Ajv();
-import { FastifyRequest, FastifyReply } from "fastify";
+import { FastifyReply } from "fastify";
+import {
+  sendError,
+  sendNoContent,
+  sendClientError,
+  sendNotFound,
+} from "../../middleware/response-handler";
+import householdDeleteDao from "../../dao/household/household-delete-dao";
+import householdGetDao from "../../dao/household/household-get-dao";
 
-const HOUSEHOLD_DAO = require("../../dao/household/household-delete-dao");
-
-const SCHEMA = {
+const schema = {
   type: "object",
   properties: {
-    id_household: { type: "string" },
+    id: { type: "string" },
   },
-  required: ["id_household"],
+  required: ["id"],
   additionalProperties: false,
 };
 
-interface IHouseholdDelete {
-  id_household: string;
-}
-
-async function deleteHousehold(request: FastifyRequest, reply: FastifyReply) {
+async function householdDeleteAbl(id: string, reply: FastifyReply) {
   try {
-    const REQ_PARAM: IHouseholdDelete = request.body as IHouseholdDelete;
-    const VALID = ajv.validate(SCHEMA, REQ_PARAM);
-    if (!VALID) {
-      reply.status(400).send({
-        code: "dtoInIsNotValid",
-        message: "dtoIn is not valid",
-        validationError: ajv.errors,
-      });
+    const idObject = { id: id };
+    const validate = ajv.compile(schema);
+    const valid = validate(idObject);
+    if (!valid) {
+      sendClientError(
+        reply,
+        JSON.stringify(validate.errors?.map((error) => error.message))
+      );
       return;
     }
-    await HOUSEHOLD_DAO.delete(REQ_PARAM.id_household);
-    reply
-      .status(200)
-      .send({ message: "Household deleted successfully", status: "success" });
-  } catch (error) {
-    if (error instanceof Error) {
-      reply.status(500).send({ message: error.message, status: "error" });
-    } else {
-      reply
-        .status(500)
-        .send({ message: "Unknown error occurred", status: "error" });
+    const household = await householdGetDao(id);
+    if (!household) {
+      sendNotFound(reply, "Household does not exist");
     }
+
+    await householdDeleteDao(id);
+    sendNoContent(reply, "Household deleted successfully");
+  } catch (error) {
+    sendError(reply, error);
   }
 }
-export default deleteHousehold;
+export default householdDeleteAbl;

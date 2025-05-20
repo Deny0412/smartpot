@@ -1,53 +1,50 @@
 import Ajv from "ajv";
 const ajv = new Ajv();
-import { FastifyRequest, FastifyReply } from "fastify";
-
-const HOUSEHOLD_DAO = require("../../dao/household/household-create-dao");
+import { FastifyReply } from "fastify";
+import householdCreateDao from "../../dao/household/household-create-dao";
 import { IHousehold } from "../../models/Household";
+import {
+  sendError,
+  sendSuccess,
+  sendClientError,
+} from "../../middleware/response-handler";
+import { Types } from "mongoose";
 
-const SCHEMA = {
+const schema = {
   type: "object",
   properties: {
     name: { type: "string" },
-    owner: { type: "string" },
     members: { type: "array", items: { type: "string" } },
     invites: { type: "array", items: { type: "string" } },
   },
-  required: ["name", "owner"],
-  additionalProperties: false,
+  required: ["name"],
 };
 
-async function createHousehold(request: FastifyRequest, reply: FastifyReply) {
+async function householdCreateAbl(
+  data: IHousehold,
+  user_id: string,
+  reply: FastifyReply
+) {
   try {
-    const REQ_PARAM: IHousehold = request.body as IHousehold;
+    data.members = data.members ?? [];
+    data.invites = data.invites ?? [];
+    data.owner = new Types.ObjectId(user_id);
 
-    REQ_PARAM.members = REQ_PARAM.members || [];
-    REQ_PARAM.invites = REQ_PARAM.invites || [];
-
-    const VALID = ajv.validate(SCHEMA, REQ_PARAM);
-    if (!VALID) {
-      reply.status(400).send({
-        code: "dtoInIsNotValid",
-        message: "dtoIn is not valid",
-        validationError: ajv.errors,
-      });
+    const validate = ajv.compile(schema);
+    const valid = validate(data);
+    if (!valid) {
+      sendClientError(
+        reply,
+        JSON.stringify(validate.errors?.map((error) => error.message))
+      );
       return;
     }
-    const CREATED_HOUSEHOLD = await HOUSEHOLD_DAO.create(REQ_PARAM);
-    reply.status(200).send({
-      CREATED_HOUSEHOLD,
-      message: "Household created successfully",
-      status: "success",
-    });
+
+    const newHousehold = await householdCreateDao(data);
+    sendSuccess(reply, newHousehold, "Household creates successfully");
   } catch (error) {
-    if (error instanceof Error) {
-      reply.status(500).send({ message: error.message, status: "error" });
-    } else {
-      reply
-        .status(500)
-        .send({ message: "Unknown error occurred", status: "error" });
-    }
+    sendError(reply, error);
   }
 }
 
-export default createHousehold;
+export default householdCreateAbl;

@@ -1,17 +1,7 @@
-import householdDAO from "./household-dao";
+import HOUSEHOLD_MODEL from "../../models/Household";
 
-export async function deleteHousehold(id: string) {
-  try {
-    await householdDAO.delete(id);
-    return;
-  } catch (error) {
-    if (error instanceof Error) {
-      throw { code: "failedToDeleteHousehold", message: error.message };
-    } else {
-      throw {
-        code: "failedToDeleteHousehold",
-        message: "Unknown error occurred",
-      };
-    }
-  }
+async function householdDeleteDao(id: string) {
+  return await HOUSEHOLD_MODEL.findByIdAndDelete(id);
 }
+
+export default householdDeleteDao;
