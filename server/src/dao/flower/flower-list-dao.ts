@@ -6,11 +6,6 @@ async function listFlowers(page: number = 1, household_id: string, limit: number
   const parsedPage = Math.max(1, Number(page))
   const parsedLimit = Math.max(1, Math.min(100, Number(limit))) // Cap limit at 100
 
-  console.log('Searching flowers with params:', {
-    page: parsedPage,
-    household_id,
-    limit: parsedLimit,
-  })
 
   const query = {
     household_id: new Types.ObjectId(household_id),

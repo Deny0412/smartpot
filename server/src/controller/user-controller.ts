@@ -49,7 +49,7 @@ export const userController = {
   getInvites: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const userId = (request.user as any).id
-      console.log('Searching invites for user:', userId)
+      
 
       const households = await HOUSEHOLD_MODEL.find({
         invites: userId,
@@ -57,7 +57,7 @@ export const userController = {
         .populate('owner', 'name surname')
         .lean()
 
-      console.log('Found households with invites:', households)
+      
 
       const invites = households.map((household) => ({
         id: household._id.toString(),
@@ -67,7 +67,7 @@ export const userController = {
         status: 'pending',
       }))
 
-      console.log('Processed invites:', invites)
+      
 
       return sendSuccess(reply, invites, 'Pozvánky úspešne načítané')
     } catch (error) {

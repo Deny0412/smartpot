@@ -106,10 +106,19 @@ class WebSocketService {
         this.token = localStorage.getItem('token')
         if (!this.token) {
             console.error(i18next.t('flower_detail.console.token_not_available'))
+            if (this.dispatch) {
+                this.dispatch(measurementsSlice.actions.setWebSocketStatus('error'))
+            }
             return
         }
 
-        const wsUrl = `${process.env.REACT_APP_WS_URL}/ws/measurements/${flowerId}?token=${this.token}`
+        // Update WebSocket URL construction
+        const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001'
+        const wsUrl = `${baseUrl.replace('http', 'ws')}/api/ws/measurements/${flowerId}?token=${encodeURIComponent(
+            this.token,
+        )}`
+
+        console.log('Connecting to WebSocket:', wsUrl)
 
         try {
             this.ws = new WebSocket(wsUrl)
@@ -120,16 +129,15 @@ class WebSocketService {
                 if (this.dispatch) {
                     this.dispatch(measurementsSlice.actions.setWebSocketStatus('connected'))
                     this.dispatch(measurementsSlice.actions.setActiveWebSocketFlowerId(this.flowerId!))
-
-                    setTimeout(() => {
-                        this.sendMessage({ type: 'get_measurements' })
-                    }, 1000)
                 }
+                // Send get_measurements request immediately after connection
+                this.sendMessage({ type: 'get_measurements' })
             }
 
             this.ws.onmessage = event => {
                 try {
                     const message = JSON.parse(event.data)
+                    console.log('WebSocket message received:', message)
 
                     if (!this.dispatch || !this.flowerId) {
                         return
@@ -166,7 +174,6 @@ class WebSocketService {
                                     measurement: measurementWithType,
                                 }),
                             )
-
                             break
                         case 'measurement_updated':
                             this.dispatch(
@@ -186,13 +193,18 @@ class WebSocketService {
                             )
                             break
                         case 'error':
+                            console.error('WebSocket error message:', message.message)
                             break
                         default:
+                            console.log('Unknown message type:', message.type)
                     }
-                } catch (error) {}
+                } catch (error) {
+                    console.error('Error processing WebSocket message:', error)
+                }
             }
 
             this.ws.onclose = event => {
+                console.log('WebSocket closed:', event.code, event.reason)
                 if (this.isIntentionalDisconnect) {
                     if (this.dispatch) {
                         this.dispatch(measurementsSlice.actions.setWebSocketStatus('idle'))
@@ -216,6 +228,7 @@ class WebSocketService {
                 this.handleReconnect()
             }
         } catch (error) {
+            console.error('Error creating WebSocket:', error)
             if (this.dispatch) {
                 this.dispatch(measurementsSlice.actions.setWebSocketStatus('error'))
             }
@@ -230,6 +243,7 @@ class WebSocketService {
 
         if (this.reconnectAttempts < this.maxReconnectAttempts) {
             this.reconnectAttempts++
+            console.log(`Reconnect attempt ${this.reconnectAttempts} of ${this.maxReconnectAttempts}`)
 
             if (this.dispatch) {
                 this.dispatch(measurementsSlice.actions.setWebSocketStatus('reconnecting'))
@@ -244,8 +258,9 @@ class WebSocketService {
                     if (this.dispatch) this.dispatch(measurementsSlice.actions.setWebSocketStatus('connecting'))
                     this.connect(this.flowerId)
                 }
-            }, this.reconnectTimeout)
+            }, this.reconnectTimeout * this.reconnectAttempts) // Increase timeout with each attempt
         } else {
+            console.log('Max reconnect attempts reached')
             if (this.dispatch) {
                 this.dispatch(measurementsSlice.actions.setWebSocketStatus('disconnected'))
                 this.dispatch(measurementsSlice.actions.setActiveWebSocketFlowerId(null))

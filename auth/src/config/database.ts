@@ -5,7 +5,7 @@ import path from "path";
 if (process.env.NODE_ENV !== "production") {
   config({ path: path.resolve(__dirname, "../../../.env") });
 }
-const url = process.env.MONGO_URI || "mongodb://localhost:27017/smart-pot";
+const url = process.env.MONGO_URI || "mongodb+srv://skull-crusher123:275Y34NbzVky4QrN@clustermain.zgzesyz.mongodb.net/smart-pot";
 
 export async function connectToDatabase() {
   try {

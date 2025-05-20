@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const authApi = axios.create({
-    baseURL: process.env.REACT_APP_AUTH_API,
+    baseURL: process.env.REACT_APP_AUTH_API || 'http://localhost:3001/api/auth',
     headers: {
         'Content-Type': 'application/json',
     },
@@ -26,6 +26,8 @@ export const loginUser = async (email: string, password: string): Promise<UserDa
     try {
         const response = await authApi.post('/login', { email, password })
         const { token, user } = response.data
+
+        
 
         localStorage.setItem('token', token)
         localStorage.setItem(
@@ -59,18 +61,30 @@ export const checkAuth = async (): Promise<UserData | null> => {
     const userStr = localStorage.getItem('user')
 
     if (!token || !userStr) {
+        console.log('No token or userStr')
         return null
     }
 
     try {
-        const response = await authApi.get('/get')
+        const response = await authApi.get('/check', {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        })
+
+        if (!response.data.authorized) {
+            throw new Error('Not authorized')
+        }
+
+        const userData = JSON.parse(userStr)
         return {
-            id: JSON.parse(userStr).id,
-            email: response.data.email,
-            name: response.data.name,
-            surname: response.data.surname,
+            id: userData.id,
+            email: response.data.user.email,
+            name: userData.name,
+            surname: userData.surname,
         }
     } catch (error) {
+        console.error('Auth check failed:', error)
         localStorage.removeItem('token')
         localStorage.removeItem('user')
         return null

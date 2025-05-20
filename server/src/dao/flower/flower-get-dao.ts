@@ -16,7 +16,7 @@ export async function getFlower(id: string) {
 export async function getFlowerSchedule(flowerId: string) {
   const flowerSchedule = await FlowerScheduleModel.findOne({ flower_id: flowerId }).lean()
   if (!flowerSchedule) {
-    console.log('No schedule found for flowerId:', flowerId)
+    
     return null
   }
   return flowerSchedule

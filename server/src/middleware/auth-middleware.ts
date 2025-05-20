@@ -1,9 +1,5 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
-import jwt from 'jsonwebtoken'
-import { secrets } from '../config/config'
-import { User } from '../models/User'
-
-// Extend FastifyRequest to include a user property
+import fetch from 'node-fetch'
 declare module 'fastify' {
   interface FastifyRequest {
     user?: {}
@@ -11,40 +7,65 @@ declare module 'fastify' {
 }
 
 export async function authMiddleware(request: FastifyRequest, reply: FastifyReply) {
-  console.log('Auth middleware called')
+  
+
   const authHeader = request.headers.authorization
+ 
+
   if (!authHeader) {
     return reply.code(401).send({ error: 'Missing Authorization header' })
   }
 
+  // Check for correct Bearer format
+  if (!authHeader.toLowerCase().startsWith('bearer ')) {
+    console.log('Error: Invalid authorization format - should start with "Bearer "')
+    return reply.code(401).send({ error: 'Invalid authorization format' })
+  }
+
   const token = authHeader.split(' ')[1]
+  
+
   if (!token) {
+    
     return reply.code(401).send({ error: 'Invalid Authorization header format' })
   }
 
   try {
-    const decoded = jwt.verify(token, secrets.JWT_SECRET) as { email: string; user_id: string }
-    console.log('Decoded token:', decoded)
+    const authServerUrl = process.env.AUTH_SERVER_URL || 'http://localhost:3003'
+    
 
-    if (!decoded.user_id) {
-      return reply.code(401).send({ error: 'Unauthorized: User ID missing' })
+    if (!authServerUrl) {
+      
+      throw new Error('AUTH_SERVER_URL environment variable is not set')
     }
 
-    const user = await User.findOne({ email: decoded.email })
+    console.log('Sending request to auth server...')
+    const response = await fetch(`${authServerUrl}/auth/check`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    })
+    
 
-    if (!user) {
-      return reply.code(401).send({ error: 'User not found' })
+    if (!response.ok) {
+      const errorData = await response.json()
+      
+      return reply.code(401).send({ error: 'Unauthorized', details: errorData })
     }
 
-    request.user = {
-      id: user._id.toString(),
-      user_id: decoded.user_id,
-      email: user.email,
-      name: user.name || '',
-      surname: user.surname || '',
+    const data = await response.json()
+    
+
+    if (!data.authorized) {
+      console.log('Error: User not authorized')
+      return reply.code(401).send({ error: 'Unauthorized' })
     }
+
+    request.user = { id: data.user.user_id }
+    
   } catch (error) {
-    console.error('Error in auth middleware:', error)
-    return reply.code(401).send({ error: 'Invalid token' })
+  
+    return reply.code(500).send({ error: 'Internal Server Error' })
   }
 }

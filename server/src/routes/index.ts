@@ -30,7 +30,7 @@ const routes: FastifyPluginAsync = async (fastify) => {
     }
   )
 
-  // Register routes under the /api prefix
+ 
   fastify.register(flowerRoutes, { prefix: '/flower' })
   fastify.register(householdRoutes, { prefix: '/household' })
   fastify.register(smartpotRoutes, { prefix: '/smart-pot' })

@@ -139,7 +139,6 @@ const FlowerDetail: React.FC = () => {
         if (!schedule) return
     }
 
-  
     const batteryStatus = useMemo(() => {
         if (!processedMeasurements?.battery || processedMeasurements.battery.length === 0) return null
         const lastBatteryValue = Number(processedMeasurements.battery[0].value)
@@ -157,7 +156,6 @@ const FlowerDetail: React.FC = () => {
             if (response.success) {
                 toast.success(t('flower_detail.disconnect_success_toast'))
 
-              
                 const currentFlower = await dispatch(loadFlowerDetails(flowerId)).unwrap()
                 if (currentFlower) {
                     await Promise.all([
@@ -192,10 +190,9 @@ const FlowerDetail: React.FC = () => {
                 try {
                     setIsLoading(true)
 
-                    const flowerExistsInState = !!flower 
+                    const flowerExistsInState = !!flower
 
                     const metadataPromises: Promise<any>[] = [
-                     
                         ...(!flowerExistsInState ? [dispatch(loadFlowerDetails(flowerId))] : []),
                         dispatch(fetchSmartPots(householdId)),
                         dispatch(fetchInactiveSmartPots(householdId)),
@@ -263,6 +260,44 @@ const FlowerDetail: React.FC = () => {
             }
         }
     }, [dispatch, flowerId, flower?.serial_number])
+
+    // Add new useEffect for time range changes
+    useEffect(() => {
+        if (flowerId && householdId) {
+            let dateFrom: string
+            let dateTo = new Date().toISOString().split('T')[0]
+
+            if (timeRange === 'custom' && customDateRange.from && customDateRange.to) {
+                dateFrom = customDateRange.from
+                dateTo = customDateRange.to
+            } else {
+                const now = new Date()
+                const startDate = new Date(now)
+
+                switch (timeRange) {
+                    case 'day':
+                        startDate.setHours(0, 0, 0, 0)
+                        break
+                    case 'week':
+                        startDate.setDate(now.getDate() - 7)
+                        break
+                    case 'month':
+                        startDate.setMonth(now.getMonth() - 1)
+                        break
+                }
+                dateFrom = startDate.toISOString().split('T')[0]
+            }
+
+            // Check if we have any measurements for the current type
+            const hasDataForRange =
+                processedMeasurements &&
+                Object.values(processedMeasurements).some(measurements => measurements && measurements.length > 0)
+
+            if (!hasDataForRange) {
+                dispatch(fetchMeasurementsForFlower({ flowerId, householdId, dateFrom, dateTo }))
+            }
+        }
+    }, [dispatch, flowerId, householdId, timeRange, customDateRange, processedMeasurements])
 
     const handleTimeRangeChange = (range: 'day' | 'week' | 'month' | 'custom') => {
         setTimeRange(range)

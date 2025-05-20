@@ -257,7 +257,6 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
     }
 
     const formatDate = (timestamp: string) => {
-        
         const date = new Date(timestamp)
 
         if (isNaN(date.getTime())) {

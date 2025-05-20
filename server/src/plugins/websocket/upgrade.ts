@@ -4,12 +4,13 @@ import { WebSocketServer } from 'ws'
 import { AuthenticatedWebSocket } from './userConnections'
 
 export function handleUpgrade(request: IncomingMessage, socket: any, head: Buffer, wss: WebSocketServer) {
-  const url = new URL(request.url || '', `http://${request.headers.host}`)
-  const path = url.pathname
-
-  if (path.startsWith('/ws/measurements/')) {
+  try {
+    const url = new URL(request.url || '', `http://${request.headers.host}`)
     const token = url.searchParams.get('token')
-    if (!token) {
+    const flowerId = url.pathname.split('/measurements/')[1]
+
+    if (!token || !flowerId) {
+      console.error('Missing token or flower ID:', { token: !!token, flowerId: !!flowerId })
       socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n')
       socket.destroy()
       return
@@ -19,9 +20,9 @@ export function handleUpgrade(request: IncomingMessage, socket: any, head: Buffe
       const decoded = jwt.verify(token, process.env.JWT_SECRET || '')
       const userId = (decoded as any).user_id
 
-      const flowerId = path.split('/').pop()
-      if (!flowerId) {
-        socket.write('HTTP/1.1 400 Bad Request\r\n\r\n')
+      if (!userId) {
+        console.error('Invalid token - missing user_id')
+        socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n')
         socket.destroy()
         return
       }
@@ -33,16 +34,17 @@ export function handleUpgrade(request: IncomingMessage, socket: any, head: Buffe
           flowerId,
         }) as AuthenticatedWebSocket
 
-        console.log(`Nové WebSocket pripojenie pre kvetinu ${flowerId} od používateľa ${userId}`)
+        console.log(`New WebSocket connection for flower ${flowerId} from user ${userId}`)
         wss.emit('connection', authenticatedWs, request)
       })
     } catch (error) {
-      console.error('Chyba pri overovaní tokenu:', error)
+      console.error('Token verification error:', error)
       socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n')
       socket.destroy()
     }
-  } else {
-    socket.write('HTTP/1.1 404 Not Found\r\n\r\n')
+  } catch (error) {
+    console.error('Error in handleUpgrade:', error)
+    socket.write('HTTP/1.1 500 Internal Server Error\r\n\r\n')
     socket.destroy()
   }
 }
