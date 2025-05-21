@@ -2,7 +2,7 @@ import { FastifyRequest, FastifyReply } from "fastify";
 
 import { sendSuccess, sendError, sendNotFound, sendClientError } from "../../middleware/response-handler";
 import { MongoValidator } from "../../validation/mongo-validator";
-import { getFlower } from "../../dao/flower/flower-get-dao";
+import getFlower from "../../dao/flower/flower-get-dao";
 
 async function getFlowerHandler(id: string, reply: FastifyReply) {
     try {

@@ -15,7 +15,7 @@ const WATER_SCHEMA = new Schema<IWaterMeasurement>(
         },
     },
     { timestamps: true }
-); 
+); // createdAt = zápis do DB, timestamp = čas měření
 
 const WATER_MODEL = model<IWaterMeasurement>("WaterMeasurement", WATER_SCHEMA);
 

@@ -1,5 +1,5 @@
 import { FastifyReply } from "fastify";
-import smartpotGetDao from "../../dao/smartpot/smart-pot-get-by-serial-number";
+import smartpotGetDao from "../../dao/smartpot/smart-pot-getBySerial-dao";
 import flowerGetDao from "../../dao/flower/flower-get-dao";
 import { Types } from "mongoose";
 

@@ -1,14 +1,13 @@
+import { FastifyRequest, FastifyReply } from "fastify";
 import Ajv from "ajv";
 const ajv = new Ajv();
-import { FastifyReply } from "fastify";
-import householdLeaveDao from "../../dao/household/household-leave-dao";
+import smartpotListByHouseholdDao from "../../dao/smartpot/smart-pot-listByHousehold-dao";
 import householdGetDao from "../../dao/household/household-get-dao";
-
 import {
-  sendError,
   sendSuccess,
-  sendClientError,
+  sendError,
   sendNotFound,
+  sendClientError,
 } from "../../middleware/response-handler";
 const schema = {
   type: "object",
@@ -16,11 +15,10 @@ const schema = {
     id: { type: "string" },
   },
   required: ["id"],
+  additionalProperties: false,
 };
-
-async function householdCreateAbl(
+async function smartpotListByHouseholdAbl(
   household_id: string,
-  user_id: string,
   reply: FastifyReply
 ) {
   try {
@@ -34,16 +32,23 @@ async function householdCreateAbl(
       );
       return;
     }
+    const filteredSmartpots = await smartpotListByHouseholdDao(household_id);
+    if (!filteredSmartpots) {
+      return sendNotFound(reply, "Smartpots not found");
+    }
     const household = await householdGetDao(household_id);
     if (!household) {
-      sendNotFound(reply, "Household does not exist");
+      return sendNotFound(reply, "Household not found");
     }
 
-    const updatedHousehold = await householdLeaveDao(household_id, user_id);
-    sendSuccess(reply, updatedHousehold, "User left household successfully");
+    return sendSuccess(
+      reply,
+      filteredSmartpots,
+      "Smartpots retrieved successfully"
+    );
   } catch (error) {
-    sendError(reply, error);
+    return sendError(reply, error);
   }
 }
 
-export default householdCreateAbl;
+export default smartpotListByHouseholdAbl;

@@ -3,7 +3,7 @@ import { config } from "dotenv";
 import path from "path";
 
 if (process.env.NODE_ENV !== "production") {
-  config({ path: path.resolve(__dirname, "../../.env") });
+  config({ path: path.resolve(__dirname, "../../../.env") });
 }
 
 export const ConfigSchema = Type.Object({
@@ -12,10 +12,15 @@ export const ConfigSchema = Type.Object({
     minimum: 1,
     maximum: 65535,
   }),
-  NODE_ENV: Type.Union([Type.Literal('development'), Type.Literal('production'), Type.Literal('test')], {
-    default: 'development',
-  }),
-})
+  NODE_ENV: Type.Union(
+    [
+      Type.Literal("development"),
+      Type.Literal("production"),
+      Type.Literal("test"),
+    ],
+    { default: "development" }
+  ),
+});
 
 export const appConfig = {
   PORT: parseInt(process.env.PORT || "3001", 10),
@@ -42,11 +47,11 @@ const requireEnv = (key: string): string => {
 };
 
 export const secrets = {
-  /* CLIENT_ID: requireEnv("CLIENT_ID"),
+  CLIENT_ID: requireEnv("CLIENT_ID"),
   CLIENT_SECRET: requireEnv("CLIENT_SECRET"),
-  REDIRECT_URI: requireEnv("REDIRECT_URI"), */
+  REDIRECT_URI: requireEnv("REDIRECT_URI"),
   REFRESH_TOKEN: requireEnv("REFRESH_TOKEN"),
- /*  DISCORD_WEBHOOK_URL: requireEnv("DISCORD_WEBHOOK_URL"), */
+  DISCORD_WEBHOOK_URL: requireEnv("DISCORD_WEBHOOK_URL"),
   JWT_SECRET: requireEnv("JWT_SECRET"),
   MONGO_URI: requireEnv("MONGO_URI"),
 };

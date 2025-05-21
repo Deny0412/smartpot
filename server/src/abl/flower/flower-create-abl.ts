@@ -22,7 +22,7 @@ const schema = {
 };
 const ajv = new Ajv();
 async function createFlowerHandler(data: IFlower, reply: FastifyReply) {
-  
+  console.log(data);
   try {
     const validate = ajv.compile(schema);
     const valid = validate(data);

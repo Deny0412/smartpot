@@ -1,71 +1,48 @@
-import { FastifyReply, FastifyRequest } from 'fastify'
-import fetch from 'node-fetch'
+import { FastifyRequest, FastifyReply } from 'fastify';
+
+// Extend FastifyRequest to include a user property
 declare module 'fastify' {
   interface FastifyRequest {
-    user?: {}
+    user?: { };
   }
 }
+import fetch from 'node-fetch';
 
 export async function authMiddleware(request: FastifyRequest, reply: FastifyReply) {
-  
-
-  const authHeader = request.headers.authorization
- 
-
+  console.log('Auth middleware called');
+  const authHeader = request.headers.authorization;
   if (!authHeader) {
-    return reply.code(401).send({ error: 'Missing Authorization header' })
+    return reply.code(401).send({ error: 'Missing Authorization header' }); // Return explicitly
   }
 
-  // Check for correct Bearer format
-  if (!authHeader.toLowerCase().startsWith('bearer ')) {
-    console.log('Error: Invalid authorization format - should start with "Bearer "')
-    return reply.code(401).send({ error: 'Invalid authorization format' })
-  }
-
-  const token = authHeader.split(' ')[1]
-  
-
+  const token = authHeader.split(' ')[1];
   if (!token) {
-    
-    return reply.code(401).send({ error: 'Invalid Authorization header format' })
+    return reply.code(401).send({ error: 'Invalid Authorization header format' }); // Return explicitly
   }
 
   try {
-    const authServerUrl = process.env.AUTH_SERVER_URL || 'http://localhost:3003'
-    
-
+    const authServerUrl = process.env.AUTH_SERVER_URL || 'http://localhost:3000';
     if (!authServerUrl) {
-      
-      throw new Error('AUTH_SERVER_URL environment variable is not set')
+      throw new Error('AUTH_SERVER_URL environment variable is not set');
     }
 
-    console.log('Sending request to auth server...')
     const response = await fetch(`${authServerUrl}/auth/check`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    })
-    
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
     if (!response.ok) {
-      const errorData = await response.json()
-      
-      return reply.code(401).send({ error: 'Unauthorized', details: errorData })
+      return reply.code(401).send({ error: 'Unauthorized' }); // Return explicitly
     }
 
-    const data = await response.json()
-    
+    const data = await response.json() as { user: any; authorized: boolean };
 
     if (!data.authorized) {
-      console.log('Error: User not authorized')
-      return reply.code(401).send({ error: 'Unauthorized' })
+      return reply.code(401).send({ error: 'Unauthorized' }); // Return explicitly
     }
 
-    request.user = { id: data.user.user_id }
-    
+    request.user = data.user; // Store user object directly
   } catch (error) {
-  
-    return reply.code(500).send({ error: 'Internal Server Error' })
+    console.error('Error in auth middleware:', error);
+    return reply.code(500).send({ error: 'Internal Server Error' }); // Return explicitly
   }
 }

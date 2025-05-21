@@ -1,50 +1,47 @@
-import { IncomingMessage } from 'http'
-import jwt from 'jsonwebtoken'
-import { WebSocketServer } from 'ws'
-import { AuthenticatedWebSocket } from './userConnections'
+import { IncomingMessage } from "http";
+import { Socket } from "net";
+import { WebSocketServer } from "ws";
+import jwt from "jsonwebtoken";
+import { secrets } from "../../config/config";
 
-export function handleUpgrade(request: IncomingMessage, socket: any, head: Buffer, wss: WebSocketServer) {
+export function handleUpgrade(
+  request: IncomingMessage,
+  socket: any,
+  head: Buffer,
+  wss: WebSocketServer,
+  fastify: any
+) {
   try {
-    const url = new URL(request.url || '', `http://${request.headers.host}`)
-    const token = url.searchParams.get('token')
-    const flowerId = url.pathname.split('/measurements/')[1]
+    const url = new URL(request.url ?? "", `http://${request.headers.host}`);
+    if (url.pathname !== "/ws") return socket.destroy();
 
-    if (!token || !flowerId) {
-      console.error('Missing token or flower ID:', { token: !!token, flowerId: !!flowerId })
-      socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n')
-      socket.destroy()
-      return
+    const token = url.searchParams.get("token")?.trim();
+    if (!token) {
+      socket.write("HTTP/1.1 401 Unauthorized\r\n\r\nMissing token");
+      return socket.destroy();
     }
 
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || '')
-      const userId = (decoded as any).user_id
-
-      if (!userId) {
-        console.error('Invalid token - missing user_id')
-        socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n')
-        socket.destroy()
-        return
+    jwt.verify(token, secrets.JWT_SECRET, (err, decoded) => {
+      if (
+        err ||
+        !decoded ||
+        typeof decoded !== "object" ||
+        !("user" in decoded) ||
+        !(decoded as any).user?.id
+      ) {
+        socket.write("HTTP/1.1 401 Unauthorized\r\n\r\nInvalid token");
+        return socket.destroy();
       }
 
-      wss.handleUpgrade(request, socket, head, (ws) => {
-        const authenticatedWs = Object.assign(ws, {
-          id: Math.random().toString(36).substring(7),
-          userId,
-          flowerId,
-        }) as AuthenticatedWebSocket
+      const user = (decoded as any).user;
 
-        console.log(`New WebSocket connection for flower ${flowerId} from user ${userId}`)
-        wss.emit('connection', authenticatedWs, request)
-      })
-    } catch (error) {
-      console.error('Token verification error:', error)
-      socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n')
-      socket.destroy()
-    }
-  } catch (error) {
-    console.error('Error in handleUpgrade:', error)
-    socket.write('HTTP/1.1 500 Internal Server Error\r\n\r\n')
-    socket.destroy()
+      wss.handleUpgrade(request, socket, head, (ws) => {
+        (ws as any).user = user;
+        wss.emit("connection", ws, request);
+      });
+    });
+  } catch (err) {
+    fastify.log.error("WebSocket upgrade failed", err);
+    socket.destroy();
   }
 }

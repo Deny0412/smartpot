@@ -11,7 +11,7 @@ import deleteFlower from "../../dao/flower/flower-delete-dao";
 
 async function deleteFlowerHandler(id: string, reply: FastifyReply) {
   try {
-    
+    // Validate ObjectId format first
     if (!MongoValidator.validateId(id)) {
       return sendClientError(reply, "Invalid flower ID format");
     }

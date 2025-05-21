@@ -1,4 +1,4 @@
-import { measurementController } from "../controller/measurement-controller";
+import { smartpotController } from "../controller/smartPot-controller";
 import { FastifyInstance } from "fastify";
 import { authMiddleware } from "../middleware/auth-middleware";
 import { householdAuthMidlleware } from "../middleware/household-membership-middleware";
@@ -6,57 +6,45 @@ import { householdAuthMidlleware } from "../middleware/household-membership-midd
 const MEMBER_ROLE = "member";
 const OWNER_ROLE = "owner";
 
-export default async function measurementRoutes(fastify: FastifyInstance) {
-  // fastify.post("/measurement/add", flowerController.addMeasurement);
+export default async function smartpotRoutes(fastify: FastifyInstance) {
   fastify.post(
-    "/history",
+    "/create",
     {
-      onRequest: [authMiddleware], // Authenticate first
+      onRequest: [authMiddleware], // Administrator při výrobě
     },
-    measurementController.history
+    smartpotController.create
   );
-  fastify.post("/create", measurementController.create);
-
-  /*
-  fastify.post(
-    "/createWater",
-    
+  fastify.get(
+    "/get/:id",
     {
       onRequest: [authMiddleware], // Authenticate first
       preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
     },
-    
-    measurementController.create
+    smartpotController.get
   );
-  fastify.post(
-    "/createLight",
-    
+  fastify.get(
+    "/getCurrentFlower/:id",
+    /*
     {
       onRequest: [authMiddleware], // Authenticate first
       preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
     },
-    
-    measurementController.create
+    */
+    smartpotController.getCurrentFlower
   );
-  fastify.post(
-    "/createTemperature",
-    
+  fastify.put(
+    "/update",
     {
       onRequest: [authMiddleware], // Authenticate first
       preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
     },
-    
-    measurementController.create
+    smartpotController.update
   );
-  fastify.post(
-    "/createHumidity",
-    
+  fastify.get(
+    "/listByHousehold/:id",
     {
       onRequest: [authMiddleware], // Authenticate first
-      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
     },
-    
-    measurementController.create
+    smartpotController.listByHousehold
   );
-  */
 }

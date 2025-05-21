@@ -1,7 +1,7 @@
 import { FastifyReply } from "fastify";
 import createMeasurement from "../../dao/measurement/measurement-create-dao";
-import getSmartpot from "../../dao/smartpot/smart-pot-get-by-serial-number";
-import { getFlower } from "../../dao/flower/flower-get-dao";
+import getSmartpot from "../../dao/smartpot/smart-pot-getBySerial-dao";
+import getFlower from "../../dao/flower/flower-get-dao";
 import { Types } from "mongoose";
 import { isValueOutOfRange } from "../../utils/flower/flower-range-util";
 import notificationService from "../../services/notification-service";
