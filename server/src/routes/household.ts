@@ -74,4 +74,20 @@ export default async function householdRoutes(fastify: FastifyInstance) {
     },
     householdController.decision
   );
+  fastify.put(
+    "/leave",
+    {
+      onRequest: [authMiddleware], // Authenticate first
+      preHandler: [householdAuthMidlleware([MEMBER_ROLE])], // Then check household auth
+    },
+    householdController.leave
+  );
+  fastify.get(
+    "/getMembers/:id",
+    {
+      onRequest: [authMiddleware], // Authenticate first
+      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
+    },
+    householdController.getMembers
+  );
 }

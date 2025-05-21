@@ -8,6 +8,9 @@ import householdInviteAbl from "../abl/household/household-invite-abl";
 import householdKickAbl from "../abl/household/household-kick-abl";
 import householdChangeOwnerAbl from "../abl/household/household-changeOwner-abl";
 import householdDecisionAbl from "../abl/household/household-decision-abl";
+import householdLeaveAbl from "../abl/household/household-leave-abl";
+import householdGetMembersAbl from "../abl/household/household-getMembers-abl";
+
 import { sendError } from "../middleware/response-handler";
 import { IHousehold } from "../models/Household";
 
@@ -93,6 +96,26 @@ export const householdController = {
         ?.id as string;
 
       await householdDecisionAbl(updatedHousehold, user_id, reply);
+    } catch (error) {
+      sendError(reply, error);
+    }
+  },
+  leave: async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const household = request.body as Params;
+      const household_id = household.id;
+      const user_id = (request.user as { user?: { id?: string } })?.user
+        ?.id as string;
+
+      await householdLeaveAbl(household_id, user_id, reply);
+    } catch (error) {
+      sendError(reply, error);
+    }
+  },
+  getMembers: async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const id = (request.params as Params).id;
+      await householdGetMembersAbl(id, reply);
     } catch (error) {
       sendError(reply, error);
     }

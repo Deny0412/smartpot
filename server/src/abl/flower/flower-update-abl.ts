@@ -11,7 +11,7 @@ import {
 import { MongoValidator } from "../../validation/mongo-validator";
 import updateFlower from "../../dao/flower/flower-update-dao";
 import flowerProfileGetDao from "../../dao/flower-profile/flowerProfile-get-dao";
-import smartpotGetBySerialNumberDao from "../../dao/smartpot/smart-pot-get-by-serial-number";
+import smartpotGetBySerialNumberDao from "../../dao/smartpot/smart-pot-getBySerial-dao";
 import smartpotUpdateActiveFlowerDao from "../../dao/smartpot/smart-pot-update-dao";
 import flowerGetDao from "../../dao/flower/flower-get-dao";
 import updateSmartPot from "../../dao/smartpot/smart-pot-update-dao";

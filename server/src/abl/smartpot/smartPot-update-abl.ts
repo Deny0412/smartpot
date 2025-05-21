@@ -12,9 +12,9 @@ import {
 import checkFlowerExists from "../../dao/flower/flower-exists-dao";
 import householdGetDao from "../../dao/household/household-get-dao";
 import mongoose from "mongoose";
-import smartpotGetBySerialNumberDao from "../../dao/smartpot/smart-pot-get-by-serial-number";
+import smartpotGetBySerialNumberDao from "../../dao/smartpot/smart-pot-getBySerial-dao";
 import flowerGetDao from "../../dao/flower/flower-get-dao";
-import getSmartBySerialNumberPot from "../../dao/smartpot/smart-pot-get-by-serial-number";
+import getSmartBySerialNumberPot from "../../dao/smartpot/smart-pot-getBySerial-dao";
 
 function isValidObjectId(id: string): boolean {
   return mongoose.Types.ObjectId.isValid(id);
