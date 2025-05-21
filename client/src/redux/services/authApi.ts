@@ -26,6 +26,7 @@ export const loginUser = async (email: string, password: string): Promise<UserDa
     try {
         const response = await authApi.post('/login', { email, password })
         const { token, user } = response.data
+        console.log(token)
 
         
 
