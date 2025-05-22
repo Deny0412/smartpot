@@ -30,6 +30,7 @@ import { disconnectFlower } from '../../redux/services/flowersApi'
 import { loadFlowerProfiles } from '../../redux/slices/flowerProfilesSlice'
 import { loadFlowerDetails, removeFlower } from '../../redux/slices/flowersSlice'
 import {
+    cleanupWebSocket,
     clearMeasurements,
     fetchMeasurementsForFlower,
     startWebSocketConnection,
@@ -236,7 +237,9 @@ const FlowerDetail: React.FC = () => {
             dispatch(startWebSocketConnection(flowerId))
 
             return () => {
+                console.log('Cleaning up WebSocket connection')
                 dispatch(stopWebSocketConnection())
+                dispatch(cleanupWebSocket())
             }
         }
     }, [dispatch, flowerId, flower?.serial_number])

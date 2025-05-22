@@ -10,8 +10,6 @@ export async function registerMeasurementWebSocket(fastify: FastifyInstance) {
     throw new Error('WebSocket server not initialized')
   }
 
-
-
   // Check MongoDB connection
   if (mongoose.connection.readyState !== 1) {
     console.error('[WEBSOCKET] MongoDB is not connected. Current state:', mongoose.connection.readyState)
@@ -30,7 +28,6 @@ export async function registerMeasurementWebSocket(fastify: FastifyInstance) {
   ]
 
   collections.forEach((collectionName) => {
- 
     try {
       const collection = mongoose.connection.collection(collectionName)
 
@@ -38,7 +35,6 @@ export async function registerMeasurementWebSocket(fastify: FastifyInstance) {
         fullDocument: 'updateLookup',
         maxAwaitTimeMS: 100,
       })
-
 
       changeStream.on('change', async (change: any) => {
         if (change.operationType === 'insert') {
@@ -62,7 +58,6 @@ export async function registerMeasurementWebSocket(fastify: FastifyInstance) {
       })
 
       changeStream.on('error', (error: Error) => {
-      
         setTimeout(() => {
           registerMeasurementWebSocket(fastify)
         }, 5000)
@@ -74,7 +69,6 @@ export async function registerMeasurementWebSocket(fastify: FastifyInstance) {
           registerMeasurementWebSocket(fastify)
         }, 5000)
       })
-
     } catch (error) {
       console.error(`[WEBSOCKET] Error setting up change stream for ${collectionName}:`, error)
     }
@@ -112,7 +106,6 @@ export async function registerMeasurementWebSocket(fastify: FastifyInstance) {
 
       flowerConnections.addConnection(flowerId, userId, authenticatedWs)
 
-      
       ws.send(
         JSON.stringify({
           type: 'connection',

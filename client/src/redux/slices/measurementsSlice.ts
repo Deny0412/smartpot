@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { createAction, createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import i18next from 'i18next'
 import { MeasurementType, MeasurementValue } from '../../types/flowerTypes'
 import { api } from '../services/api'
@@ -46,6 +46,9 @@ export interface MeasurementsState {
         type: MeasurementType
         timestamp: string
     } | null
+    processedMeasurements: {
+        [flowerId: string]: Measurements
+    }
 }
 
 const initialState: MeasurementsState = {
@@ -55,6 +58,7 @@ const initialState: MeasurementsState = {
     activeWebSocketFlowerId: null,
     webSocketStatus: 'idle',
     lastChange: null,
+    processedMeasurements: {},
 }
 
 // WebSocket service
@@ -102,7 +106,6 @@ class WebSocketService {
         this.isIntentionalDisconnect = false
         this.reconnectAttempts = 0
 
-        
         this.token = localStorage.getItem('token')
         if (!this.token) {
             console.error(i18next.t('flower_detail.console.token_not_available'))
@@ -343,33 +346,23 @@ const startWebSocketConnectionThunk = createAsyncThunk(
     },
 )
 
-const stopWebSocketConnectionThunk = createAsyncThunk(
+export const stopWebSocketConnectionThunk = createAsyncThunk(
     'measurements/stopWebSocketConnection',
-    async (_, { dispatch, getState }) => {
+    async (_, { getState }) => {
         const state = getState() as RootState
-        const measurementsState = state.measurements
+        const { webSocketStatus, activeWebSocketFlowerId } = state.measurements
 
-        if (
-            measurementsState.activeWebSocketFlowerId &&
-            measurementsState.webSocketStatus !== 'idle' &&
-            measurementsState.webSocketStatus !== 'closing'
-        ) {
-            console.log(
-                i18next.t('flower_detail.console.websocket_stopping_connection_for_flower', {
-                    flowerId: measurementsState.activeWebSocketFlowerId,
-                }),
-            )
-            dispatch(measurementsSlice.actions.setWebSocketStatus('closing'))
+        // Ak už nie je aktívne pripojenie, nič nerobíme
+        if (webSocketStatus === 'idle' || !activeWebSocketFlowerId) {
+            console.log('WebSocket: stopWebSocketConnection called but already idle or no active flower')
+            return
+        }
+
+        try {
             webSocketService.prepareForIntentionalDisconnect()
             webSocketService.disconnect()
-        } else {
-            console.log(
-                i18next.t('flower_detail.console.websocket_stop_called_on_inactive', {
-                    status: measurementsState.webSocketStatus,
-                }),
-            )
-            dispatch(measurementsSlice.actions.setActiveWebSocketFlowerId(null))
-            dispatch(measurementsSlice.actions.setWebSocketStatus('idle'))
+        } catch (error) {
+            console.error('WebSocket: Error during cleanup:', error)
         }
     },
 )
@@ -386,19 +379,15 @@ export const fetchMeasurementsForFlower = createAsyncThunk(
         { rejectWithValue },
     ) => {
         try {
-            
             const formatDate = (date: Date) => {
                 return date.toISOString().split('T')[0]
             }
 
-            
             const fromDate = dateFrom ? new Date(dateFrom) : new Date(Date.now() - 24 * 60 * 60 * 1000)
             const toDate = dateTo ? new Date(dateTo) : new Date()
 
             const formattedDateFrom = formatDate(fromDate)
             const formattedDateTo = formatDate(toDate)
-
-          
 
             const types = ['water', 'humidity', 'temperature', 'light', 'battery'] as const
             const results = await Promise.all(
@@ -431,7 +420,6 @@ export const fetchMeasurementsForFlower = createAsyncThunk(
                     measurementsByType[types[index]] = result.data
                 }
             })
-
 
             return {
                 flowerId,
@@ -705,6 +693,18 @@ export const measurementsSlice = createSlice({
                 state.loading = false
                 state.error = action.error.message || 'Chyba pri načítaní meraní'
             })
+            .addCase(stopWebSocketConnectionThunk.fulfilled, state => {
+                state.webSocketStatus = 'idle'
+                state.activeWebSocketFlowerId = null
+                state.measurements = {}
+                state.processedMeasurements = {}
+            })
+            .addCase(cleanupWebSocket, state => {
+                state.webSocketStatus = 'idle'
+                state.activeWebSocketFlowerId = null
+                state.measurements = {}
+                state.processedMeasurements = {}
+            })
     },
 })
 
@@ -720,11 +720,7 @@ export const {
 } = measurementsSlice.actions
 
 // Add new synchronous action for cleanup
-export const cleanupWebSocket = () => {
-    webSocketService.prepareForIntentionalDisconnect()
-    webSocketService.disconnect()
-    return { type: 'measurements/cleanupWebSocket' }
-}
+export const cleanupWebSocket = createAction('measurements/cleanupWebSocket')
 
 export const initializeWebSocket = (dispatch: AppDispatch) => {
     webSocketService.setDispatch(dispatch)
