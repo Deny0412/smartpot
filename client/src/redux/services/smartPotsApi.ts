@@ -1,9 +1,10 @@
 import { AxiosError } from 'axios'
 import { SmartPot } from '../../types/flowerTypes'
 import { api } from './api'
+import { updateFlower } from './flowersApi'
 
 export const loadSmartPots = async (householdId: string): Promise<SmartPot[]> => {
-    const response = await api.get<{ status: string; data: SmartPot[] }>(`/smart-pot/household/${householdId}`)
+    const response = await api.get<{ status: string; data: SmartPot[] }>(`/smart-pot/listByHousehold/${householdId}`)
     return response.data.data
 }
 
@@ -16,16 +17,20 @@ export const updateSmartPot = async (serialNumber: string, smartPot: Partial<Sma
     return response.data.data
 }
 
-export const disconnectSmartPot = async (serialNumber: string, householdId: string) => {
+export const disconnectSmartPot = async (serialNumber: string, householdId: string, activeFlowerId: string | null) => {
     try {
-        console.log('Disconnecting smart pot with serial number:', serialNumber)
         const requestData = {
             serial_number: serialNumber,
             household_id: householdId,
+            active_flower_id: null,
         }
-        console.log('Request data:', requestData)
-        const response = await api.put('/smart-pot/disconnect', requestData)
-        console.log('Disconnect response:', response.data)
+        const response = await api.put('/smart-pot/update', requestData)
+
+        
+        if (activeFlowerId) {
+            await updateFlower(activeFlowerId, { serial_number: '' })
+        }
+
         return response.data.data
     } catch (error) {
         console.error('Error disconnecting smart pot:', error)
@@ -64,9 +69,47 @@ export const transplantSmartPotWithoutFlower = async (
 }
 
 export const transplantSmartPotToFlower = async (smartPotId: string, targetFlowerId: string): Promise<SmartPot> => {
-    const response = await api.post<{ status: string; data: SmartPot }>(`/smart-pot/transplant-to-flower`, {
-        smartPotId,
-        targetFlowerId,
-    })
-    return response.data.data
+    try {
+        // First check if the target flower is already connected to a smart pot
+        const flowerResponse = await api.get<{
+            status: string
+            data: { serial_number: string | null; household_id: string }
+        }>(`/flower/get/${targetFlowerId}`)
+        if (flowerResponse.data.data.serial_number) {
+            throw new Error('Kvetina je už pripojená k smart potu')
+        }
+
+        const householdId = flowerResponse.data.data.household_id
+
+        
+        const smartPotResponse = await api.get<{ status: string; data: SmartPot }>(
+            `/smart-pot/get/${smartPotId}?household_id=${householdId}`,
+        )
+        const smartPot = smartPotResponse.data.data
+
+        
+        const smartPotUpdateData = {
+            serial_number: smartPot.serial_number,
+            active_flower_id: targetFlowerId,
+            household_id: householdId,
+        }
+  
+        const response = await api.put<{ status: string; data: SmartPot }>('/smart-pot/update', smartPotUpdateData)
+
+        const flowerUpdateData = {
+            id: targetFlowerId,
+            serial_number: smartPot.serial_number,
+        }
+
+        await api.put('/flower/update', flowerUpdateData)
+
+        return response.data.data
+    } catch (error) {
+        console.error('Transplant error details:', error)
+        if (error instanceof AxiosError) {
+            console.error('Request data:', error.config?.data)
+            console.error('Response data:', error.response?.data)
+        }
+        throw error
+    }
 }

@@ -102,7 +102,7 @@ class WebSocketService {
         this.isIntentionalDisconnect = false
         this.reconnectAttempts = 0
 
-        // Aktualizujeme token pred každým pripojením
+        
         this.token = localStorage.getItem('token')
         if (!this.token) {
             console.error(i18next.t('flower_detail.console.token_not_available'))
@@ -112,13 +112,30 @@ class WebSocketService {
             return
         }
 
+        // Validate token format
+        try {
+            const tokenParts = this.token.split('.')
+            if (tokenParts.length !== 3) {
+                throw new Error('Invalid token format')
+            }
+            const payload = JSON.parse(atob(tokenParts[1]))
+
+            if (!payload.user || !payload.user.id) {
+                throw new Error('Invalid token structure - missing user.id')
+            }
+        } catch (error) {
+            console.error('Invalid token:', error)
+            if (this.dispatch) {
+                this.dispatch(measurementsSlice.actions.setWebSocketStatus('error'))
+            }
+            return
+        }
+
         // Update WebSocket URL construction
         const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001'
-        const wsUrl = `${baseUrl.replace('http', 'ws')}/api/ws/measurements/${flowerId}?token=${encodeURIComponent(
+        const wsUrl = `${baseUrl.replace('http', 'ws')}/ws/measurements/${flowerId}?token=${encodeURIComponent(
             this.token,
         )}`
-
-        console.log('Connecting to WebSocket:', wsUrl)
 
         try {
             this.ws = new WebSocket(wsUrl)
@@ -130,52 +147,41 @@ class WebSocketService {
                     this.dispatch(measurementsSlice.actions.setWebSocketStatus('connected'))
                     this.dispatch(measurementsSlice.actions.setActiveWebSocketFlowerId(this.flowerId!))
                 }
-                // Send get_measurements request immediately after connection
-                this.sendMessage({ type: 'get_measurements' })
             }
 
             this.ws.onmessage = event => {
                 try {
                     const message = JSON.parse(event.data)
-                    console.log('WebSocket message received:', message)
+                    console.log('[WEBSOCKET] Message received:', message)
 
                     if (!this.dispatch || !this.flowerId) {
+                        console.error('[WEBSOCKET] No dispatch or flowerId available')
                         return
                     }
 
                     switch (message.type) {
                         case 'connection':
-                            this.sendMessage({ type: 'get_measurements' })
-                            break
-                        case 'measurements':
-                            this.dispatch(
-                                measurementsSlice.actions.setMeasurements({
-                                    flowerId: this.flowerId,
-                                    measurements: message.data,
-                                }),
-                            )
+                            console.log('[WEBSOCKET] Connection established')
                             break
                         case 'measurement_inserted':
+                            console.log('[WEBSOCKET] New measurement received:', message.data)
                             if (
                                 !message.data.type ||
                                 !['water', 'temperature', 'light', 'humidity', 'battery'].includes(message.data.type)
                             ) {
+                                console.error('[WEBSOCKET] Invalid measurement type:', message.data.type)
                                 break
-                            }
-
-                            const measurementWithType = {
-                                ...message.data,
-                                type: message.data.type,
                             }
 
                             this.dispatch(
                                 measurementsSlice.actions.addMeasurement({
                                     flowerId: this.flowerId,
-                                    measurement: measurementWithType,
+                                    measurement: message.data,
                                 }),
                             )
                             break
                         case 'measurement_updated':
+                            console.log('[WEBSOCKET] Measurement updated:', message.data)
                             this.dispatch(
                                 measurementsSlice.actions.updateMeasurement({
                                     flowerId: this.flowerId,
@@ -184,6 +190,7 @@ class WebSocketService {
                             )
                             break
                         case 'measurement_deleted':
+                            console.log('[WEBSOCKET] Measurement deleted:', message.data)
                             this.dispatch(
                                 measurementsSlice.actions.removeMeasurement({
                                     flowerId: this.flowerId,
@@ -193,13 +200,13 @@ class WebSocketService {
                             )
                             break
                         case 'error':
-                            console.error('WebSocket error message:', message.message)
+                            console.error('[WEBSOCKET] Error message:', message.message)
                             break
                         default:
-                            console.log('Unknown message type:', message.type)
+                            console.log('[WEBSOCKET] Unknown message type:', message.type)
                     }
                 } catch (error) {
-                    console.error('Error processing WebSocket message:', error)
+                    console.error('[WEBSOCKET] Error processing message:', error)
                 }
             }
 
@@ -379,46 +386,59 @@ export const fetchMeasurementsForFlower = createAsyncThunk(
         { rejectWithValue },
     ) => {
         try {
-            const response = await getMeasurementsForFlower(flowerId, householdId, dateFrom, dateTo)
+            
+            const formatDate = (date: Date) => {
+                return date.toISOString().split('T')[0]
+            }
 
-            const measurementsByType = response.data.reduce(
-                (acc: MeasurementsByType, measurement) => {
-                    if (!acc[measurement.type]) {
-                        acc[measurement.type] = []
+            
+            const fromDate = dateFrom ? new Date(dateFrom) : new Date(Date.now() - 24 * 60 * 60 * 1000)
+            const toDate = dateTo ? new Date(dateTo) : new Date()
+
+            const formattedDateFrom = formatDate(fromDate)
+            const formattedDateTo = formatDate(toDate)
+
+          
+
+            const types = ['water', 'humidity', 'temperature', 'light', 'battery'] as const
+            const results = await Promise.all(
+                types.map(async type => {
+                    try {
+                        return await getMeasurementsForFlower(
+                            flowerId,
+                            householdId,
+                            formattedDateFrom,
+                            formattedDateTo,
+                            type,
+                        )
+                    } catch (error) {
+                        console.error(`Error fetching ${type} measurements:`, error)
+                        return { data: [] }
                     }
-
-                    acc[measurement.type].push(measurement)
-                    acc[measurement.type].sort(
-                        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-                    )
-                    return acc
-                },
-                {
-                    water: [],
-                    temperature: [],
-                    light: [],
-                    humidity: [],
-                    battery: [],
-                } as MeasurementsByType,
+                }),
             )
+
+            const measurementsByType = {
+                water: [],
+                temperature: [],
+                light: [],
+                humidity: [],
+                battery: [],
+            } as MeasurementsByType
+
+            results.forEach((result, index) => {
+                if (result.data?.length > 0) {
+                    measurementsByType[types[index]] = result.data
+                }
+            })
+
 
             return {
                 flowerId,
                 measurements: measurementsByType,
             }
         } catch (error) {
-            if (error instanceof Error && error.message.includes('404')) {
-                return {
-                    flowerId,
-                    measurements: {
-                        water: [],
-                        temperature: [],
-                        light: [],
-                        humidity: [],
-                        battery: [],
-                    } as MeasurementsByType,
-                }
-            }
+            console.error('Error in fetchMeasurementsForFlower:', error)
             return rejectWithValue(error instanceof Error ? error.message : 'Chyba pri načítaní meraní')
         }
     },
@@ -428,7 +448,7 @@ export const fetchLatestMeasurements = createAsyncThunk(
     'measurements/fetchLatest',
     async ({ flowerId, householdId }: { flowerId: string; householdId: string }, { rejectWithValue }) => {
         try {
-            const response = await api.post('/measurements/latest', {
+            const response = await api.post('/flower/latest-history', {
                 id: flowerId,
                 householdId,
             })
@@ -489,15 +509,17 @@ export const measurementsSlice = createSlice({
         addMeasurement: (state, action: PayloadAction<{ flowerId: string; measurement: MeasurementValue }>) => {
             const { flowerId, measurement } = action.payload
 
-            const validTypes = ['water', 'temperature', 'light', 'humidity', 'battery'] as const
-            type ValidType = (typeof validTypes)[number]
-
-            if (!measurement.type || !validTypes.includes(measurement.type as ValidType)) {
+            // Rýchla validácia typu
+            if (
+                !measurement.type ||
+                !['water', 'temperature', 'light', 'humidity', 'battery'].includes(measurement.type)
+            ) {
                 return
             }
 
-            const measurementType = measurement.type as ValidType
+            const measurementType = measurement.type as keyof MeasurementsByType
 
+            // Inicializácia stavu ak neexistuje
             if (!state.measurements[flowerId]) {
                 state.measurements[flowerId] = {
                     water: [],
@@ -511,17 +533,20 @@ export const measurementsSlice = createSlice({
 
             const measurements = state.measurements[flowerId][measurementType]
 
-            const isDuplicate = measurements.some((m: MeasurementValue) => m._id === measurement._id)
-            if (isDuplicate) {
+            // Rýchla kontrola duplicity pomocou Set
+            if (measurements.some(m => m._id === measurement._id)) {
                 return
             }
 
+            // Pridanie merania na začiatok poľa
             measurements.unshift(measurement)
 
+            // Obmedzenie veľkosti poľa
             if (measurements.length > 1000) {
                 measurements.length = 1000
             }
 
+            // Aktualizácia časovej pečiatky
             state.measurements[flowerId].lastChange = new Date().toISOString()
         },
         updateMeasurement: (state, action: PayloadAction<{ flowerId: string; measurement: MeasurementValue }>) => {
@@ -693,6 +718,13 @@ export const {
     clearActiveWebSocketFlowerId,
     setWebSocketStatus,
 } = measurementsSlice.actions
+
+// Add new synchronous action for cleanup
+export const cleanupWebSocket = () => {
+    webSocketService.prepareForIntentionalDisconnect()
+    webSocketService.disconnect()
+    return { type: 'measurements/cleanupWebSocket' }
+}
 
 export const initializeWebSocket = (dispatch: AppDispatch) => {
     webSocketService.setDispatch(dispatch)

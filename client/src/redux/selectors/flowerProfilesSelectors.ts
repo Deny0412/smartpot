@@ -1,7 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit'
 import { RootState } from '../store/rootReducer'
-import { selectFlowers } from './flowerDetailSelectors' // Import pre závislosť
-
+import { selectFlower } from './flowerDetailSelectors'
 
 export const selectProfiles = (state: RootState) => state.flowerProfiles.profiles
 
@@ -9,17 +8,14 @@ export const selectProfilesLoading = (state: RootState) => state.flowerProfiles.
 
 export const selectProfilesError = (state: RootState) => state.flowerProfiles.error
 
-
 export const selectProfileById = createSelector(
     [selectProfiles, (state: RootState, profileId: string) => profileId],
     (profiles, profileId) => profiles.find(profile => profile._id === profileId),
 )
 
-
 export const selectFlowerProfile = createSelector(
-    [selectFlowers, selectProfiles, (state: RootState, flowerId: string) => flowerId],
-    (flowers, profiles, flowerId) => {
-        const flower = flowers.find(f => f._id === flowerId)
+    [selectFlower, selectProfiles, (state: RootState, flowerId: string) => flowerId],
+    (flower, profiles, flowerId) => {
         if (!flower || !flower.profile_id) return null
         return profiles.find(profile => profile._id === flower.profile_id)
     },
@@ -37,7 +33,7 @@ export const selectIsValidProfile = (state: RootState, profileId: string) => {
         humidity?.max != null &&
         light?.min != null &&
         light?.max != null &&
-        temperature.min <= temperature.max && 
+        temperature.min <= temperature.max &&
         humidity.min <= humidity.max &&
         light.min <= light.max
     )

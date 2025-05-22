@@ -2,6 +2,7 @@ import { FastifyRequest, FastifyReply } from "fastify";
 import scheduleCreateAbl from "../abl/schedule/schedule-create-abl";
 import scheduleGetAbl from "../abl/schedule/schedule-get-abl";
 import scheduleUpdateAbl from "../abl/schedule/schedule-update-abl";
+import scheduleGetFlowerScheduleAbl from "../abl/schedule/schedule-get-flower-schedule-abl";
 import { sendError } from "../middleware/response-handler";
 import { ISchedule } from "../models/Schedule";
 
@@ -32,4 +33,12 @@ export const scheduleController = {
       sendError(reply, error);
     }
   },
+  getFlowerSchedule: async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const id = (request.params as Params).id;
+      await scheduleGetFlowerScheduleAbl(id, reply);
+    } catch (error) {
+      sendError(reply, error);
+    }
+  }
 };

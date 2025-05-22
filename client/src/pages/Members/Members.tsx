@@ -16,6 +16,7 @@ import {
     selectHouseholdsLoading,
 } from '../../redux/selectors/houseHoldSelectors'
 import { selectUsers, selectUsersLoading } from '../../redux/selectors/userSelectors'
+import { getMembers } from '../../redux/services/householdsApi'
 import { loadHouseholds, makeOwnerAction, removeMemberAction } from '../../redux/slices/householdsSlice'
 import { fetchUsers } from '../../redux/slices/usersSlice'
 import { AppDispatch, RootState } from '../../redux/store/store'
@@ -33,6 +34,10 @@ const Members: React.FC = () => {
     const usersLoading = useSelector(selectUsersLoading)
     const user = useSelector(selectUser)
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
+    const [members, setMembers] = useState<{ members: any[]; invitedMembers: any[] }>({
+        members: [],
+        invitedMembers: [],
+    })
 
     const household = useSelector((state: RootState) => selectHouseholdById(state, householdId || ''))
     const isOwner = household?.owner === user?.id
@@ -42,10 +47,22 @@ const Members: React.FC = () => {
     }, [dispatch])
 
     useEffect(() => {
-        if (household?.id) {
-            dispatch(fetchUsers(household.id))
+        const fetchMembers = async () => {
+            if (householdId && household) {
+                try {
+                    const response = await getMembers(householdId)
+                    console.log('Members response:', response)
+                    console.log('Members data:', response.data.members)
+                    console.log('Invited members data:', response.data.invitedMembers)
+                    setMembers(response.data)
+                } catch (error) {
+                    console.error('Error fetching members:', error)
+                    toast.error(t('manage_household.manage_members.toast.fetch_members_error'))
+                }
+            }
         }
-    }, [dispatch, household])
+        fetchMembers()
+    }, [householdId, household, t])
 
     useEffect(() => {
         if (household && !isOwner && !householdsLoading) {
@@ -122,27 +139,28 @@ const Members: React.FC = () => {
                     </H4>
                     <div className="section-content">
                         <div className="members-list">
-                            {household.members.map((memberId: string) => (
-                                <div key={memberId} className="member-item">
+                            {members?.members?.map(member => (
+                                <div key={member._id} className="member-item">
                                     <div className="member-info">
-                                        <span className="member-name">{getMemberName(memberId)}</span>
-                                        <span
-                                            className={users[memberId]?.role === 'owner' ? 'owner-tag' : 'member-tag'}>
-                                            {getMemberRole(memberId)}
+                                        <span className="member-name">{`${member.name} ${member.surname}`}</span>
+                                        <span className={member._id === household.owner ? 'owner-tag' : 'member-tag'}>
+                                            {member._id === household.owner
+                                                ? t('manage_household.manage_members.roles.owner')
+                                                : t('manage_household.manage_members.roles.member')}
                                         </span>
                                     </div>
-                                    {memberId !== household.owner && (
+                                    {member._id !== household.owner && (
                                         <div className="member-actions">
                                             <Button
                                                 variant="default"
                                                 className="make-owner-button"
-                                                onClick={() => handleMakeOwner(memberId)}>
+                                                onClick={() => handleMakeOwner(member._id)}>
                                                 {t('manage_household.manage_members.actions.make_owner')}
                                             </Button>
                                             <Button
                                                 variant="default"
                                                 className="remove-button"
-                                                onClick={() => handleRemoveMember(memberId)}>
+                                                onClick={() => handleRemoveMember(member._id)}>
                                                 {t('manage_household.manage_members.actions.remove')}
                                             </Button>
                                         </div>
@@ -159,23 +177,16 @@ const Members: React.FC = () => {
                     </H4>
                     <div className="section-content">
                         <div className="members-list">
-                            {household.invites.map((invitedUserId: string) => {
-                                const invitedUser = users[invitedUserId]
-                                return (
-                                    <div key={invitedUserId} className="member-item">
-                                        <div className="member-info">
-                                            <span className="member-name">
-                                                {invitedUser
-                                                    ? `${invitedUser.name} ${invitedUser.surname}`
-                                                    : t('common.loading_text')}
-                                            </span>
-                                            <span className="invited-tag">
-                                                {t('manage_household.manage_members.invited_tag')}
-                                            </span>
-                                        </div>
+                            {members?.invitedMembers?.map(invitedMember => (
+                                <div key={invitedMember._id} className="member-item">
+                                    <div className="member-info">
+                                        <span className="member-name">{`${invitedMember.name} ${invitedMember.surname}`}</span>
+                                        <span className="invited-tag">
+                                            {t('manage_household.manage_members.invited_tag')}
+                                        </span>
                                     </div>
-                                )
-                            })}
+                                </div>
+                            ))}
                         </div>
                         <div className="add-member-icon" onClick={() => setIsInviteModalOpen(true)}>
                             <UserCirclePlus size={32} color="#bfbfbf" />
@@ -189,7 +200,7 @@ const Members: React.FC = () => {
                 onClose={() => setIsInviteModalOpen(false)}
                 householdId={householdId || ''}
                 existingMembers={household.members}
-                invitedUsers={household.invites.map((user: any) => user.id)}
+                invitedUsers={household.invites}
             />
         </div>
     )

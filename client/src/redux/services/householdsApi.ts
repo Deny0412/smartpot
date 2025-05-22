@@ -1,4 +1,5 @@
 import { CreateHouseholdData, Household } from '../../types/householdTypes'
+import { User } from '../../types/userTypes'
 import { api } from './api'
 
 interface ApiHousehold extends Household {
@@ -8,6 +9,14 @@ interface ApiHousehold extends Household {
 interface HouseholdResponse {
     status: string
     data: ApiHousehold[]
+}
+
+interface MembersResponse {
+    status: string
+    data: {
+        members: User[]
+        invitedMembers: User[]
+    }
 }
 
 export const fetchHouseholds = async (): Promise<HouseholdResponse> => {
@@ -68,5 +77,10 @@ export const makeOwner = async (householdId: string, newOwnerId: string): Promis
         id: householdId,
         new_owner_id: newOwnerId,
     })
+    return response.data
+}
+
+export const getMembers = async (householdId: string): Promise<MembersResponse> => {
+    const response = await api.get<MembersResponse>(`/household/getMembers/${householdId}`)
     return response.data
 }

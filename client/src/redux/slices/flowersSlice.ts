@@ -73,9 +73,9 @@ export const updateFlowerData = createAsyncThunk<Flower, { id: string; flower: P
 
 export const transplantFlowerToSmartPotThunk = createAsyncThunk(
     'flowers/transplantToSmartPot',
-    async ({ flowerId, targetSmartPotId }: { flowerId: string; targetSmartPotId: string }, { rejectWithValue }) => {
+    async ({ flowerId, targetSmartPotId, householdId }: { flowerId: string; targetSmartPotId: string; householdId: string }, { rejectWithValue }) => {
         try {
-            return await transplantFlowerToSmartPot(flowerId, targetSmartPotId)
+            return await transplantFlowerToSmartPot(flowerId, targetSmartPotId, householdId)
         } catch (error) {
             return rejectWithValue(
                 error instanceof Error ? error.message : 'Chyba pri presadzovaní kvetiny do kvetináča',
@@ -86,9 +86,9 @@ export const transplantFlowerToSmartPotThunk = createAsyncThunk(
 
 export const transplantFlowerWithSmartPotThunk = createAsyncThunk(
     'flowers/transplantWithSmartPot',
-    async ({ flowerId, targetHouseholdId }: { flowerId: string; targetHouseholdId: string }, { rejectWithValue }) => {
+    async ({ flowerId, targetHouseholdId , smartPotId}: { flowerId: string; targetHouseholdId: string; smartPotId: string }, { rejectWithValue }) => {
         try {
-            return await transplantFlowerWithSmartPot(flowerId, targetHouseholdId)
+            return await transplantFlowerWithSmartPot(flowerId, targetHouseholdId, smartPotId)
         } catch (error) {
             return rejectWithValue(
                 error instanceof Error ? error.message : 'Chyba pri presadzovaní kvetiny s kvetináčom',

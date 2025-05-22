@@ -430,6 +430,7 @@
         "auto_watering_settings": "Nastavení profilu automatického zavlažování",
         "assigned_profile": "Květina má přiřazený profil:",
         "custom_settings": "Květina je na vlastních nastaveních",
+        "loading": "Načítání profilu...",
         "temperature": "Teplota",
         "humidity": "Vlhkost",
         "light": "Světlení",
@@ -502,7 +503,7 @@
         "websocket_status": {
             "idle": "Sledování kvetu není aktívne.",
             "connecting": "Pripájam sa k vášmu kvetu pre sledovanie v reálnom čase...",
-            "connected": "Ste úspešne pripojení k vášmu kvetu. Dáta sa sledujú v reálnom čase.",
+            "connected": "Ste uspesne pripojení k vášmu kvetu. Dáta sa sledujú v reálnom čase.",
             "reconnecting": "Spojenie bolo prerušené. Pokúšam sa znovu pripojiť...",
             "disconnected": "Nepodarilo sa pripojiť k vášmu kvetu pre sledovanie v reálnom čase. Skontrolujte pripojenie zariadenia.",
             "error": "Vyskytla sa chyba pripojenia k vášmu kvetu. Skúste obnoviť stránku.",

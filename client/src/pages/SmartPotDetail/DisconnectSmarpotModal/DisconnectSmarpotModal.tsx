@@ -40,8 +40,9 @@ const DisconnectSmarpotModal: React.FC<DisconnectSmarpotModalProps> = ({
                 serialNumber,
                 smartPotId,
                 householdId,
+                activeFlowerId: smartPot.active_flower_id,
             })
-            await dispatch(disconnectSmartPot({ serialNumber, householdId }))
+            await dispatch(disconnectSmartPot({ serialNumber, householdId, activeFlowerId: smartPot.active_flower_id }))
             toast.success('Smart pot bol úspešne odpojený')
             onClose()
         } catch (error) {

@@ -1,78 +1,36 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
-import { Types } from 'mongoose'
-import { sendError, sendSuccess } from '../middleware/response-handler'
-import HOUSEHOLD_MODEL, { IHousehold } from '../models/Household'
-import { User } from '../models/User'
-
-interface PopulatedHousehold extends Omit<IHousehold, 'owner'> {
-  owner: {
-    _id: Types.ObjectId
-    name: string
-    surname: string
-  }
-}
+import getInvitesHandler from '../abl/user/user-get-invites-abl'
+import searchUsersHandler from '../abl/user/user-search-abl'
+import { sendError } from '../middleware/response-handler'
 
 export const userController = {
   search: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const { query } = request.query as { query: string }
-
-      if (!query || query.length < 2) {
-        return sendSuccess(reply, [], 'Vyhľadávanie vyžaduje aspoň 2 znaky')
-      }
-
-      const users = await User.find({
-        $or: [
-          { name: { $regex: query, $options: 'i' } },
-          { surname: { $regex: query, $options: 'i' } },
-          { email: { $regex: query, $options: 'i' } },
-        ],
-      })
-        .select('name surname email _id')
-        .limit(10)
-
-      return sendSuccess(
-        reply,
-        users.map((user) => ({
-          id: user._id,
-          name: user.name,
-          surname: user.surname,
-          email: user.email,
-        })),
-        'Používatelia nájdení'
-      )
+      await searchUsersHandler(query, reply)
     } catch (error) {
+      console.error('Error in user search controller:', error)
       sendError(reply, error)
     }
   },
 
   getInvites: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const userId = (request.user as any).id
-      
+      const userId = (request.user as any)?.id
+      console.log('User controller - getInvites - userId:', userId)
 
-      const households = await HOUSEHOLD_MODEL.find({
-        invites: userId,
-      })
-        .populate('owner', 'name surname')
-        .lean()
+      if (!userId) {
+        console.error('User controller - getInvites - Missing userId in request')
+        return reply.status(400).send({ error: 'Missing user ID' })
+      }
 
-      
-
-      const invites = households.map((household) => ({
-        id: household._id.toString(),
-        household_name: household.name,
-        inviter_name: `${household.owner.name} ${household.owner.surname}`,
-        timestamp: household.updatedAt,
-        status: 'pending',
-      }))
-
-      
-
-      return sendSuccess(reply, invites, 'Pozvánky úspešne načítané')
+      await getInvitesHandler(userId, reply)
     } catch (error) {
-      console.error('Error in getInvites:', error)
-      sendError(reply, error)
+      console.error('Error in user getInvites controller:', error)
+      return reply.status(500).send({
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      })
     }
   },
 }

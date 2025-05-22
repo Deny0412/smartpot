@@ -39,14 +39,18 @@ export const fetchSmartPots = createAsyncThunk(
 
 export const disconnectSmartPot = createAsyncThunk(
     'smartPots/disconnectSmartPot',
-    async ({ serialNumber, householdId }: { serialNumber: string; householdId: string }, { dispatch }) => {
+    async (
+        {
+            serialNumber,
+            householdId,
+            activeFlowerId,
+        }: { serialNumber: string; householdId: string; activeFlowerId: string | null },
+        { dispatch },
+    ) => {
         try {
-       
-            const response = await disconnectSmartPotApi(serialNumber, householdId)
-          
+            const response = await disconnectSmartPotApi(serialNumber, householdId, activeFlowerId)
             return response
         } catch (error) {
-           
             throw error
         }
     },
@@ -230,7 +234,6 @@ const smartPotsSlice = createSlice({
 })
 
 export const { clearError, clearSmartPots } = smartPotsSlice.actions
-
 
 export const selectInactiveSmartPots = (state: RootState) => state.smartPots.inactiveSmartPots
 

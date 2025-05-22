@@ -88,6 +88,7 @@ const EditFlowerHousehold: React.FC<EditFlowerHouseholdProps> = ({
                     transplantFlowerToSmartPotThunk({
                         flowerId,
                         targetSmartPotId: selectedSmartPotId,
+                        householdId: currentHouseholdId,
                     }),
                 ).unwrap()
 
@@ -103,6 +104,7 @@ const EditFlowerHousehold: React.FC<EditFlowerHouseholdProps> = ({
                         transplantFlowerWithSmartPotThunk({
                             flowerId,
                             targetHouseholdId: selectedHouseholdId,
+                            smartPotId: smartPotId,
                         }),
                     ).unwrap()
                 } else {

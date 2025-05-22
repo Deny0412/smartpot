@@ -424,6 +424,7 @@
         "auto_watering_settings": "Automatic watering profile settings",
         "assigned_profile": "Flower has assigned profile:",
         "custom_settings": "Flower is on custom settings",
+        "loading": "Loading profile...",
         "temperature": "Temperature",
         "humidity": "Humidity",
         "light": "Light",

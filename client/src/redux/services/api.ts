@@ -21,9 +21,7 @@ api.interceptors.request.use(config => {
     const householdId = localStorage.getItem('householdId')
     if (householdId) {
         config.headers['x-household-id'] = householdId
-    } else {
-        console.warn('No householdId found in localStorage')
-    }
+    } 
 
     return config
 })

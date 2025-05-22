@@ -188,7 +188,6 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
             toast.success(t('add_flower.success.flower_added'))
         } catch (err) {
             setError(t('add_flower.error.creation_failed_message'))
-            console.error('Error creating flower:', err)
             toast.error(t('add_flower.error.creation_failed_toast'))
         } finally {
             setLoading(false)

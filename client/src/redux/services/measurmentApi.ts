@@ -1,4 +1,3 @@
-import { AxiosError } from 'axios'
 import { MeasurementValue } from '../../types/flowerTypes'
 import { api } from './api'
 
@@ -12,25 +11,21 @@ export const getMeasurementsForFlower = async (
     householdId: string,
     dateFrom: string,
     dateTo: string,
+    typeOfData: 'water' | 'humidity' | 'temperature' | 'light' | 'battery',
 ): Promise<MeasurementResponse> => {
     try {
-        const response = await api.post('/measurements/history', {
+        const requestBody = {
             id: flowerId,
-            householdId,
+            typeOfData,
             dateFrom,
             dateTo,
-        })
+        }
+
+        const response = await api.post('/flower/history', requestBody)
+
         return response.data
     } catch (error) {
-        if (error instanceof AxiosError) {
-            if (error.response?.status === 404) {
-                return {
-                    status: 'success',
-                    data: [],
-                }
-            }
-            throw new Error(error.response?.data?.message || 'Nepodarilo sa získať históriu meraní')
-        }
+        console.error('Error fetching measurements:', error)
         throw error
     }
 }

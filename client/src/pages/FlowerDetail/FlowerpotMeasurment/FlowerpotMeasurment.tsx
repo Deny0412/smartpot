@@ -1,5 +1,5 @@
 import { BatteryChargingVertical, Drop, Sun, Thermometer } from '@phosphor-icons/react'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDispatch, useSelector } from 'react-redux'
 import Button from '../../../components/Button/Button'
@@ -16,6 +16,7 @@ import {
     selectMeasurementsLoading,
     selectProcessedMeasurements,
 } from '../../../redux/selectors/measurementSelectors'
+import { fetchMeasurementsForFlower } from '../../../redux/slices/measurementsSlice'
 import { AppDispatch, RootState } from '../../../redux/store/store'
 import { Flower, FlowerProfile, MeasurementValue } from '../../../types/flowerTypes'
 import './FlowerpotMeasurment.sass'
@@ -103,6 +104,7 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
     const { t } = useTranslation() as { t: TranslationFunction }
     const measurements = useSelector((state: RootState) => selectProcessedMeasurements(state, flowerId))
     const lastChange = useSelector(selectLastChange)
+    const [cachedData, setCachedData] = useState<Record<string, any>>({})
 
     const [measurementType, setMeasurementType] = useState<FlowerpotMeasurementType>('humidity')
     const [selectedDate, setSelectedDate] = useState<string>('')
@@ -173,12 +175,7 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
         switch (timeRange) {
             case 'day':
                 startDate.setHours(0, 0, 0, 0)
-                return data
-                    .filter(item => {
-                        const itemDate = new Date(item.timestamp)
-                        return itemDate >= startDate && itemDate <= now
-                    })
-                    .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+                break
             case 'week':
                 startDate.setDate(now.getDate() - 7)
                 break
@@ -257,6 +254,11 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
     }
 
     const formatDate = (timestamp: string) => {
+        if (!timestamp) {
+            console.warn('Missing timestamp')
+            return t('flower_measurments.no_value_placeholder')
+        }
+
         const date = new Date(timestamp)
 
         if (isNaN(date.getTime())) {
@@ -322,6 +324,40 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
         if (value > currentLimits.max) return { text: t(`flower_measurments.status_high_${type}`), className: 'high' }
         return { text: t('flower_measurments.status_ok'), className: 'good' }
     }
+
+    useEffect(() => {
+        if (flowerId && householdId) {
+            // Načítame dáta len raz pri inicializácii komponentu
+            const now = new Date()
+            const startDate = new Date(now)
+            startDate.setMonth(now.getMonth() - 1) // Načítame dáta za posledný mesiac
+            const dateFrom = startDate.toISOString().split('T')[0]
+            const dateTo = now.toISOString().split('T')[0]
+
+            // Check if we already have data
+            if (cachedData['initial']) {
+                console.log('Using cached data')
+                return
+            }
+
+            dispatch(fetchMeasurementsForFlower({ flowerId, householdId, dateFrom, dateTo }))
+                .unwrap()
+                .then(data => {
+                    setCachedData(prev => ({
+                        ...prev,
+                        initial: data,
+                    }))
+                })
+                .catch(error => {
+                    console.error('Error fetching measurements:', error)
+                })
+        }
+    }, [dispatch, flowerId, householdId])
+
+    // Clear cache when changing flowers
+    useEffect(() => {
+        setCachedData({})
+    }, [flowerId])
 
     if (!measurements) {
         return <div>{t('common.loading')}</div>

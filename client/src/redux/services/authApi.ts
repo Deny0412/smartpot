@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const authApi = axios.create({
-    baseURL: process.env.REACT_APP_AUTH_API || 'http://localhost:3001/api/auth',
+    baseURL: process.env.REACT_APP_AUTH_API || 'http://localhost:3003/auth',
     headers: {
         'Content-Type': 'application/json',
     },
@@ -25,28 +25,22 @@ export const registerUser = async (email: string, password: string, name: string
 export const loginUser = async (email: string, password: string): Promise<UserData> => {
     try {
         const response = await authApi.post('/login', { email, password })
-        const { token, user } = response.data
+        const { token } = response.data
         console.log(token)
 
-        
+        // Decode the token to get user data
+        const decodedToken = JSON.parse(atob(token.split('.')[1]))
+        const userData = {
+            id: decodedToken.user.id,
+            email: decodedToken.user.email,
+            name: decodedToken.user.name,
+            surname: decodedToken.user.surname,
+        }
 
         localStorage.setItem('token', token)
-        localStorage.setItem(
-            'user',
-            JSON.stringify({
-                id: user.id,
-                email: user.email,
-                name: user.name,
-                surname: user.surname,
-            }),
-        )
+        localStorage.setItem('user', JSON.stringify(userData))
 
-        return {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            surname: user.surname,
-        }
+        return userData
     } catch (error: any) {
         throw new Error(error.response?.data?.error || 'Neplatné prihlasovacie údaje')
     }

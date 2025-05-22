@@ -94,6 +94,7 @@ export interface Gateway {
 
 export interface Schedule {
     _id?: string
+    id?: string
     flower_id: string
     active: boolean
     monday: { from: string | null; to: string | null }

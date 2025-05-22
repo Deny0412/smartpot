@@ -17,8 +17,6 @@ interface MeasurementData {
 }
 
 export async function broadcastMeasurement(flowerId: string, measurement: any, type: MeasurementType) {
-  
-
   const message = JSON.stringify({
     type: 'measurement_inserted',
     data: {
@@ -40,76 +38,9 @@ class MeasurementService {
   } as const
 
   private fastify: FastifyInstance | null = null
-  private changeStreams: any[] = []
 
   setFastify(fastify: FastifyInstance) {
     this.fastify = fastify
-    this.initializeChangeStreams()
-  }
-
-  private initializeChangeStreams() {
-    
-    Object.entries(this.measurementModels).forEach(([type, Model]) => {
-      const changeStream = Model.watch([], { fullDocument: 'updateLookup' })
-
-      changeStream.on('change', (change) => {
-       
-
-        if (change.operationType === 'insert' && change.fullDocument) {
-          const flowerId = change.fullDocument.flower_id.toString()
-     
-          this.broadcastToFlower(flowerId, {
-            type: 'measurement_inserted',
-            data: {
-              ...change.fullDocument,
-              type: type,
-            },
-          })
-        } else if (change.operationType === 'update' && change.fullDocument) {
-          const flowerId = change.fullDocument.flower_id.toString()
-         
-          this.broadcastToFlower(flowerId, {
-            type: 'measurement_updated',
-            data: {
-              ...change.fullDocument,
-              type: type,
-            },
-          })
-        } else if (change.operationType === 'delete' && change.documentKey) {
-          const flowerId = change.documentKey._id.toString()
-          console.log('Broadcasting delete to flower:', flowerId)
-          this.broadcastToFlower(flowerId, {
-            type: 'measurement_deleted',
-            data: {
-              _id: change.documentKey._id,
-              type: type as MeasurementType,
-            },
-          })
-        }
-      })
-
-      this.changeStreams.push(changeStream)
-    })
-  }
-
-  private broadcastToFlower(flowerId: string, message: any) {
-    try {
-     
-
-      
-      const messageWithType = {
-        ...message,
-        data: {
-          ...message.data,
-          type: message.data.type || 'humidity', 
-        },
-      }
-
-      
-      userConnections.broadcastToFlower(flowerId, messageWithType)
-    } catch (error) {
-      console.error('Error while broadcasting to flower', error)
-    }
   }
 
   async getMeasurements(flowerId: string) {
@@ -158,21 +89,11 @@ class MeasurementService {
       })
 
       await measurement.save()
-
-    
-
-     
-      this.broadcastToFlower(data.flower_id, {
-        type: 'measurement_inserted',
-        data: {
-          ...measurement.toObject(),
-          type: data.type,
-        },
-      })
+      console.log(`[MEASUREMENT SERVICE] Saved new ${data.type} measurement for flower ${data.flower_id}`)
 
       return measurement
     } catch (error) {
-      console.error('Error while inserting measurement', error)
+      console.error('[MEASUREMENT SERVICE] Error while inserting measurement:', error)
       throw error
     }
   }
@@ -194,20 +115,9 @@ class MeasurementService {
       measurement.type = data.type
       await measurement.save()
 
-      
-
-      
-      this.broadcastToFlower(measurement.flower_id.toString(), {
-        type: 'measurement_updated',
-        data: {
-          ...measurement.toObject(),
-          type: data.type,
-        },
-      })
-
       return measurement
     } catch (error) {
-      console.error('Error while updating measurement', error)
+      console.error('[MEASUREMENT SERVICE] Error while updating measurement:', error)
       throw error
     }
   }

@@ -16,6 +16,7 @@ interface ScheduleDay {
 }
 
 interface ScheduleData {
+    _id?: string
     monday: ScheduleDay
     tuesday: ScheduleDay
     wednesday: ScheduleDay
@@ -76,7 +77,6 @@ const EditFlowerSchedule: React.FC<EditFlowerScheduleProps> = ({ isOpen, onClose
         }
         setLoading(true)
 
-       
         for (const day of Object.keys(scheduleData)) {
             if (day === 'active') continue
             const dayData = scheduleData[day as keyof ScheduleData] as ScheduleDay
@@ -87,7 +87,6 @@ const EditFlowerSchedule: React.FC<EditFlowerScheduleProps> = ({ isOpen, onClose
             }
         }
 
-        
         const atLeastOneDay = Object.keys(scheduleData).some(day => {
             if (day === 'active') return false
             const dayData = scheduleData[day as keyof ScheduleData] as ScheduleDay
@@ -103,21 +102,21 @@ const EditFlowerSchedule: React.FC<EditFlowerScheduleProps> = ({ isOpen, onClose
         try {
             const scheduleToUpdate: Schedule = {
                 ...scheduleData,
+                id: currentSchedule._id,
                 flower_id: flowerId,
             }
             await dispatch(
                 updateSchedule({
-                    flowerId,
                     schedule: scheduleToUpdate,
                 }),
             ).unwrap()
 
-           
             await dispatch(loadSchedule(flowerId)).unwrap()
 
             onClose()
             toast.success(t('flower_detail.edit_schedule.success.schedule_updated'))
         } catch (err) {
+            console.error('Update schedule error:', err)
             toast.error(t('flower_detail.edit_schedule.error.update_failed'))
         } finally {
             setLoading(false)

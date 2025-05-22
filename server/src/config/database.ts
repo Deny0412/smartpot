@@ -6,7 +6,7 @@ export const dbPlugin: FastifyPluginAsync = async (fastify) => {
     const url = process.env.MONGO_URI || "mongodb://localhost:27017/smart-pot";
     await mongoose.connect(url);
 
-    fastify.log.info("MongoDB connected successfully");
+    fastify.log.info("MongoDB connected successfully ");
 
     // Close MongoDB connection when fastify closes
     fastify.addHook("onClose", async () => {

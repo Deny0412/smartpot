@@ -33,13 +33,6 @@ interface HouseholdResponse {
 
 export const loadHouseholds = createAsyncThunk('households/load', async (_, { getState, rejectWithValue }) => {
     try {
-        const state = getState() as { households: HouseholdsState }
-
-        // If we already have households and we're not explicitly reloading, return existing data
-        if (state.households.households.length > 0 && !state.households.loading) {
-            return { status: 'success', data: state.households.households }
-        }
-
         return await fetchHouseholds()
     } catch (error) {
         return rejectWithValue(error instanceof Error ? error.message : 'Chyba pri načítaní domácností')

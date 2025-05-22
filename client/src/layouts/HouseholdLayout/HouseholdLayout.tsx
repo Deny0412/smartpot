@@ -56,14 +56,12 @@ const HouseholdLayout = () => {
             return
         }
 
-        // Check if the loaded list contains the current householdId
         const currentHouseholdExists = households.some((h: { id: string }) => h.id === householdId)
 
         if (currentHouseholdExists) {
             setAccessStatus('granted')
         } else if (initialLoadAttempted) {
-            // Only redirect if we've attempted to load the data
-            console.warn(`User does not have access to household ${householdId} or it doesn't exist. Redirecting.`)
+           
             toast.error(t('households.access_denied_toast'))
             setAccessStatus('denied')
             navigate('/households', { replace: true })

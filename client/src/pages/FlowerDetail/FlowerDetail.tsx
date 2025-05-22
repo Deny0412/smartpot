@@ -1,4 +1,4 @@
-import { CheckCircle, PencilSimple, WarningCircle } from '@phosphor-icons/react'
+import { CheckCircle, PencilSimple, Power, WarningCircle } from '@phosphor-icons/react'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDispatch, useSelector } from 'react-redux'
@@ -15,7 +15,7 @@ import {
     selectFlowerpotData,
     selectSmartPot,
 } from '../../redux/selectors/flowerDetailSelectors'
-import { selectFlowerProfile } from '../../redux/selectors/flowerProfilesSelectors'
+import { selectFlowerProfile, selectProfilesLoading } from '../../redux/selectors/flowerProfilesSelectors'
 import { selectHouseholdById, selectIsHouseholdOwner } from '../../redux/selectors/houseHoldSelectors'
 import {
     selectActiveWebSocketFlowerId,
@@ -35,7 +35,7 @@ import {
     startWebSocketConnection,
     stopWebSocketConnection,
 } from '../../redux/slices/measurementsSlice'
-import { loadSchedule } from '../../redux/slices/scheduleSlice'
+import { loadSchedule, updateSchedule } from '../../redux/slices/scheduleSlice'
 import { fetchInactiveSmartPots, fetchSmartPots } from '../../redux/slices/smartPotsSlice'
 import { AppDispatch, RootState } from '../../redux/store/store'
 import { MeasurementValue, Schedule } from '../../types/flowerTypes'
@@ -98,10 +98,12 @@ const FlowerDetail: React.FC = () => {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false)
     const [isTransplantModalOpen, setIsTransplantModalOpen] = useState(false)
     const navigate = useNavigate()
+    const [cachedData, setCachedData] = useState<Record<string, any>>({})
 
     const user = useSelector(selectUser)
     const flower = useSelector(selectFlower)
     const flowerProfileData = useSelector((state: RootState) => selectFlowerProfile(state, flowerId || ''))
+    const profilesLoading = useSelector(selectProfilesLoading)
     const allMeasurementsForFlower = useSelector((state: RootState) => state.measurements.measurements[flowerId || ''])
     const processedMeasurements = useSelector((state: RootState) => selectProcessedMeasurements(state, flowerId || ''))
     const loading = useSelector(selectMeasurementsLoading)
@@ -168,7 +170,6 @@ const FlowerDetail: React.FC = () => {
                 toast.error(response.message || t('flower_detail.disconnect_error_fallback_toast'))
             }
         } catch (error) {
-            console.error(t('flower_detail.console.disconnect_error_prefix'), error)
             toast.error(t('flower_detail.disconnect_error_fallback_toast'))
         }
     }
@@ -190,45 +191,25 @@ const FlowerDetail: React.FC = () => {
                 try {
                     setIsLoading(true)
 
-                    const flowerExistsInState = !!flower
+                    // Load flower profiles first
+                    await dispatch(loadFlowerProfiles()).unwrap()
 
+                    // Then load flower details
+                    const flowerDetails = await dispatch(loadFlowerDetails(flowerId)).unwrap()
+                    if (!flowerDetails) {
+                        throw new Error('Failed to load flower details')
+                    }
+
+                    // Then load other metadata
                     const metadataPromises: Promise<any>[] = [
-                        ...(!flowerExistsInState ? [dispatch(loadFlowerDetails(flowerId))] : []),
                         dispatch(fetchSmartPots(householdId)),
                         dispatch(fetchInactiveSmartPots(householdId)),
-                        dispatch(loadFlowerProfiles()),
+                        dispatch(loadSchedule(flowerId)),
                     ]
-
-                    let latestTimestamp: string | null = null
-                    if (allMeasurementsForFlower) {
-                        Object.values(allMeasurementsForFlower).forEach(measurementsArray => {
-                            if (Array.isArray(measurementsArray) && measurementsArray.length > 0) {
-                                const currentLatest = measurementsArray[0].createdAt
-                                if (!latestTimestamp || new Date(currentLatest) > new Date(latestTimestamp)) {
-                                    latestTimestamp = currentLatest
-                                }
-                            }
-                        })
-                    }
-
-                    let dateFrom: string
-                    if (latestTimestamp) {
-                        dateFrom = new Date(latestTimestamp).toISOString().split('T')[0]
-                    } else {
-                        const oneYearAgo = new Date()
-                        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
-                        dateFrom = oneYearAgo.toISOString().split('T')[0]
-                    }
-
-                    const dateTo = new Date().toISOString().split('T')[0]
-
-                    metadataPromises.push(
-                        dispatch(fetchMeasurementsForFlower({ flowerId, householdId, dateFrom, dateTo })),
-                    )
 
                     await Promise.all(metadataPromises)
                 } catch (error) {
-                    console.error(t('flower_detail.console.data_load_error_prefix'), error)
+                    toast.error(t('flower_detail.error_loading_data'))
                 } finally {
                     setIsLoading(false)
                     setIsInitialLoad(false)
@@ -246,7 +227,6 @@ const FlowerDetail: React.FC = () => {
 
     useEffect(() => {
         if (flowerId && !schedule && !scheduleLoading) {
-            console.log('FlowerDetail: Schedule is missing, attempting to load for flowerId:', flowerId)
             dispatch(loadSchedule(flowerId))
         }
     }, [dispatch, flowerId, schedule, scheduleLoading])
@@ -264,40 +244,36 @@ const FlowerDetail: React.FC = () => {
     // Add new useEffect for time range changes
     useEffect(() => {
         if (flowerId && householdId) {
-            let dateFrom: string
-            let dateTo = new Date().toISOString().split('T')[0]
+            const now = new Date()
+            const startDate = new Date(now)
+            startDate.setMonth(now.getMonth() - 1) // Načítame dáta za posledný mesiac
+            const dateFrom = startDate.toISOString().split('T')[0]
+            const dateTo = now.toISOString().split('T')[0]
 
-            if (timeRange === 'custom' && customDateRange.from && customDateRange.to) {
-                dateFrom = customDateRange.from
-                dateTo = customDateRange.to
-            } else {
-                const now = new Date()
-                const startDate = new Date(now)
-
-                switch (timeRange) {
-                    case 'day':
-                        startDate.setHours(0, 0, 0, 0)
-                        break
-                    case 'week':
-                        startDate.setDate(now.getDate() - 7)
-                        break
-                    case 'month':
-                        startDate.setMonth(now.getMonth() - 1)
-                        break
-                }
-                dateFrom = startDate.toISOString().split('T')[0]
+            // Check if we already have data
+            if (cachedData['initial']) {
+                console.log('Using cached data')
+                return
             }
 
-            // Check if we have any measurements for the current type
-            const hasDataForRange =
-                processedMeasurements &&
-                Object.values(processedMeasurements).some(measurements => measurements && measurements.length > 0)
-
-            if (!hasDataForRange) {
-                dispatch(fetchMeasurementsForFlower({ flowerId, householdId, dateFrom, dateTo }))
-            }
+            dispatch(fetchMeasurementsForFlower({ flowerId, householdId, dateFrom, dateTo }))
+                .unwrap()
+                .then(data => {
+                    setCachedData(prev => ({
+                        ...prev,
+                        initial: data,
+                    }))
+                })
+                .catch(error => {
+                    console.error('Error fetching measurements:', error)
+                })
         }
-    }, [dispatch, flowerId, householdId, timeRange, customDateRange, processedMeasurements])
+    }, [dispatch, flowerId, householdId])
+
+    // Clear cache when changing flowers
+    useEffect(() => {
+        setCachedData({})
+    }, [flowerId])
 
     const handleTimeRangeChange = (range: 'day' | 'week' | 'month' | 'custom') => {
         setTimeRange(range)
@@ -309,6 +285,16 @@ const FlowerDetail: React.FC = () => {
     const handleCustomDateRangeChange = (range: { from: string; to: string }) => {
         setCustomDateRange(range)
     }
+
+    // Add debug logging
+    useEffect(() => {
+        console.log('Debug profile data:', {
+            flowerId,
+            flowerProfileId: flower?.profile_id,
+            flowerProfileData,
+            profilesLoading,
+        })
+    }, [flowerId, flower?.profile_id, flowerProfileData, profilesLoading])
 
     if (isLoading) {
         return <Loader />
@@ -420,12 +406,42 @@ const FlowerDetail: React.FC = () => {
                 <div className="schedule-container">
                     <div className="flower-detail-schedule-title-container">
                         <H4 className="flower-detail-schedule-title">{t('flower_detail.schedule')}</H4>
-                        <PencilSimple
-                            size={20}
-                            color="#bfbfbf"
-                            className="pencil-icon"
-                            onClick={() => setIsScheduleEditModalOpen(true)}
-                        />
+                        <div className="schedule-controls">
+                            <Power
+                                size={20}
+                                color={schedule.active ? '#4CAF50' : '#bfbfbf'}
+                                className="power-icon"
+                                onClick={async () => {
+                                    const updatedSchedule = {
+                                        ...schedule,
+                                        active: !schedule.active,
+                                    }
+                                    try {
+                                        await dispatch(
+                                            updateSchedule({
+                                                schedule: {
+                                                    ...updatedSchedule,
+                                                    id: schedule._id,
+                                                    flower_id: flowerId || '',
+                                                },
+                                            }),
+                                        ).unwrap()
+
+                                        // Reload schedule after update
+                                        await dispatch(loadSchedule(flowerId || '')).unwrap()
+                                    } catch (error) {
+                                        console.error('Error updating schedule:', error)
+                                        toast.error(t('flower_detail.edit_schedule.error.update_failed'))
+                                    }
+                                }}
+                            />
+                            <PencilSimple
+                                size={20}
+                                color="#bfbfbf"
+                                className="pencil-icon"
+                                onClick={() => setIsScheduleEditModalOpen(true)}
+                            />
+                        </div>
                     </div>
                     <div className="schedule-grid">
                         {Object.entries(schedule).map(([day, times]) => {
@@ -495,58 +511,67 @@ const FlowerDetail: React.FC = () => {
                         onClick={() => setIsProfileEditModalOpen(true)}
                     />
                 </H4>
-                {flowerProfileData ? (
+                {profilesLoading ? (
+                    <div className="profile-loading">
+                        <Loader />
+                    </div>
+                ) : flower?.profile_id ? (
                     <div className="profile-info">
                         <div className="profile-text">
-                            {t('flower_detail.assigned_profile')} <strong>{flowerProfileData.name}</strong>
+                            {t('flower_detail.assigned_profile')}{' '}
+                            <strong>
+                                {flowerProfileData ? flowerProfileData.name : t('flower_detail.profile_not_found')}
+                            </strong>
                         </div>
-                        <div className="profile-settings">
-                            <div className="setting-group">
-                                <div className="setting-title">{t('flower_detail.temperature')}</div>
-                                <div className="setting-item">
-                                    <span>{t('flower_detail.min')}</span>
-                                    <span>
-                                        {flowerProfileData.temperature.min}
-                                        {t('flower_detail.unit.celsius')}
-                                    </span>
+                        {flowerProfileData && (
+                            <div className="profile-settings">
+                                <div className="setting-group">
+                                    <div className="setting-title">{t('flower_detail.temperature')}</div>
+                                    <div className="setting-item">
+                                        <span>{t('flower_detail.min')}</span>
+                                        <span>
+                                            {flowerProfileData.temperature.min}
+                                            {t('flower_detail.unit.celsius')}
+                                        </span>
+                                    </div>
+                                    <div className="setting-item">
+                                        <span>{t('flower_detail.max')}</span>
+                                        <span>
+                                            {flowerProfileData.temperature.max}
+                                            {t('flower_detail.unit.celsius')}
+                                        </span>
+                                    </div>
                                 </div>
-                                <div className="setting-item">
-                                    <span>{t('flower_detail.max')}</span>
-                                    <span>
-                                        {flowerProfileData.temperature.max}
-                                        {t('flower_detail.unit.celsius')}
-                                    </span>
+                                <div className="setting-group">
+                                    <div className="setting-title">{t('flower_detail.humidity')}</div>
+                                    <div className="setting-item">
+                                        <span>{t('flower_detail.min')}</span>
+                                        <span>
+                                            {flowerProfileData.humidity.min}
+                                            {t('flower_detail.unit.percent')}
+                                        </span>
+                                    </div>
+                                    <div className="setting-item">
+                                        <span>{t('flower_detail.max')}</span>
+                                        <span>
+                                            {flowerProfileData.humidity.max}
+                                            {t('flower_detail.unit.percent')}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="setting-group">
+                                    <div className="setting-title">{t('flower_detail.light')}</div>
+                                    <div className="setting-item">
+                                        <span>{t('flower_detail.min_light')}</span>
+                                        <span>{flowerProfileData.light.min} </span>
+                                    </div>
+                                    <div className="setting-item">
+                                        <span>{t('flower_detail.max_light')}</span>
+                                        <span>{flowerProfileData.light.max}</span>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="setting-group">
-                                <div className="setting-title">{t('flower_detail.humidity')}</div>
-                                <div className="setting-item">
-                                    <span>{t('flower_detail.min')}</span>
-                                    <span>
-                                        {flowerProfileData.humidity.min}
-                                        {t('flower_detail.unit.percent')}
-                                    </span>
-                                </div>
-                                <div className="setting-item">
-                                    <span>{t('flower_detail.max')}</span>
-                                    <span>
-                                        {flowerProfileData.humidity.max}
-                                        {t('flower_detail.unit.percent')}
-                                    </span>
-                                </div>
-                            </div>
-                            <div className="setting-group">
-                                <div className="setting-title">{t('flower_detail.light')}</div>
-                                <div className="setting-item">
-                                    <span>{t('flower_detail.min_light')}</span>
-                                    <span>{flowerProfileData.light.min} </span>
-                                </div>
-                                <div className="setting-item">
-                                    <span>{t('flower_detail.max_light')}</span>
-                                    <span>{flowerProfileData.light.max}</span>
-                                </div>
-                            </div>
-                        </div>
+                        )}
                     </div>
                 ) : (
                     <div className="no-profile">
@@ -619,7 +644,7 @@ const FlowerDetail: React.FC = () => {
                 <Button onClick={() => navigate(`/households/${householdId}/flowers`)}>
                     {t('flower_detail.back_to_list')}
                 </Button>
-                <Button variant="warning" onClick={handleDisconnectFlower} disabled={!connectedSmartPot}>
+                <Button variant="warning" onClick={handleDisconnectFlower} disabled={!flower?.serial_number}>
                     {t('flower_detail.disconnect_flower')}
                 </Button>
 

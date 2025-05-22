@@ -17,6 +17,8 @@ export default async function measurementRoutes(fastify: FastifyInstance) {
   );
   fastify.post("/create", measurementController.create);
 
+ 
+
   /*
   fastify.post(
     "/createWater",
