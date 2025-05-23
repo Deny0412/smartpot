@@ -90,4 +90,12 @@ export default async function householdRoutes(fastify: FastifyInstance) {
     },
     householdController.getMembers
   );
+  fastify.get(
+    "/getInvited/:id",
+    {
+      onRequest: [authMiddleware], // Authenticate first
+      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
+    },
+    householdController.getInvitedUsers
+  );
 }

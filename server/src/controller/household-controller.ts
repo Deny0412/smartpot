@@ -10,6 +10,7 @@ import householdChangeOwnerAbl from "../abl/household/household-changeOwner-abl"
 import householdDecisionAbl from "../abl/household/household-decision-abl";
 import householdLeaveAbl from "../abl/household/household-leave-abl";
 import householdGetMembersAbl from "../abl/household/household-getMembers-abl";
+import householdGetInvitedUsersAbl from "../abl/household/household-getInvitedUsers-abl";
 
 import { sendError } from "../middleware/response-handler";
 import { IHousehold } from "../models/Household";
@@ -116,6 +117,14 @@ export const householdController = {
     try {
       const id = (request.params as Params).id;
       await householdGetMembersAbl(id, reply);
+    } catch (error) {
+      sendError(reply, error);
+    }
+  },
+  getInvitedUsers: async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const id = (request.params as Params).id;
+      await householdGetInvitedUsersAbl(id, reply);
     } catch (error) {
       sendError(reply, error);
     }
