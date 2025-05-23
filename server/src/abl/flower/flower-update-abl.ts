@@ -11,10 +11,10 @@ import {
 import { MongoValidator } from "../../validation/mongo-validator";
 import updateFlower from "../../dao/flower/flower-update-dao";
 import flowerProfileGetDao from "../../dao/flower-profile/flowerProfile-get-dao";
-import smartpotGetBySerialNumberDao from "../../dao/smartpot/smart-pot-getBySerial-dao";
-import smartpotUpdateActiveFlowerDao from "../../dao/smartpot/smart-pot-update-dao";
+import smartpotGetBySerialNumberDao from "../../dao/smartpot/smartpot-getBySerial-dao";
+import smartpotUpdateActiveFlowerDao from "../../dao/smartpot/smartpot-update-dao";
 import flowerGetDao from "../../dao/flower/flower-get-dao";
-import updateSmartPot from "../../dao/smartpot/smart-pot-update-dao";
+import updateSmartPot from "../../dao/smartpot/smartpot-update-dao";
 import { ISmartPot } from "../../models/SmartPot";
 const SCHEMA = {
   type: "object",
@@ -30,34 +30,32 @@ const SCHEMA = {
           type: "object",
           properties: {
             min: { type: "number" },
-            max: { type: "number" }
-          }
+            max: { type: "number" },
+          },
         },
         temperature: {
           type: "object",
           properties: {
             min: { type: "number" },
-            max: { type: "number" }
-          }
+            max: { type: "number" },
+          },
         },
         light: {
           type: "object",
           properties: {
             min: { type: "number" },
-            max: { type: "number" }
-          }
+            max: { type: "number" },
+          },
         },
-
-      }
-    }
+      },
+    },
   },
   required: ["id"],
-  additionalProperties: true
+  additionalProperties: true,
 };
 
-async function updateFlowerHandler(data: IFlower, reply: FastifyReply) {
+async function flowerUpdateAbl(data: IFlower, reply: FastifyReply) {
   try {
-
     const validate = ajv.compile(SCHEMA);
     const isValid = validate(data);
     if (!isValid) {
@@ -102,31 +100,47 @@ async function updateFlowerHandler(data: IFlower, reply: FastifyReply) {
       String(old_serial_number)
     );
 
-    const new_smart_pot = data.serial_number ?
-      await smartpotGetBySerialNumberDao(String(data.serial_number)) :
-      null;
+    const new_smart_pot = data.serial_number
+      ? await smartpotGetBySerialNumberDao(String(data.serial_number))
+      : null;
 
     // Logic for when the flower is moved to a different smartpot
-    if (old_smart_pot &&
-      old_smart_pot.active_flower_id?.toString() === old_flower._id?.toString() &&
+    if (
+      old_smart_pot &&
+      old_smart_pot.active_flower_id?.toString() ===
+        old_flower._id?.toString() &&
       old_flower.serial_number === old_smart_pot.serial_number
     ) {
       const updateData = {
         serial_number: old_smart_pot.serial_number,
         active_flower_id: undefined,
-        household_id: old_smart_pot.household_id
+        household_id: old_smart_pot.household_id,
       };
       await updateSmartPot(updateData as unknown as ISmartPot);
     }
 
     // Validate household consistency
-    if (new_smart_pot?.household_id.toString() !== old_flower?.household_id.toString() && !data.household_id) {
-      sendClientError(reply, "Flower must be from the same household as the smartpot");
+    if (
+      new_smart_pot?.household_id.toString() !==
+        old_flower?.household_id.toString() &&
+      !data.household_id
+    ) {
+      sendClientError(
+        reply,
+        "Flower must be from the same household as the smartpot"
+      );
       return;
     }
 
-    if (data.serial_number && data.household_id && new_smart_pot?.household_id.toString() !== data.household_id.toString()) {
-      sendClientError(reply, "Flower must be from the same household as the smartpot");
+    if (
+      data.serial_number &&
+      data.household_id &&
+      new_smart_pot?.household_id.toString() !== data.household_id.toString()
+    ) {
+      sendClientError(
+        reply,
+        "Flower must be from the same household as the smartpot"
+      );
       return;
     }
 
@@ -147,4 +161,4 @@ async function updateFlowerHandler(data: IFlower, reply: FastifyReply) {
   }
 }
 
-export default updateFlowerHandler;
+export default flowerUpdateAbl;

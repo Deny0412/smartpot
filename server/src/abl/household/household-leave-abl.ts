@@ -18,7 +18,7 @@ const schema = {
   required: ["id"],
 };
 
-async function householdCreateAbl(
+async function householdLeaveAbl(
   household_id: string,
   user_id: string,
   reply: FastifyReply
@@ -46,4 +46,4 @@ async function householdCreateAbl(
   }
 }
 
-export default householdCreateAbl;
+export default householdLeaveAbl;

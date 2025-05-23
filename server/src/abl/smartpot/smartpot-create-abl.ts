@@ -1,5 +1,5 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import smartpotCreateDao from "../../dao/smartpot/smart-pot-create-dao";
+import smartpotCreateDao from "../../dao/smartpot/smartpot-create-dao";
 import { ISmartPot } from "../../models/SmartPot";
 import {
   sendClientError,
@@ -20,7 +20,7 @@ const schema = {
   required: ["serial_number"],
 };
 const ajv = new Ajv();
-async function createSmartPotHandler(data: ISmartPot, reply: FastifyReply) {
+async function smartpotCreateAbl(data: ISmartPot, reply: FastifyReply) {
   try {
     const validate = ajv.compile(schema);
     const valid = validate(data);
@@ -38,4 +38,4 @@ async function createSmartPotHandler(data: ISmartPot, reply: FastifyReply) {
   }
 }
 
-export default createSmartPotHandler;
+export default smartpotCreateAbl;

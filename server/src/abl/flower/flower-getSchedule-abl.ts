@@ -17,7 +17,7 @@ const schema = {
   additionalProperties: false,
 };
 
-async function getFlowerScheduleAbl(id: string, reply: FastifyReply) {
+async function flowerGetScheduleAbl(id: string, reply: FastifyReply) {
   try {
     const idObject = { id: id };
     const validate = ajv.compile(schema);
@@ -43,4 +43,4 @@ async function getFlowerScheduleAbl(id: string, reply: FastifyReply) {
   }
 }
 
-export default getFlowerScheduleAbl;
+export default flowerGetScheduleAbl;

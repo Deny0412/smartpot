@@ -8,7 +8,7 @@ import {
 import flowerCreateDao from "../../dao/flower/flower-create-dao";
 import householdGetDao from "../../dao/household/household-get-dao";
 import Ajv from "ajv";
-import checkSmartPotExists from "../../dao/smartpot/smart-pot-exists-dao";
+import checkSmartPotExists from "../../dao/smartpot/smartpot-exists-dao";
 import flowerProfileGetDao from "../../dao/flower-profile/flowerProfile-get-dao";
 import { MongoValidator } from "../../validation/mongo-validator";
 const schema = {
@@ -21,7 +21,7 @@ const schema = {
   required: ["household_id", "name"],
 };
 const ajv = new Ajv();
-async function createFlowerHandler(data: IFlower, reply: FastifyReply) {
+async function flowerCreateAbl(data: IFlower, reply: FastifyReply) {
   console.log(data);
   try {
     const validate = ajv.compile(schema);
@@ -68,4 +68,4 @@ async function createFlowerHandler(data: IFlower, reply: FastifyReply) {
   }
 }
 
-export default createFlowerHandler;
+export default flowerCreateAbl;

@@ -1,7 +1,7 @@
 import HOUSEHOLD_MODEL from "../../models/Household";
 import { Types } from "mongoose";
 
-async function getInvitesDao(userId: string) {
+async function userInvitesDao(userId: string) {
   const userObjectId = new Types.ObjectId(userId);
 
   return await HOUSEHOLD_MODEL.find({
@@ -9,4 +9,4 @@ async function getInvitesDao(userId: string) {
   }).lean();
 }
 
-export default getInvitesDao;
+export default userInvitesDao;

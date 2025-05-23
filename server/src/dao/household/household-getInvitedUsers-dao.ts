@@ -1,7 +1,7 @@
 import HOUSEHOLD_MODEL from "../../models/Household";
 import USER_MODEL from "../../models/User";
 
-async function getInvitedUsers(householdId: string) {
+async function householdGetInvitedUsersDao(householdId: string) {
   const household = await HOUSEHOLD_MODEL.findById(householdId).lean();
   if (!household?.invites?.length) return [];
 
@@ -12,4 +12,4 @@ async function getInvitedUsers(householdId: string) {
   return users;
 }
 
-export default getInvitedUsers;
+export default householdGetInvitedUsersDao;

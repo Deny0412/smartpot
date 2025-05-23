@@ -4,7 +4,7 @@ import LightMeasurement from "../../models/LightMeasurement";
 import TemperatureMeasurement from "../../models/TemperatureMeasurement";
 import WaterMeasurement from "../../models/WaterMeasurement";
 
-async function getLatestMeasurementsDao(flowerId: string) {
+async function measurementGetLatestDao(flowerId: string) {
   const [battery, humidity, light, temperature, water] = await Promise.all([
     BatteryMeasurement.findOne({ flower_id: flowerId }).sort({ createdAt: -1 }),
     HumidityMeasurement.findOne({ flower_id: flowerId }).sort({
@@ -26,4 +26,4 @@ async function getLatestMeasurementsDao(flowerId: string) {
   };
 }
 
-export default getLatestMeasurementsDao;
+export default measurementGetLatestDao;

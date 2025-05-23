@@ -9,7 +9,7 @@ import {
 import { MongoValidator } from "../../validation/mongo-validator";
 import deleteFlower from "../../dao/flower/flower-delete-dao";
 
-async function deleteFlowerHandler(id: string, reply: FastifyReply) {
+async function flowerDeleteAbl(id: string, reply: FastifyReply) {
   try {
     // Validate ObjectId format first
     if (!MongoValidator.validateId(id)) {
@@ -26,4 +26,4 @@ async function deleteFlowerHandler(id: string, reply: FastifyReply) {
   }
 }
 
-export default deleteFlowerHandler;
+export default flowerDeleteAbl;

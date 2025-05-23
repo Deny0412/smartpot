@@ -1,9 +1,8 @@
-import FlowerModel from '../../models/Flower';
+import FlowerModel from "../../models/Flower";
 
-async function getFlower(id: string) {
-    
-    const flower = await FlowerModel.findById(id);
-    return flower;
+async function flowerGetDao(id: string) {
+  const flower = await FlowerModel.findById(id);
+  return flower;
 }
 
-export default getFlower;
+export default flowerGetDao;
