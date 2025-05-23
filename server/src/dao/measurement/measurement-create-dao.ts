@@ -1,8 +1,8 @@
-import BatteryMeasurementModel from '../../models/BatteryMeasurement'
-import HumidityMeasurementModel from '../../models/HumidityMeasurement'
-import LightMeasurementModel from '../../models/LightMeasurement'
-import TemperatureMeasurementModel from '../../models/TemperatureMeasurement'
-import WaterMeasurementModel from '../../models/WaterMeasurement'
+import WaterMeasurementModel from "../../models/WaterMeasurement";
+import HumidityMeasurementModel from "../../models/HumidityMeasurement";
+import LightMeasurementModel from "../../models/LightMeasurement";
+import TemperatureMeasurementModel from "../../models/TemperatureMeasurement";
+import BatteryMeasurementModel from "../../models/BatteryMeasurement";
 
 const measurementModelMap: Record<string, any> = {
   water: WaterMeasurementModel,
@@ -10,16 +10,16 @@ const measurementModelMap: Record<string, any> = {
   soil: HumidityMeasurementModel,
   temperature: TemperatureMeasurementModel,
   battery: BatteryMeasurementModel,
-}
+};
 
-async function createMeasurement(data: any) {
-  const Model = measurementModelMap[data.typeOfData]
+async function measurementCreateDao(data: any) {
+  const Model = measurementModelMap[data.typeOfData];
 
   if (!Model) {
-    throw new Error(`Unsupported measurement type: ${data.typeOfData}`)
+    throw new Error(`Unsupported measurement type: ${data.typeOfData}`);
   }
 
-  return await Model.create(data)
+  return await Model.create(data);
 }
 
-export default createMeasurement
+export default measurementCreateDao;

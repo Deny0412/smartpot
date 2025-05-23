@@ -1,5 +1,5 @@
 import { FastifyReply } from "fastify";
-import smartpotGetDao from "../../dao/smartpot/smart-pot-getBySerial-dao";
+import smartpotGetDao from "../../dao/smartpot/smartpot-getBySerial-dao";
 import flowerGetDao from "../../dao/flower/flower-get-dao";
 import { Types } from "mongoose";
 
@@ -9,7 +9,10 @@ import {
   sendNotFound,
 } from "../../middleware/response-handler";
 
-async function getCurrentFlowerAbl(serial_number: string, reply: FastifyReply) {
+async function smartpotGetCurrentFlowerAbl(
+  serial_number: string,
+  reply: FastifyReply
+) {
   try {
     const smartpot = await smartpotGetDao(serial_number);
     if (!smartpot) {
@@ -28,4 +31,4 @@ async function getCurrentFlowerAbl(serial_number: string, reply: FastifyReply) {
   }
 }
 
-export default getCurrentFlowerAbl;
+export default smartpotGetCurrentFlowerAbl;

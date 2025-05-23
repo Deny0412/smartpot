@@ -2,7 +2,7 @@ import { Types } from 'mongoose'
 import HOUSEHOLD_MODEL from '../../models/Household'
 import USER_MODEL from '../../models/User'
 
-async function getUsersByHousehold(householdId: string) {
+async function householdGetMembersDao(householdId: string) {
   const household = await HOUSEHOLD_MODEL.findById(householdId)
   if (!household) return null
   const userIds = [...household.members.map((id) => id.toString()), household.owner.toString()]
@@ -14,4 +14,4 @@ async function getUsersByHousehold(householdId: string) {
   return users
 }
 
-export default getUsersByHousehold
+export default householdGetMembersDao

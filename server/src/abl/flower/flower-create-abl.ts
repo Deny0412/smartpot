@@ -1,4 +1,4 @@
-import { FastifyRequest, FastifyReply } from "fastify";
+import { FastifyReply } from "fastify";
 import { IFlower } from "../../models/Flower";
 import {
   sendClientError,
@@ -8,9 +8,8 @@ import {
 import flowerCreateDao from "../../dao/flower/flower-create-dao";
 import householdGetDao from "../../dao/household/household-get-dao";
 import Ajv from "ajv";
-import checkSmartPotExists from "../../dao/smartpot/smart-pot-exists-dao";
-import flowerProfileGetDao from "../../dao/flower-profile/flowerProfile-get-dao";
-import { MongoValidator } from "../../validation/mongo-validator";
+import checkSmartPotExists from "../../dao/smartpot/smartpot-exists-dao";
+import flowerProfileGetDao from "../../dao/flowerProfile/flowerProfile-get-dao";
 const schema = {
   type: "object",
   properties: {
@@ -21,7 +20,7 @@ const schema = {
   required: ["household_id", "name"],
 };
 const ajv = new Ajv();
-async function createFlowerHandler(data: IFlower, reply: FastifyReply) {
+async function flowerCreateAbl(data: IFlower, reply: FastifyReply) {
   console.log(data);
   try {
     const validate = ajv.compile(schema);
@@ -58,8 +57,6 @@ async function createFlowerHandler(data: IFlower, reply: FastifyReply) {
         return;
       }
     }
-    //TODO
-
     const createdFlower = await flowerCreateDao(data);
     sendCreated(reply, createdFlower, "Flower created successfully");
   } catch (error) {
@@ -68,4 +65,4 @@ async function createFlowerHandler(data: IFlower, reply: FastifyReply) {
   }
 }
 
-export default createFlowerHandler;
+export default flowerCreateAbl;

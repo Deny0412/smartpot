@@ -1,20 +1,14 @@
-import Ajv from "ajv";
-const ajv = new Ajv();
-import { FastifyRequest, FastifyReply } from "fastify";
-import smartpotUpdateDao from "../../dao/smartpot/smart-pot-update-dao";
-import { ISmartPot } from "../../models/SmartPot";
-import {
-  sendSuccess,
-  sendError,
-  sendNotFound,
-  sendClientError,
-} from "../../middleware/response-handler";
-import checkFlowerExists from "../../dao/flower/flower-exists-dao";
-import householdGetDao from "../../dao/household/household-get-dao";
-import mongoose from "mongoose";
-import smartpotGetBySerialNumberDao from "../../dao/smartpot/smart-pot-getBySerial-dao";
-import flowerGetDao from "../../dao/flower/flower-get-dao";
-import getSmartBySerialNumberPot from "../../dao/smartpot/smart-pot-getBySerial-dao";
+import Ajv from 'ajv'
+import { FastifyReply } from 'fastify'
+import mongoose from 'mongoose'
+import checkFlowerExists from '../../dao/flower/flower-exists-dao'
+import flowerGetDao from '../../dao/flower/flower-get-dao'
+import householdGetDao from '../../dao/household/household-get-dao'
+import getSmartBySerialNumberPot from '../../dao/smartpot/smartpot-getBySerial-dao'
+import smartpotUpdateDao from '../../dao/smartpot/smartpot-update-dao'
+import { sendClientError, sendError, sendNotFound, sendSuccess } from '../../middleware/response-handler'
+import { ISmartPot } from '../../models/SmartPot'
+const ajv = new Ajv()
 
 function isValidObjectId(id: string): boolean {
   return mongoose.Types.ObjectId.isValid(id)
@@ -37,7 +31,7 @@ interface SmartPotUpdateData {
   active_flower_id?: mongoose.Types.ObjectId | null
 }
 
-async function updateSmartPotHandler(data: ISmartPot, reply: FastifyReply) {
+async function smartpotUpdateAbl(data: ISmartPot, reply: FastifyReply) {
   try {
     // Get existing smartpot data
     const existingSmartPot = await getSmartBySerialNumberPot(data.serial_number)
@@ -87,10 +81,7 @@ async function updateSmartPotHandler(data: ISmartPot, reply: FastifyReply) {
       }
 
       // Check if household has changed
-      if (
-       /*  existingSmartPot.household_id?.toString() !== updateData.household_id.toString() || */
-        data.active_flower_id === null
-      ) {
+      if (existingSmartPot.household_id?.toString() !== updateData.household_id.toString()) {
         console.log('Household changed, removing active flower')
         updateData.active_flower_id = null
       }
@@ -128,4 +119,4 @@ async function updateSmartPotHandler(data: ISmartPot, reply: FastifyReply) {
   }
 }
 
-export default updateSmartPotHandler
+export default smartpotUpdateAbl

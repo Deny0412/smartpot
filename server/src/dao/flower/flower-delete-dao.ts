@@ -1,8 +1,8 @@
-import FlowerModel from '../../models/Flower';
+import FlowerModel from "../../models/Flower";
 
-async function deleteFlower(id: string) {
-    const deletedFlower = await FlowerModel.findByIdAndDelete(id);
-    return deletedFlower;
+async function flowerDeleteDao(id: string) {
+  const deletedFlower = await FlowerModel.findByIdAndDelete(id);
+  return deletedFlower;
 }
 
-export default deleteFlower; 
+export default flowerDeleteDao;
