@@ -1,14 +1,20 @@
-import Ajv from 'ajv'
-import { FastifyReply } from 'fastify'
-import mongoose from 'mongoose'
-import checkFlowerExists from '../../dao/flower/flower-exists-dao'
-import flowerGetDao from '../../dao/flower/flower-get-dao'
-import householdGetDao from '../../dao/household/household-get-dao'
-import getSmartBySerialNumberPot from '../../dao/smartpot/smart-pot-getBySerial-dao'
-import smartpotUpdateDao from '../../dao/smartpot/smart-pot-update-dao'
-import { sendClientError, sendError, sendNotFound, sendSuccess } from '../../middleware/response-handler'
-import { ISmartPot } from '../../models/SmartPot'
-const ajv = new Ajv()
+import Ajv from "ajv";
+const ajv = new Ajv();
+import { FastifyRequest, FastifyReply } from "fastify";
+import smartpotUpdateDao from "../../dao/smartpot/smart-pot-update-dao";
+import { ISmartPot } from "../../models/SmartPot";
+import {
+  sendSuccess,
+  sendError,
+  sendNotFound,
+  sendClientError,
+} from "../../middleware/response-handler";
+import checkFlowerExists from "../../dao/flower/flower-exists-dao";
+import householdGetDao from "../../dao/household/household-get-dao";
+import mongoose from "mongoose";
+import smartpotGetBySerialNumberDao from "../../dao/smartpot/smart-pot-getBySerial-dao";
+import flowerGetDao from "../../dao/flower/flower-get-dao";
+import getSmartBySerialNumberPot from "../../dao/smartpot/smart-pot-getBySerial-dao";
 
 function isValidObjectId(id: string): boolean {
   return mongoose.Types.ObjectId.isValid(id)

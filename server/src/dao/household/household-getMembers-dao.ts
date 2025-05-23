@@ -9,20 +9,9 @@ async function getUsersByHousehold(householdId: string) {
 
   const uniqueUserIds = Array.from(new Set(userIds)).map((id) => new Types.ObjectId(id))
 
-  const invitedUserIds = [...household.invites.map((id) => id.toString())]
+  const users = await USER_MODEL.find({ _id: { $in: uniqueUserIds } }).select('email')
 
-  const uniqueInvitedUserIds = Array.from(new Set(invitedUserIds)).map((id) => new Types.ObjectId(id))
-
-  const users = await USER_MODEL.find({ _id: { $in: uniqueUserIds } }).select('email name surname')
-
-  const invitedUsers = await USER_MODEL.find({
-    _id: { $in: uniqueInvitedUserIds },
-  }).select('email name surname')
-
-  return {
-    members: users,
-    invitedMembers: invitedUsers,
-  }
+  return users
 }
 
 export default getUsersByHousehold

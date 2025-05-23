@@ -1,29 +1,33 @@
+import Ajv from 'ajv'
 import { FastifyReply } from 'fastify'
-import searchUsers from '../../dao/user/user-search-dao'
-import { sendClientError, sendSuccess } from '../../middleware/response-handler'
+import userSearchDao from '../../dao/user/user-search-dao'
+import { sendClientError, sendError, sendNotFound, sendSuccess } from '../../middleware/response-handler'
+const ajv = new Ajv()
 
-async function searchUsersHandler(query: string, reply: FastifyReply) {
-  try {
-    if (!query || query.length < 2) {
-      return sendSuccess(reply, [], 'Vyhľadávanie vyžaduje aspoň 2 znaky')
-    }
-
-    const users = await searchUsers(query)
-
-    return sendSuccess(
-      reply,
-      users.map((user) => ({
-        id: user._id,
-        name: user.name,
-        surname: user.surname,
-        email: user.email,
-      })),
-      'Používatelia nájdení'
-    )
-  } catch (error) {
-    console.error('Error in user search:', error)
-    sendClientError(reply, 'Chyba pri vyhľadávaní používateľov')
-  }
+const schema = {
+  type: 'object',
+  properties: {
+    query: { type: 'string' },
+  },
+  required: ['query'],
+  additionalProperties: false,
 }
 
-export default searchUsersHandler
+async function userSearchAbl(query: string, reply: FastifyReply) {
+  try {
+    const validate = ajv.compile(schema)
+    const valid = validate({ query })
+    if (!valid) {
+      sendClientError(reply, JSON.stringify(validate.errors?.map((error) => error.message)))
+      return
+    }
+    const users = await userSearchDao(query)
+    if (!users) {
+      sendNotFound(reply, 'No users found')
+    }
+    sendSuccess(reply, users, 'Users retrieved successfully')
+  } catch (error) {
+    sendError(reply, error)
+  }
+}
+export default userSearchAbl
