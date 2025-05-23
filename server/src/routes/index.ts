@@ -6,6 +6,8 @@ import smartpotRoutes from "./smartPot"; // Import the smartpot routes
 import scheduleRoutes from "./schedule"; // Import the schedule routes
 import flowerProfileRoutes from "./flowerProfile"; // Import the household routes
 import measurementRoutes from "./measurement";
+import userRoutes from "./user";
+
 const routes: FastifyPluginAsync = async (fastify) => {
   // Health check endpoint
   fastify.get(
@@ -35,6 +37,7 @@ const routes: FastifyPluginAsync = async (fastify) => {
   fastify.register(scheduleRoutes, { prefix: "/schedule" });
   fastify.register(flowerProfileRoutes, { prefix: "/flowerProfile" });
   fastify.register(measurementRoutes, { prefix: "/measurement" });
+  fastify.register(userRoutes, { prefix: "/user" });
 };
 
 export default routes;
