@@ -10,4 +10,11 @@ export default async function flowerRoutes(fastify: FastifyInstance) {
     },
     userController.search
   );
+  fastify.get(
+    "/invites",
+    {
+      onRequest: [authMiddleware],
+    },
+    userController.invites
+  );
 }
