@@ -1,6 +1,6 @@
 import Ajv from "ajv";
 const ajv = new Ajv();
-import { FastifyRequest, FastifyReply } from "fastify";
+import { FastifyReply } from "fastify";
 import smartpotUpdateDao from "../../dao/smartpot/smartpot-update-dao";
 import { ISmartPot } from "../../models/SmartPot";
 import {
@@ -12,7 +12,6 @@ import {
 import checkFlowerExists from "../../dao/flower/flower-exists-dao";
 import householdGetDao from "../../dao/household/household-get-dao";
 import mongoose from "mongoose";
-import smartpotGetBySerialNumberDao from "../../dao/smartpot/smartpot-getBySerial-dao";
 import flowerGetDao from "../../dao/flower/flower-get-dao";
 import getSmartBySerialNumberPot from "../../dao/smartpot/smartpot-getBySerial-dao";
 

@@ -1,4 +1,4 @@
-import { FastifyRequest, FastifyReply } from "fastify";
+import { FastifyReply } from "fastify";
 import scheduleGetDao from "../../dao/schedule/schedule-get-dao"; // Adjust the import based on your DAO structure
 import {
   sendSuccess,

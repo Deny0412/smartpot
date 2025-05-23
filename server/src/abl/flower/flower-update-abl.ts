@@ -1,6 +1,6 @@
 import Ajv from "ajv";
 const ajv = new Ajv();
-import { FastifyRequest, FastifyReply } from "fastify";
+import { FastifyReply } from "fastify";
 import { IFlower } from "../../models/Flower";
 import {
   sendSuccess,
@@ -10,9 +10,7 @@ import {
 } from "../../middleware/response-handler";
 import { MongoValidator } from "../../validation/mongo-validator";
 import updateFlower from "../../dao/flower/flower-update-dao";
-import flowerProfileGetDao from "../../dao/flower-profile/flowerProfile-get-dao";
 import smartpotGetBySerialNumberDao from "../../dao/smartpot/smartpot-getBySerial-dao";
-import smartpotUpdateActiveFlowerDao from "../../dao/smartpot/smartpot-update-dao";
 import flowerGetDao from "../../dao/flower/flower-get-dao";
 import updateSmartPot from "../../dao/smartpot/smartpot-update-dao";
 import { ISmartPot } from "../../models/SmartPot";

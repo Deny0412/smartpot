@@ -1,6 +1,6 @@
 import Ajv from "ajv";
 const ajv = new Ajv();
-import { FastifyRequest, FastifyReply } from "fastify";
+import { FastifyReply } from "fastify";
 import scheduleUpdateDao from "../../dao/schedule/schedule-update-dao";
 import { ISchedule } from "../../models/Schedule";
 import {

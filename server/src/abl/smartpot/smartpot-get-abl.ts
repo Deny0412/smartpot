@@ -1,4 +1,4 @@
-import { FastifyRequest, FastifyReply } from "fastify";
+import { FastifyReply } from "fastify";
 import smartpotGetDao from "../../dao/smartpot/smartpot-get-dao"; // Adjust the import based on your DAO structure
 import {
   sendSuccess,

@@ -1,15 +1,13 @@
-import { FastifyRequest, FastifyReply } from "fastify";
+import { FastifyReply } from "fastify";
 import smartpotCreateDao from "../../dao/smartpot/smartpot-create-dao";
 import { ISmartPot } from "../../models/SmartPot";
 import {
   sendClientError,
   sendCreated,
   sendError,
-  sendNotFound,
 } from "../../middleware/response-handler";
 import Ajv from "ajv";
-import checkFlowerExists from "../../dao/flower/flower-exists-dao";
-//import householdDao from "../../dao/household/household-dao";
+
 const schema = {
   type: "object",
   properties: {

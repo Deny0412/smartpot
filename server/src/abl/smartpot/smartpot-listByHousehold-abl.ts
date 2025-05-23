@@ -1,4 +1,4 @@
-import { FastifyRequest, FastifyReply } from "fastify";
+import { FastifyReply } from "fastify";
 import Ajv from "ajv";
 const ajv = new Ajv();
 import smartpotListByHouseholdDao from "../../dao/smartpot/smartpot-listByHousehold-dao";

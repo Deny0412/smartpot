@@ -1,4 +1,4 @@
-import { FastifyRequest, FastifyReply } from "fastify";
+import { FastifyReply } from "fastify";
 import { IFlower } from "../../models/Flower";
 import {
   sendClientError,
@@ -10,7 +10,6 @@ import householdGetDao from "../../dao/household/household-get-dao";
 import Ajv from "ajv";
 import checkSmartPotExists from "../../dao/smartpot/smartpot-exists-dao";
 import flowerProfileGetDao from "../../dao/flower-profile/flowerProfile-get-dao";
-import { MongoValidator } from "../../validation/mongo-validator";
 const schema = {
   type: "object",
   properties: {
@@ -58,8 +57,6 @@ async function flowerCreateAbl(data: IFlower, reply: FastifyReply) {
         return;
       }
     }
-    //TODO
-
     const createdFlower = await flowerCreateDao(data);
     sendCreated(reply, createdFlower, "Flower created successfully");
   } catch (error) {

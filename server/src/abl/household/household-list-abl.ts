@@ -29,9 +29,7 @@ async function householdListAbl(user_id: string, reply: FastifyReply) {
       );
       return;
     }
-    /*
-    check for user existence here
-    */
+
     const listHousehold = await householdListDao(user_id);
     sendSuccess(reply, listHousehold, "Households listed successfully");
   } catch (error) {
