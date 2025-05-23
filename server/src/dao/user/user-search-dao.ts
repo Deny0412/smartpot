@@ -4,7 +4,7 @@ async function userSearchDao(query: string) {
   return await USER_MODEL.find({
     email: { $regex: query, $options: "i" }, // case-insensitive match
   })
-    .select("email")
+    .select("email name surname")
     .lean();
 }
 export default userSearchDao;
