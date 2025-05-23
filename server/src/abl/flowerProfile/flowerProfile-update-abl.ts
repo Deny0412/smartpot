@@ -1,14 +1,15 @@
 import Ajv from "ajv";
 const ajv = new Ajv();
 import { FastifyReply } from "fastify";
-import flowerProfileCreateDao from "../../dao/flower-profile/flowerProfile-create-dao";
-
-import { IFlowerProfile } from "../../models/FlowerProfile";
 import {
-  sendError,
   sendSuccess,
+  sendError,
   sendClientError,
 } from "../../middleware/response-handler";
+import flowerProfileUpdateDao from "../../dao/flowerProfile/flowerProfile-update-dao";
+import flowerProfileGetDao from "../../dao/flowerProfile/flowerProfile-get-dao";
+
+import { IFlowerProfile } from "@/models/FlowerProfile";
 
 const schema = {
   type: "object",
@@ -41,12 +42,13 @@ const schema = {
       additionalProperties: false,
     },
 
+    id: { type: "string" },
   },
-  required: ["temperature", "humidity", "light"],
+  required: ["id"],
   additionalProperties: false,
 };
 
-async function flowerProfileCreateAbl(
+async function flowerProfileUpdateAbl(
   data: IFlowerProfile,
   reply: FastifyReply
 ) {
@@ -60,15 +62,23 @@ async function flowerProfileCreateAbl(
       );
       return;
     }
-    const newFlowerProfile = await flowerProfileCreateDao(data);
-    sendSuccess(
+
+    const flowerProfile = await flowerProfileGetDao(data.id);
+    if (!flowerProfile) {
+      sendClientError(reply, "Flower profile does not exist");
+      return;
+    }
+    const updatedFlowerProfile = await flowerProfileUpdateDao(
+      data.id as string,
+      data
+    );
+    return sendSuccess(
       reply,
-      newFlowerProfile,
-      "Flower profile assigned successfully"
+      updatedFlowerProfile,
+      "Flower profile updated successfully"
     );
   } catch (error) {
     sendError(reply, error);
   }
 }
-
-export default flowerProfileCreateAbl;
+export default flowerProfileUpdateAbl;

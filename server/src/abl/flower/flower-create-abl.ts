@@ -9,7 +9,7 @@ import flowerCreateDao from "../../dao/flower/flower-create-dao";
 import householdGetDao from "../../dao/household/household-get-dao";
 import Ajv from "ajv";
 import checkSmartPotExists from "../../dao/smartpot/smartpot-exists-dao";
-import flowerProfileGetDao from "../../dao/flower-profile/flowerProfile-get-dao";
+import flowerProfileGetDao from "../../dao/flowerProfile/flowerProfile-get-dao";
 const schema = {
   type: "object",
   properties: {

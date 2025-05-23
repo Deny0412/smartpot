@@ -2,12 +2,11 @@ import Ajv from "ajv";
 const ajv = new Ajv();
 import { FastifyReply } from "fastify";
 import {
-  sendClientError,
+  sendSuccess,
   sendError,
-  sendNoContent,
+  sendClientError,
 } from "../../middleware/response-handler";
-import flowerProfileDeleteDao from "../../dao/flower-profile/flowerProfile-delete-dao";
-import flowerProfileGetDao from "../../dao/flower-profile/flowerProfile-get-dao";
+import flowerProfileGetDao from "../../dao/flowerProfile/flowerProfile-get-dao";
 
 const schema = {
   type: "object",
@@ -18,7 +17,7 @@ const schema = {
   additionalProperties: false,
 };
 
-async function flowerProfileDeleteAbl(id: string, reply: FastifyReply) {
+async function flowerProfileGetAbl(id: string, reply: FastifyReply) {
   try {
     const idObject = { flowerProfile_id: id };
     const validate = ajv.compile(schema);
@@ -35,10 +34,9 @@ async function flowerProfileDeleteAbl(id: string, reply: FastifyReply) {
       sendClientError(reply, "Flower profile does not exist");
       return;
     }
-    await flowerProfileDeleteDao(id);
-    sendNoContent(reply, "Flower profile deleted successfully");
+    sendSuccess(reply, flowerProfile, "Flower profile retrieved successfully");
   } catch (error) {
     sendError(reply, error);
   }
 }
-export default flowerProfileDeleteAbl;
+export default flowerProfileGetAbl;

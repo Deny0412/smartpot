@@ -1,6 +1,6 @@
 import { FastifyReply } from "fastify";
 import { sendSuccess, sendError } from "../../middleware/response-handler";
-import flowerProfileListDao from "../../dao/flower-profile/flowerProfile-list-dao";
+import flowerProfileListDao from "../../dao/flowerProfile/flowerProfile-list-dao";
 
 async function flowerProfileListAbl(reply: FastifyReply) {
   try {
