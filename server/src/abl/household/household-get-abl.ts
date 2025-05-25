@@ -1,46 +1,42 @@
 import Ajv from "ajv";
 const ajv = new Ajv();
-import { FastifyRequest, FastifyReply } from "fastify";
+import { FastifyReply } from "fastify";
+import {
+  sendSuccess,
+  sendError,
+  sendClientError,
+  sendNotFound,
+} from "../../middleware/response-handler";
+import householdGetDao from "../../dao/household/household-get-dao";
 
-const HOUSEHOLD_DAO = require("../../dao/household/household-get-dao");
-
-const SCHEMA = {
+const schema = {
   type: "object",
   properties: {
-    id_household: { type: "string" },
+    id: { type: "string" },
   },
-  required: ["id_household"],
+  required: ["id"],
   additionalProperties: false,
 };
-interface IHouseholdGet {
-  id_household: string;
-}
-async function getHousehold(request: FastifyRequest, reply: FastifyReply) {
+
+async function householdGetAbl(id: string, reply: FastifyReply) {
   try {
-    const REQ_PARAM: IHouseholdGet = request.query as IHouseholdGet;
-    const VALID = ajv.validate(SCHEMA, REQ_PARAM);
-    if (!VALID) {
-      reply.status(400).send({
-        code: "dtoInIsNotValid",
-        message: "dtoIn is not valid",
-        validationError: ajv.errors,
-      });
+    const idObject = { id: id };
+    const validate = ajv.compile(schema);
+    const valid = validate(idObject);
+    if (!valid) {
+      sendClientError(
+        reply,
+        JSON.stringify(validate.errors?.map((error) => error.message))
+      );
       return;
     }
-    const HOUSEHOLD = await HOUSEHOLD_DAO.get(REQ_PARAM.id_household);
-    reply.status(200).send({
-      HOUSEHOLD,
-      message: "Household retrieved successfully",
-      status: "success",
-    });
-  } catch (error) {
-    if (error instanceof Error) {
-      reply.status(500).send({ message: error.message, status: "error" });
-    } else {
-      reply
-        .status(500)
-        .send({ message: "Unknown error occurred", status: "error" });
+    const household = await householdGetDao(id);
+    if (!household) {
+      sendNotFound(reply, "Household does not exist");
     }
+    sendSuccess(reply, household, "Household retrieved successfully");
+  } catch (error) {
+    sendError(reply, error);
   }
 }
-export default getHousehold;
+export default householdGetAbl;

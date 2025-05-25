@@ -16,11 +16,12 @@
   "description": "Authentication microservice",
   "dependencies": {
     "@fastify/cors": "^8.0.0",
-    "@fastify/jwt": "^7.0.0",
+    "@fastify/jwt": "^7.2.4",
     "@fastify/type-provider-typebox": "^3.0.0",
     "@sinclair/typebox": "^0.31.0",
     "dotenv": "^16.0.0",
-    "fastify": "^4.0.0"
+    "fastify": "^4.0.0",
+    "mongoose": "^8.1.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
