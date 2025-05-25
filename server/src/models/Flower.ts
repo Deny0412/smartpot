@@ -5,6 +5,7 @@ export interface IFlower extends Document {
   name: string;
   household_id: Types.ObjectId;
   serial_number: string;
+  avatar: string;
   profile: {
     humidity: {
       min: number | null;
@@ -30,6 +31,7 @@ const flowerSchema = new Schema<IFlower>(
       ref: "Household",
       required: false,
     },
+    avatar: { type: String, required: false, default: null },
     serial_number: { type: String, required: false, default: null },
     profile: {
       humidity: {

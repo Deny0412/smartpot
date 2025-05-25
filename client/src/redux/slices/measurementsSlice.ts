@@ -1,0 +1,450 @@
+import { createAction, createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { MeasurementType, MeasurementValue } from '../../types/flowerTypes'
+import { api } from '../services/api'
+import { getMeasurementsForFlower } from '../services/measurmentApi'
+import { webSocketService } from '../services/websocketService'
+import { AppDispatch, RootState } from '../store/store'
+
+const WebSocketStates = {
+    CONNECTING: 0,
+    OPEN: 1,
+    CLOSING: 2,
+    CLOSED: 3,
+} as const
+
+export type WebSocketConnectionStatus =
+    | 'idle'
+    | 'connecting'
+    | 'connected'
+    | 'reconnecting'
+    | 'disconnected'
+    | 'error'
+    | 'closing'
+
+export interface MeasurementsByType {
+    water: MeasurementValue[]
+    temperature: MeasurementValue[]
+    light: MeasurementValue[]
+    humidity: MeasurementValue[]
+    battery: MeasurementValue[]
+}
+
+export interface Measurements extends MeasurementsByType {
+    lastChange: string
+}
+
+export interface MeasurementsState {
+    measurements: {
+        [flowerId: string]: Measurements
+    }
+    loading: boolean
+    error: string | null
+    activeWebSocketFlowerId: string | null
+    webSocketStatus: WebSocketConnectionStatus
+    lastChange: {
+        flowerId: string
+        type: MeasurementType
+        timestamp: string
+    } | null
+    processedMeasurements: {
+        [flowerId: string]: Measurements
+    }
+}
+
+const initialState: MeasurementsState = {
+    measurements: {},
+    loading: false,
+    error: null,
+    activeWebSocketFlowerId: null,
+    webSocketStatus: 'idle',
+    lastChange: null,
+    processedMeasurements: {},
+}
+
+export const startWebSocketConnectionThunk = createAsyncThunk(
+    'measurements/startWebSocketConnection',
+    async (_, { dispatch, getState }) => {
+        const state = getState() as RootState
+        const measurementsState = state.measurements
+
+        if (['idle', 'disconnected', 'error', 'closing'].includes(measurementsState.webSocketStatus)) {
+            dispatch(measurementsSlice.actions.setWebSocketStatus('connecting'))
+            webSocketService.connect()
+        } else if (measurementsState.webSocketStatus === 'connected') {
+            console.log('WebSocket already connected')
+        }
+    },
+)
+
+export const stopWebSocketConnectionThunk = createAsyncThunk(
+    'measurements/stopWebSocketConnection',
+    async (_, { getState }) => {
+        const state = getState() as RootState
+        const { webSocketStatus, activeWebSocketFlowerId } = state.measurements
+
+        if (webSocketStatus === 'idle' || !activeWebSocketFlowerId) {
+            console.log('WebSocket: stopWebSocketConnection called but already idle or no active flower')
+            return
+        }
+
+        try {
+            webSocketService.prepareForIntentionalDisconnect()
+            webSocketService.disconnect()
+        } catch (error) {
+            console.error('WebSocket: Error during cleanup:', error)
+        }
+    },
+)
+
+export const fetchMeasurementsForFlower = createAsyncThunk(
+    'measurements/fetchForFlower',
+    async (
+        {
+            flowerId,
+            householdId,
+            dateFrom,
+            dateTo,
+        }: { flowerId: string; householdId: string; dateFrom: string; dateTo: string },
+        { rejectWithValue },
+    ) => {
+        try {
+            const formatDate = (date: Date) => {
+                return date.toISOString().split('T')[0]
+            }
+
+            const fromDate = dateFrom ? new Date(dateFrom) : new Date(Date.now() - 24 * 60 * 60 * 1000)
+            const toDate = dateTo ? new Date(dateTo) : new Date()
+
+            const formattedDateFrom = formatDate(fromDate)
+            const formattedDateTo = formatDate(toDate)
+
+            const types = ['water', 'humidity', 'temperature', 'light', 'battery'] as const
+            const results = await Promise.all(
+                types.map(async type => {
+                    try {
+                        return await getMeasurementsForFlower(flowerId, formattedDateFrom, formattedDateTo, type)
+                    } catch (error) {
+                        console.error(`Error fetching ${type} measurements:`, error)
+                        return { data: [] }
+                    }
+                }),
+            )
+
+            const measurementsByType = {
+                water: [],
+                temperature: [],
+                light: [],
+                humidity: [],
+                battery: [],
+            } as MeasurementsByType
+
+            results.forEach((result, index) => {
+                if (result.data?.length > 0) {
+                    measurementsByType[types[index]] = result.data
+                }
+            })
+
+            return {
+                flowerId,
+                measurements: measurementsByType,
+            }
+        } catch (error) {
+            console.error('Error in fetchMeasurementsForFlower:', error)
+            return rejectWithValue(error instanceof Error ? error.message : 'Chyba pri načítaní meraní')
+        }
+    },
+)
+
+export const fetchLatestMeasurements = createAsyncThunk(
+    'measurements/fetchLatest',
+    async ({ flowerId, householdId }: { flowerId: string; householdId: string }, { rejectWithValue }) => {
+        try {
+            const response = await api.get(`/measurement/getLatest/${flowerId}`)
+            return response.data.data
+        } catch (error: any) {
+            if (error.response?.status === 404) {
+                return {
+                    water: null,
+                    humidity: null,
+                    light: null,
+                    temperature: null,
+                    battery: null,
+                }
+            }
+            return rejectWithValue(error.message || 'Chyba pri načítaní meraní')
+        }
+    },
+)
+
+export const measurementsSlice = createSlice({
+    name: 'measurements',
+    initialState,
+    reducers: {
+        setWebSocketStatus: (state, action: PayloadAction<WebSocketConnectionStatus>) => {
+            state.webSocketStatus = action.payload
+        },
+        clearMeasurements: state => {
+            state.measurements = {}
+            state.activeWebSocketFlowerId = null
+            state.webSocketStatus = 'idle'
+            state.error = null
+            state.loading = false
+            state.lastChange = null
+        },
+        setMeasurements: (state, action: PayloadAction<{ flowerId: string; measurements: Measurements }>) => {
+            const { flowerId, measurements } = action.payload
+            const initialMeasurements: Measurements = {
+                water: [],
+                temperature: [],
+                light: [],
+                humidity: [],
+                battery: [],
+                lastChange: new Date().toISOString(),
+            }
+
+            if (!state.measurements[flowerId]) {
+                state.measurements[flowerId] = initialMeasurements
+            }
+
+            Object.entries(measurements).forEach(([type, values]) => {
+                if (type in state.measurements[flowerId]) {
+                    state.measurements[flowerId][type as keyof Omit<Measurements, 'lastChange'>] = values
+                }
+            })
+
+            state.measurements[flowerId].lastChange = new Date().toISOString()
+        },
+        addMeasurement: (state, action: PayloadAction<{ flowerId: string; measurement: MeasurementValue }>) => {
+            const { flowerId, measurement } = action.payload
+
+            if (
+                !measurement.type ||
+                !['water', 'temperature', 'light', 'humidity', 'battery'].includes(measurement.type)
+            ) {
+                return
+            }
+
+            const measurementType = measurement.type as keyof MeasurementsByType
+
+            
+            if (!state.measurements[flowerId]) {
+                state.measurements[flowerId] = {
+                    water: [],
+                    temperature: [],
+                    light: [],
+                    humidity: [],
+                    battery: [],
+                    lastChange: new Date().toISOString(),
+                }
+            }
+
+            const measurements = state.measurements[flowerId][measurementType]
+
+            
+            if (measurements.some(m => m._id === measurement._id)) {
+                return
+            }
+
+           
+            measurements.unshift(measurement)
+
+            
+            
+            state.measurements[flowerId].lastChange = new Date().toISOString()
+        },
+        updateMeasurement: (state, action: PayloadAction<{ flowerId: string; measurement: MeasurementValue }>) => {
+            const { flowerId, measurement } = action.payload
+            const validTypes = ['water', 'temperature', 'light', 'humidity', 'battery'] as const
+            type ValidType = (typeof validTypes)[number]
+
+            if (
+                state.measurements[flowerId] &&
+                measurement.type &&
+                validTypes.includes(measurement.type as ValidType)
+            ) {
+                const measurementType = measurement.type as ValidType
+                const index = state.measurements[flowerId][measurementType].findIndex(
+                    (m: MeasurementValue) => m._id === measurement._id,
+                )
+                if (index !== -1) {
+                    state.measurements[flowerId][measurementType][index] = measurement
+                    state.measurements[flowerId].lastChange = new Date().toISOString()
+                }
+            }
+        },
+        removeMeasurement: (
+            state,
+            action: PayloadAction<{ flowerId: string; type: MeasurementType; measurementId: string }>,
+        ) => {
+            const { flowerId, type, measurementId } = action.payload
+            const validTypes = ['water', 'temperature', 'light', 'humidity', 'battery'] as const
+            type ValidType = (typeof validTypes)[number]
+
+            if (state.measurements[flowerId] && validTypes.includes(type as ValidType)) {
+                const measurementType = type as ValidType
+                state.measurements[flowerId][measurementType] = state.measurements[flowerId][measurementType].filter(
+                    (m: MeasurementValue) => m._id !== measurementId,
+                )
+                state.measurements[flowerId].lastChange = new Date().toISOString()
+            }
+        },
+        setActiveWebSocketFlowerId: (state, action: PayloadAction<string | null>) => {
+            state.activeWebSocketFlowerId = action.payload
+        },
+        clearActiveWebSocketFlowerId: state => {
+            state.activeWebSocketFlowerId = null
+        },
+    },
+    extraReducers: builder => {
+        builder
+            .addCase(fetchMeasurementsForFlower.pending, state => {
+                state.loading = true
+                state.error = null
+            })
+            .addCase(fetchMeasurementsForFlower.fulfilled, (state, action) => {
+                state.loading = false
+                const { flowerId, measurements: newMeasurementsByType } = action.payload
+
+                
+                if (!state.measurements[flowerId]) {
+                    state.measurements[flowerId] = {
+                        water: [],
+                        temperature: [],
+                        light: [],
+                        humidity: [],
+                        battery: [],
+                        lastChange: new Date().toISOString(),
+                    }
+                }
+
+                const existingMeasurements = state.measurements[flowerId]
+                let changed = false
+
+                
+                ;(Object.keys(newMeasurementsByType) as Array<keyof MeasurementsByType>).forEach(type => {
+                    const existing = existingMeasurements[type] || []
+                    const newlyFetched = newMeasurementsByType[type] || []
+
+                    if (newlyFetched.length > 0) {
+                        changed = true
+
+                        // Spoj nové a existujúce merania
+                        const combined = [...newlyFetched, ...existing]
+
+                        // Odstráň duplikáty pomocou Map (efektívnejšie pre veľké polia)
+                        const uniqueMeasurementsMap = new Map()
+                        combined.forEach(m => {
+                            if (!uniqueMeasurementsMap.has(m._id)) {
+                                uniqueMeasurementsMap.set(m._id, m)
+                            }
+                        })
+                        const uniqueMeasurements = Array.from(uniqueMeasurementsMap.values())
+
+                        // Zoradenie podľa času zostupne
+                        uniqueMeasurements.sort(
+                            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+                        )
+
+                        // Ulož zlúčené, unikátne a zoradené merania
+                        existingMeasurements[type] = uniqueMeasurements
+                    }
+                })
+
+                // Aktualizuj lastChange len ak sa niečo zmenilo
+                if (changed) {
+                    existingMeasurements.lastChange = new Date().toISOString()
+                }
+            })
+            .addCase(fetchMeasurementsForFlower.rejected, (state, action) => {
+                state.loading = false
+                state.error = action.payload as string
+            })
+            .addCase(fetchLatestMeasurements.pending, state => {
+                state.loading = true
+                state.error = null
+            })
+            .addCase(fetchLatestMeasurements.fulfilled, (state, action) => {
+                state.loading = false
+                const flowerId = action.meta.arg.flowerId
+                if (!state.measurements[flowerId]) {
+                    state.measurements[flowerId] = {
+                        water: [],
+                        temperature: [],
+                        light: [],
+                        humidity: [],
+                        battery: [],
+                        lastChange: new Date().toISOString(),
+                    }
+                }
+
+                // Pridáme nové merania na začiatok poľa a aktualizujeme lastChange
+                let changed = false
+                if (action.payload.water) {
+                    state.measurements[flowerId].water.unshift(action.payload.water)
+                    changed = true
+                }
+                if (action.payload.humidity) {
+                    state.measurements[flowerId].humidity.unshift(action.payload.humidity)
+                    changed = true
+                }
+                if (action.payload.light) {
+                    state.measurements[flowerId].light.unshift(action.payload.light)
+                    changed = true
+                }
+                if (action.payload.temperature) {
+                    state.measurements[flowerId].temperature.unshift(action.payload.temperature)
+                    changed = true
+                }
+                if (action.payload.battery) {
+                    state.measurements[flowerId].battery.unshift(action.payload.battery)
+                    changed = true
+                }
+
+                if (changed) {
+                    state.measurements[flowerId].lastChange = new Date().toISOString()
+                }
+            })
+            .addCase(fetchLatestMeasurements.rejected, (state, action) => {
+                state.loading = false
+                state.error = action.error.message || 'Chyba pri načítaní meraní'
+            })
+            .addCase(stopWebSocketConnectionThunk.fulfilled, state => {
+                state.webSocketStatus = 'idle'
+                state.activeWebSocketFlowerId = null
+                state.measurements = {}
+                state.processedMeasurements = {}
+            })
+            .addCase(cleanupWebSocket, state => {
+                state.webSocketStatus = 'idle'
+                state.activeWebSocketFlowerId = null
+                state.measurements = {}
+                state.processedMeasurements = {}
+            })
+    },
+})
+
+export const {
+    clearMeasurements,
+    setMeasurements,
+    addMeasurement,
+    updateMeasurement,
+    removeMeasurement,
+    setActiveWebSocketFlowerId,
+    clearActiveWebSocketFlowerId,
+    setWebSocketStatus,
+} = measurementsSlice.actions
+
+// Add new synchronous action for cleanup
+export const cleanupWebSocket = createAction('measurements/cleanupWebSocket')
+
+export const initializeWebSocket = (dispatch: AppDispatch) => {
+    webSocketService.setDispatch(dispatch)
+}
+
+export default measurementsSlice.reducer
+
+// Explicitný export thunkov s novými názvami konštánt
+export {
+    startWebSocketConnectionThunk as startWebSocketConnection,
+    stopWebSocketConnectionThunk as stopWebSocketConnection,
+}

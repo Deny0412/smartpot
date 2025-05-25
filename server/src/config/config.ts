@@ -47,11 +47,11 @@ const requireEnv = (key: string): string => {
 };
 
 export const secrets = {
-  CLIENT_ID: requireEnv("CLIENT_ID"),
+ /*  CLIENT_ID: requireEnv("CLIENT_ID"),
   CLIENT_SECRET: requireEnv("CLIENT_SECRET"),
-  REDIRECT_URI: requireEnv("REDIRECT_URI"),
+  REDIRECT_URI: requireEnv("REDIRECT_URI"), */
   REFRESH_TOKEN: requireEnv("REFRESH_TOKEN"),
-  DISCORD_WEBHOOK_URL: requireEnv("DISCORD_WEBHOOK_URL"),
+  /* DISCORD_WEBHOOK_URL: requireEnv("DISCORD_WEBHOOK_URL"), */
   JWT_SECRET: requireEnv("JWT_SECRET"),
   MONGO_URI: requireEnv("MONGO_URI"),
 };
