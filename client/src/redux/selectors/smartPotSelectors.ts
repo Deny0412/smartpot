@@ -2,7 +2,7 @@ import { createSelector } from '@reduxjs/toolkit'
 import { SmartPot } from '../../types/flowerTypes'
 import { RootState } from '../store/rootReducer'
 
-// Selektory
+
 export const selectSmartPots = (state: RootState) => state.smartPots.smartPots
 
 export const selectInactiveSmartPots = createSelector([selectSmartPots], smartPots =>

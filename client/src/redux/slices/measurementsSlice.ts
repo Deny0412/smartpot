@@ -1,8 +1,8 @@
 import { createAction, createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
-import i18next from 'i18next'
 import { MeasurementType, MeasurementValue } from '../../types/flowerTypes'
 import { api } from '../services/api'
 import { getMeasurementsForFlower } from '../services/measurmentApi'
+import { webSocketService } from '../services/websocketService'
 import { AppDispatch, RootState } from '../store/store'
 
 const WebSocketStates = {
@@ -61,287 +61,17 @@ const initialState: MeasurementsState = {
     processedMeasurements: {},
 }
 
-// WebSocket service
-class WebSocketService {
-    private ws: WebSocket | null = null
-    private reconnectAttempts = 0
-    private maxReconnectAttempts = 5
-    private reconnectTimeout = 3000
-    private flowerId: string | null = null
-    private token: string | null = null
-    private dispatch: AppDispatch | null = null
-    private isIntentionalDisconnect = false
-
-    constructor() {
-        this.token = localStorage.getItem('token')
-    }
-
-    setDispatch(dispatch: AppDispatch) {
-        this.dispatch = dispatch
-    }
-
-    prepareForIntentionalDisconnect() {
-        this.isIntentionalDisconnect = true
-    }
-
-    connect(flowerId: string) {
-        if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
-            if (this.flowerId === flowerId && this.ws.readyState === WebSocket.OPEN) {
-                console.log(i18next.t('flower_detail.console.websocket_already_connected_open', { flowerId }))
-                if (this.dispatch) this.dispatch(measurementsSlice.actions.setWebSocketStatus('connected'))
-                return
-            }
-            console.log(
-                i18next.t('flower_detail.console.websocket_closing_existing_before_new', {
-                    state: this.ws.readyState,
-                    flowerId,
-                }),
-            )
-            this.ws.onclose = null
-            this.ws.close()
-            this.ws = null
-        }
-
-        this.flowerId = flowerId
-        this.isIntentionalDisconnect = false
-        this.reconnectAttempts = 0
-
-        this.token = localStorage.getItem('token')
-        if (!this.token) {
-            console.error(i18next.t('flower_detail.console.token_not_available'))
-            if (this.dispatch) {
-                this.dispatch(measurementsSlice.actions.setWebSocketStatus('error'))
-            }
-            return
-        }
-
-        // Validate token format
-        try {
-            const tokenParts = this.token.split('.')
-            if (tokenParts.length !== 3) {
-                throw new Error('Invalid token format')
-            }
-            const payload = JSON.parse(atob(tokenParts[1]))
-
-            if (!payload.user || !payload.user.id) {
-                throw new Error('Invalid token structure - missing user.id')
-            }
-        } catch (error) {
-            console.error('Invalid token:', error)
-            if (this.dispatch) {
-                this.dispatch(measurementsSlice.actions.setWebSocketStatus('error'))
-            }
-            return
-        }
-
-        // Update WebSocket URL construction
-        const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001'
-        const wsUrl = `${baseUrl.replace('http', 'ws')}/ws/measurements/${flowerId}?token=${encodeURIComponent(
-            this.token,
-        )}`
-
-        try {
-            this.ws = new WebSocket(wsUrl)
-
-            this.ws.onopen = () => {
-                console.log(i18next.t('flower_detail.console.websocket_open_for_flower', { flowerId: this.flowerId }))
-                this.reconnectAttempts = 0
-                if (this.dispatch) {
-                    this.dispatch(measurementsSlice.actions.setWebSocketStatus('connected'))
-                    this.dispatch(measurementsSlice.actions.setActiveWebSocketFlowerId(this.flowerId!))
-                }
-            }
-
-            this.ws.onmessage = event => {
-                try {
-                    const message = JSON.parse(event.data)
-                    console.log('[WEBSOCKET] Message received:', message)
-
-                    if (!this.dispatch || !this.flowerId) {
-                        console.error('[WEBSOCKET] No dispatch or flowerId available')
-                        return
-                    }
-
-                    switch (message.type) {
-                        case 'connection':
-                            console.log('[WEBSOCKET] Connection established')
-                            break
-                        case 'measurement_inserted':
-                            console.log('[WEBSOCKET] New measurement received:', message.data)
-                            if (
-                                !message.data.type ||
-                                !['water', 'temperature', 'light', 'humidity', 'battery'].includes(message.data.type)
-                            ) {
-                                console.error('[WEBSOCKET] Invalid measurement type:', message.data.type)
-                                break
-                            }
-
-                            this.dispatch(
-                                measurementsSlice.actions.addMeasurement({
-                                    flowerId: this.flowerId,
-                                    measurement: message.data,
-                                }),
-                            )
-                            break
-                        case 'measurement_updated':
-                            console.log('[WEBSOCKET] Measurement updated:', message.data)
-                            this.dispatch(
-                                measurementsSlice.actions.updateMeasurement({
-                                    flowerId: this.flowerId,
-                                    measurement: message.data,
-                                }),
-                            )
-                            break
-                        case 'measurement_deleted':
-                            console.log('[WEBSOCKET] Measurement deleted:', message.data)
-                            this.dispatch(
-                                measurementsSlice.actions.removeMeasurement({
-                                    flowerId: this.flowerId,
-                                    type: message.data.type,
-                                    measurementId: message.data.measurement_id,
-                                }),
-                            )
-                            break
-                        case 'error':
-                            console.error('[WEBSOCKET] Error message:', message.message)
-                            break
-                        default:
-                            console.log('[WEBSOCKET] Unknown message type:', message.type)
-                    }
-                } catch (error) {
-                    console.error('[WEBSOCKET] Error processing message:', error)
-                }
-            }
-
-            this.ws.onclose = event => {
-                console.log('WebSocket closed:', event.code, event.reason)
-                if (this.isIntentionalDisconnect) {
-                    if (this.dispatch) {
-                        this.dispatch(measurementsSlice.actions.setWebSocketStatus('idle'))
-                        this.dispatch(measurementsSlice.actions.setActiveWebSocketFlowerId(null))
-                    }
-                    this.isIntentionalDisconnect = false
-                } else {
-                    this.handleReconnect()
-                }
-                this.ws = null
-            }
-
-            this.ws.onerror = error => {
-                console.error(
-                    i18next.t('flower_detail.console.websocket_error_for_flower', { flowerId: this.flowerId }),
-                    error,
-                )
-                if (this.dispatch) {
-                    this.dispatch(measurementsSlice.actions.setWebSocketStatus('error'))
-                }
-                this.handleReconnect()
-            }
-        } catch (error) {
-            console.error('Error creating WebSocket:', error)
-            if (this.dispatch) {
-                this.dispatch(measurementsSlice.actions.setWebSocketStatus('error'))
-            }
-            this.handleReconnect()
-        }
-    }
-
-    private handleReconnect() {
-        if (this.isIntentionalDisconnect) {
-            return
-        }
-
-        if (this.reconnectAttempts < this.maxReconnectAttempts) {
-            this.reconnectAttempts++
-            console.log(`Reconnect attempt ${this.reconnectAttempts} of ${this.maxReconnectAttempts}`)
-
-            if (this.dispatch) {
-                this.dispatch(measurementsSlice.actions.setWebSocketStatus('reconnecting'))
-            }
-            setTimeout(() => {
-                if (this.flowerId && !this.isIntentionalDisconnect) {
-                    console.log(
-                        i18next.t('flower_detail.console.websocket_reconnecting_to_flower', {
-                            flowerId: this.flowerId,
-                        }),
-                    )
-                    if (this.dispatch) this.dispatch(measurementsSlice.actions.setWebSocketStatus('connecting'))
-                    this.connect(this.flowerId)
-                }
-            }, this.reconnectTimeout * this.reconnectAttempts) // Increase timeout with each attempt
-        } else {
-            console.log('Max reconnect attempts reached')
-            if (this.dispatch) {
-                this.dispatch(measurementsSlice.actions.setWebSocketStatus('disconnected'))
-                this.dispatch(measurementsSlice.actions.setActiveWebSocketFlowerId(null))
-            }
-        }
-    }
-
-    sendMessage(message: any) {
-        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-            this.ws.send(JSON.stringify(message))
-        }
-    }
-
-    disconnect() {
-        // isIntentionalDisconnect by mal byť nastavený cez prepareForIntentionalDisconnect
-        if (this.ws) {
-            if (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING) {
-                this.ws.close()
-            } else {
-                if (this.isIntentionalDisconnect && this.dispatch) {
-                    this.dispatch(measurementsSlice.actions.setWebSocketStatus('idle'))
-                    this.dispatch(measurementsSlice.actions.setActiveWebSocketFlowerId(null))
-                }
-            }
-            this.ws = null
-        } else {
-            if (this.isIntentionalDisconnect && this.dispatch) {
-                this.dispatch(measurementsSlice.actions.setWebSocketStatus('idle'))
-                this.dispatch(measurementsSlice.actions.setActiveWebSocketFlowerId(null))
-                this.isIntentionalDisconnect = false
-            }
-        }
-    }
-}
-
-export const webSocketService = new WebSocketService()
-
-// Thunks - najprv definované ako lokálne konštanty
-const startWebSocketConnectionThunk = createAsyncThunk(
+export const startWebSocketConnectionThunk = createAsyncThunk(
     'measurements/startWebSocketConnection',
-    async (flowerId: string, { dispatch, getState }) => {
+    async (_, { dispatch, getState }) => {
         const state = getState() as RootState
         const measurementsState = state.measurements
 
-        if (
-            measurementsState.activeWebSocketFlowerId !== flowerId ||
-            ['idle', 'disconnected', 'error', 'closing'].includes(measurementsState.webSocketStatus)
-        ) {
-            if (
-                measurementsState.activeWebSocketFlowerId &&
-                measurementsState.activeWebSocketFlowerId !== flowerId &&
-                !['idle', 'disconnected', 'error', 'closing'].includes(measurementsState.webSocketStatus)
-            ) {
-                console.log(
-                    i18next.t('flower_detail.console.websocket_switching_flower', {
-                        oldFlowerId: measurementsState.activeWebSocketFlowerId,
-                        newFlowerId: flowerId,
-                    }),
-                )
-                webSocketService.prepareForIntentionalDisconnect()
-                webSocketService.disconnect()
-            }
-
-            dispatch(measurementsSlice.actions.setActiveWebSocketFlowerId(flowerId))
+        if (['idle', 'disconnected', 'error', 'closing'].includes(measurementsState.webSocketStatus)) {
             dispatch(measurementsSlice.actions.setWebSocketStatus('connecting'))
-            webSocketService.connect(flowerId)
-        } else if (
-            measurementsState.activeWebSocketFlowerId === flowerId &&
-            measurementsState.webSocketStatus === 'connected'
-        ) {
-            console.log(i18next.t('flower_detail.console.websocket_already_connected_to_flower', { flowerId }))
+            webSocketService.connect()
+        } else if (measurementsState.webSocketStatus === 'connected') {
+            console.log('WebSocket already connected')
         }
     },
 )
@@ -352,7 +82,6 @@ export const stopWebSocketConnectionThunk = createAsyncThunk(
         const state = getState() as RootState
         const { webSocketStatus, activeWebSocketFlowerId } = state.measurements
 
-        // Ak už nie je aktívne pripojenie, nič nerobíme
         if (webSocketStatus === 'idle' || !activeWebSocketFlowerId) {
             console.log('WebSocket: stopWebSocketConnection called but already idle or no active flower')
             return
@@ -393,13 +122,7 @@ export const fetchMeasurementsForFlower = createAsyncThunk(
             const results = await Promise.all(
                 types.map(async type => {
                     try {
-                        return await getMeasurementsForFlower(
-                            flowerId,
-                            householdId,
-                            formattedDateFrom,
-                            formattedDateTo,
-                            type,
-                        )
+                        return await getMeasurementsForFlower(flowerId, formattedDateFrom, formattedDateTo, type)
                     } catch (error) {
                         console.error(`Error fetching ${type} measurements:`, error)
                         return { data: [] }
@@ -436,10 +159,7 @@ export const fetchLatestMeasurements = createAsyncThunk(
     'measurements/fetchLatest',
     async ({ flowerId, householdId }: { flowerId: string; householdId: string }, { rejectWithValue }) => {
         try {
-            const response = await api.post('/flower/latest-history', {
-                id: flowerId,
-                householdId,
-            })
+            const response = await api.get(`/measurement/getLatest/${flowerId}`)
             return response.data.data
         } catch (error: any) {
             if (error.response?.status === 404) {
@@ -497,7 +217,6 @@ export const measurementsSlice = createSlice({
         addMeasurement: (state, action: PayloadAction<{ flowerId: string; measurement: MeasurementValue }>) => {
             const { flowerId, measurement } = action.payload
 
-            // Rýchla validácia typu
             if (
                 !measurement.type ||
                 !['water', 'temperature', 'light', 'humidity', 'battery'].includes(measurement.type)
@@ -507,7 +226,7 @@ export const measurementsSlice = createSlice({
 
             const measurementType = measurement.type as keyof MeasurementsByType
 
-            // Inicializácia stavu ak neexistuje
+            
             if (!state.measurements[flowerId]) {
                 state.measurements[flowerId] = {
                     water: [],
@@ -521,20 +240,16 @@ export const measurementsSlice = createSlice({
 
             const measurements = state.measurements[flowerId][measurementType]
 
-            // Rýchla kontrola duplicity pomocou Set
+            
             if (measurements.some(m => m._id === measurement._id)) {
                 return
             }
 
-            // Pridanie merania na začiatok poľa
+           
             measurements.unshift(measurement)
 
-            // Obmedzenie veľkosti poľa
-            if (measurements.length > 1000) {
-                measurements.length = 1000
-            }
-
-            // Aktualizácia časovej pečiatky
+            
+            
             state.measurements[flowerId].lastChange = new Date().toISOString()
         },
         updateMeasurement: (state, action: PayloadAction<{ flowerId: string; measurement: MeasurementValue }>) => {
@@ -590,7 +305,7 @@ export const measurementsSlice = createSlice({
                 state.loading = false
                 const { flowerId, measurements: newMeasurementsByType } = action.payload
 
-                // Inicializuj stav pre kvetinu ak neexistuje
+                
                 if (!state.measurements[flowerId]) {
                     state.measurements[flowerId] = {
                         water: [],
@@ -605,13 +320,13 @@ export const measurementsSlice = createSlice({
                 const existingMeasurements = state.measurements[flowerId]
                 let changed = false
 
-                // Prejdi všetky typy meraní a zlúč ich
+                
                 ;(Object.keys(newMeasurementsByType) as Array<keyof MeasurementsByType>).forEach(type => {
                     const existing = existingMeasurements[type] || []
                     const newlyFetched = newMeasurementsByType[type] || []
 
                     if (newlyFetched.length > 0) {
-                        changed = true // Označ, že prišli nové dáta
+                        changed = true
 
                         // Spoj nové a existujúce merania
                         const combined = [...newlyFetched, ...existing]

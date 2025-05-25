@@ -14,6 +14,7 @@ async function flowerUpdateDao(id: string, flowerData: IFlower) {
         serial_number: flowerData.serial_number,
         household_id: flowerData.household_id,
         profile: flowerData.profile,
+        avatar: flowerData.avatar,
       },
     },
     { new: true }

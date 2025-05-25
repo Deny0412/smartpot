@@ -30,11 +30,10 @@ const HouseholdLayout = () => {
     const isOwner = useSelector((state: RootState) => selectIsHouseholdOwner(state, householdId || ''))
     const household = households.find((h: { id: string }) => h.id === householdId)
 
-    // State for access check
+    
     const [accessStatus, setAccessStatus] = useState<'checking' | 'granted' | 'denied'>('checking')
     const [initialLoadAttempted, setInitialLoadAttempted] = useState(false)
 
-    // Load households on mount
     useEffect(() => {
         if (!initialLoadAttempted) {
             dispatch(loadHouseholds())
@@ -42,14 +41,12 @@ const HouseholdLayout = () => {
         }
     }, [dispatch, initialLoadAttempted])
 
-    // Check access after households load or householdId changes
+    
     useEffect(() => {
-        // If we're still loading households, just wait
         if (householdsLoading) {
             return
         }
 
-        // If we don't have a householdId in URL, it's an invalid state for this layout
         if (!householdId) {
             setAccessStatus('denied')
             navigate('/households', { replace: true })
@@ -68,7 +65,6 @@ const HouseholdLayout = () => {
         }
     }, [householdsLoading, householdId, households, navigate, t, initialLoadAttempted])
 
-    // Show loader while checking access or loading households
     if (householdsLoading || accessStatus === 'checking') {
         return <Loader />
     }

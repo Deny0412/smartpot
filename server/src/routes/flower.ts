@@ -58,14 +58,6 @@ export default async function flowerRoutes(fastify: FastifyInstance) {
     },
     measurementController.history
   );
-  fastify.post(
-    '/latest-history',
-    {
-      onRequest: [authMiddleware],
-      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])],
-    },
-    measurementController.latest_history
-  )
   fastify.get(
     "/listactive",
     {

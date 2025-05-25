@@ -101,7 +101,6 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
         setLoading(true)
         setError(null)
 
-         
         if (!name.trim()) {
             toast.error(t('add_flower.error.name_required'))
             setLoading(false)
@@ -124,7 +123,6 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
             return
         }
 
-       
         const hasInvalidTimeRange = Object.entries(scheduleData).some(([day, times]) => {
             if (day === 'active') return false
             if (times.from && times.to && times.from >= times.to) {
@@ -140,27 +138,57 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
         }
 
         try {
-            let profileId = null
-            if (profileType === 'global' && selectedProfileId) {
-                profileId = selectedProfileId
+            let flowerData: {
+                name: string
+                household_id: string
+                avatar: string
+                serial_number: string
+                profile_id: string | null
+                profile: {
+                    humidity: { min: number; max: number }
+                    temperature: { min: number; max: number }
+                    light: { min: number; max: number }
+                }
+            } = {
+                name: name || t('add_flower.default_flower_name'),
+                household_id: householdId || '',
+                avatar: selectedAvatar || '',
+                serial_number: '',
+                profile_id: null,
+                profile: {
+                    humidity: { min: 40, max: 60 },
+                    temperature: { min: 18, max: 25 },
+                    light: { min: 30, max: 70 },
+                },
             }
 
-            const newFlower = await dispatch(
-                createFlower({
-                    name: name || t('add_flower.default_flower_name'),
-                    household_id: householdId || '',
-                    profile_id: profileId || null,
-                    avatar: selectedAvatar || '',
-                    serial_number: '',
-                    profile: profileId
-                        ? undefined
-                        : {
-                              humidity: customProfile.humidity || { min: 40, max: 60 },
-                              temperature: customProfile.temperature || { min: 18, max: 25 },
-                              light: customProfile.light || { min: 30, max: 70 },
-                          },
-                }),
-            ).unwrap()
+            if (profileType === 'global' && selectedProfileId) {
+                // Find the selected global profile
+                const selectedProfile = profiles.find(p => p._id === selectedProfileId)
+                if (selectedProfile) {
+                    flowerData = {
+                        ...flowerData,
+                        profile_id: selectedProfileId,
+                        profile: {
+                            humidity: selectedProfile.humidity,
+                            temperature: selectedProfile.temperature,
+                            light: selectedProfile.light,
+                        },
+                    }
+                }
+            } else {
+                
+                flowerData = {
+                    ...flowerData,
+                    profile: {
+                        humidity: customProfile.humidity || { min: 40, max: 60 },
+                        temperature: customProfile.temperature || { min: 18, max: 25 },
+                        light: customProfile.light || { min: 30, max: 70 },
+                    },
+                }
+            }
+
+            const newFlower = await dispatch(createFlower(flowerData)).unwrap()
 
             if (!newFlower._id) {
                 throw new Error(t('add_flower.error.no_flower_id_returned'))

@@ -66,7 +66,7 @@ const invitesSlice = createSlice({
                 state.error = null
             })
             .addCase(acceptInvite.fulfilled, (state, action: PayloadAction<string>) => {
-                state.invites = state.invites.filter(invite => invite.id !== action.payload)
+                state.invites = state.invites.filter(invite => invite._id !== action.payload)
                 state.loading = false
             })
             .addCase(acceptInvite.rejected, (state, action) => {
@@ -78,7 +78,7 @@ const invitesSlice = createSlice({
                 state.error = null
             })
             .addCase(rejectInvite.fulfilled, (state, action: PayloadAction<string>) => {
-                state.invites = state.invites.filter(invite => invite.id !== action.payload)
+                state.invites = state.invites.filter(invite => invite._id !== action.payload)
                 state.loading = false
             })
             .addCase(rejectInvite.rejected, (state, action) => {

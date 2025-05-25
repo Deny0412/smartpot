@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
@@ -11,12 +11,10 @@ import { selectHouseholds } from '../../../redux/selectors/houseHoldSelectors'
 import { selectSmartPots } from '../../../redux/selectors/smartPotSelectors'
 import {
     loadFlowerDetails,
-    loadFlowers,
     transplantFlowerToSmartPotThunk,
     transplantFlowerWithSmartPotThunk,
     transplantFlowerWithoutSmartPotThunk,
 } from '../../../redux/slices/flowersSlice'
-import { loadHouseholds } from '../../../redux/slices/householdsSlice'
 import { fetchSmartPots } from '../../../redux/slices/smartPotsSlice'
 import { AppDispatch } from '../../../redux/store/store'
 import { Flower, SmartPot } from '../../../types/flowerTypes'
@@ -66,13 +64,63 @@ const EditFlowerHousehold: React.FC<EditFlowerHouseholdProps> = ({
         (pot: SmartPot) => pot.household_id === currentHouseholdId && pot.active_flower_id === null,
     )
 
-    useEffect(() => {
-        if (isOpen) {
-            dispatch(loadHouseholds())
-            dispatch(loadFlowers(currentHouseholdId))
-            dispatch(fetchSmartPots(currentHouseholdId))
+    const handleSameHouseholdTransplant = async () => {
+        if (!selectedSmartPotId) {
+            throw new Error(t('flower_detail.error.no_smart_pot_selected'))
         }
-    }, [isOpen, dispatch, currentHouseholdId])
+
+        await dispatch(
+            transplantFlowerToSmartPotThunk({
+                flowerId,
+                targetSmartPotId: selectedSmartPotId,
+                householdId: currentHouseholdId,
+            }),
+        ).unwrap()
+
+        await dispatch(fetchSmartPots(currentHouseholdId))
+        await dispatch(loadFlowerDetails(flowerId))
+        toast.success(t('flower_detail.transplant_success'))
+        onClose()
+    }
+
+    const handleDifferentHouseholdWithSmartPot = async () => {
+        if (!smartPotId) {
+            throw new Error('No smart pot ID provided')
+        }
+
+        await dispatch(
+            transplantFlowerWithSmartPotThunk({
+                flowerId,
+                targetHouseholdId: selectedHouseholdId,
+                smartPotId: smartPotId,
+            }),
+        ).unwrap()
+
+        await dispatch(fetchSmartPots(currentHouseholdId))
+        await dispatch(fetchSmartPots(selectedHouseholdId))
+        await dispatch(loadFlowerDetails(flowerId))
+        toast.success(t('flower_detail.transplant_success'))
+        navigate(`/households/${selectedHouseholdId}/flowers`)
+        onClose()
+    }
+
+    const handleDifferentHouseholdWithoutSmartPot = async () => {
+        await dispatch(
+            transplantFlowerWithoutSmartPotThunk({
+                flowerId,
+                targetHouseholdId: selectedHouseholdId,
+                assignOldSmartPot: assignSmartPot,
+                newFlowerId: selectedFlowerId,
+            }),
+        ).unwrap()
+
+        await dispatch(fetchSmartPots(currentHouseholdId))
+        await dispatch(fetchSmartPots(selectedHouseholdId))
+        await dispatch(loadFlowerDetails(flowerId))
+        toast.success(t('flower_detail.transplant_success'))
+        navigate(`/households/${selectedHouseholdId}/flowers`)
+        onClose()
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -80,63 +128,18 @@ const EditFlowerHousehold: React.FC<EditFlowerHouseholdProps> = ({
 
         try {
             if (transplantType === 'same_household') {
-                if (!selectedSmartPotId) {
-                    throw new Error(t('flower_detail.error.no_smart_pot_selected'))
-                }
-
-                await dispatch(
-                    transplantFlowerToSmartPotThunk({
-                        flowerId,
-                        targetSmartPotId: selectedSmartPotId,
-                        householdId: currentHouseholdId,
-                    }),
-                ).unwrap()
-
-                await dispatch(fetchSmartPots(currentHouseholdId))
-                await dispatch(loadFlowerDetails(flowerId))
+                await handleSameHouseholdTransplant()
             } else {
                 if (!selectedHouseholdId) {
                     throw new Error(t('flower_detail.error.no_household_selected'))
                 }
 
-                if (hasSmartPot && keepSmartPot && smartPotId) {
-                    await dispatch(
-                        transplantFlowerWithSmartPotThunk({
-                            flowerId,
-                            targetHouseholdId: selectedHouseholdId,
-                            smartPotId: smartPotId,
-                        }),
-                    ).unwrap()
+                if (hasSmartPot && keepSmartPot) {
+                    await handleDifferentHouseholdWithSmartPot()
                 } else {
-                    await dispatch(
-                        transplantFlowerWithoutSmartPotThunk({
-                            flowerId,
-                            targetHouseholdId: selectedHouseholdId,
-                            assignOldSmartPot: assignSmartPot,
-                            newFlowerId: selectedFlowerId,
-                        }),
-                    ).unwrap()
+                    await handleDifferentHouseholdWithoutSmartPot()
                 }
-
-                await dispatch(fetchSmartPots(currentHouseholdId))
-                if (selectedHouseholdId !== currentHouseholdId) {
-                    await dispatch(fetchSmartPots(selectedHouseholdId))
-                }
-                await dispatch(loadFlowerDetails(flowerId))
             }
-
-            toast.success(t('flower_detail.transplant_success'))
-            if (
-                transplantType === 'different_household' &&
-                selectedHouseholdId &&
-                selectedHouseholdId !== currentHouseholdId
-            ) {
-                navigate(`/households/${selectedHouseholdId}/flowers`)
-            } else {
-                await dispatch(loadFlowerDetails(flowerId))
-                await dispatch(fetchSmartPots(currentHouseholdId))
-            }
-            onClose()
         } catch (error) {
             console.error(t('flower_detail.error.transplant_error_console'), error)
             toast.error(t('flower_detail.transplant_error'))
@@ -306,30 +309,33 @@ const EditFlowerHousehold: React.FC<EditFlowerHouseholdProps> = ({
                                 </div>
                             )}
 
-                            {assignSmartPot && selectedSmartPotId && (
-                                <div className="edit-flower-household-form-group">
-                                    <label className="edit-flower-household-label">
-                                        {t('flower_detail.select_smart_pot')}
-                                    </label>
-                                    {availableSmartPots.length > 0 ? (
-                                        <select
-                                            className="edit-flower-household-select"
-                                            value={selectedSmartPotId}
-                                            onChange={e => setSelectedSmartPotId(e.target.value)}>
-                                            <option value="">{t('flower_detail.select_smart_pot_placeholder')}</option>
-                                            {availableSmartPots.map(pot => (
-                                                <option key={pot._id} value={pot._id}>
-                                                    {pot.serial_number}
+                            {(transplantType as 'same_household' | 'different_household') === 'same_household' &&
+                                assignSmartPot && (
+                                    <div className="edit-flower-household-form-group">
+                                        <label className="edit-flower-household-label">
+                                            {t('flower_detail.select_smart_pot')}
+                                        </label>
+                                        {availableSmartPots.length > 0 ? (
+                                            <select
+                                                className="edit-flower-household-select"
+                                                value={selectedSmartPotId}
+                                                onChange={e => setSelectedSmartPotId(e.target.value)}>
+                                                <option value="">
+                                                    {t('flower_detail.select_smart_pot_placeholder')}
                                                 </option>
-                                            ))}
-                                        </select>
-                                    ) : (
-                                        <div className="edit-flower-household-no-smartpots">
-                                            {t('flower_detail.no_smartpots_available')}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
+                                                {availableSmartPots.map(pot => (
+                                                    <option key={pot._id} value={pot._id}>
+                                                        {pot.serial_number}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        ) : (
+                                            <div className="edit-flower-household-no-smartpots">
+                                                {t('flower_detail.no_smartpots_available')}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                         </>
                     )}
 

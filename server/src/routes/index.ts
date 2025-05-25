@@ -11,7 +11,7 @@ import userRoutes from "./user";
 const routes: FastifyPluginAsync = async (fastify) => {
   // Health check endpoint
   fastify.get(
-    '/health',
+    "/health",
     {
       schema: {
         response: {
@@ -24,11 +24,11 @@ const routes: FastifyPluginAsync = async (fastify) => {
     },
     async () => {
       return {
-        status: 'ok',
+        status: "ok",
         timestamp: new Date().toISOString(),
-      }
+      };
     }
-  )
+  );
 
   // Register routes under the /api prefix
   fastify.register(flowerRoutes, { prefix: "/flower" });
@@ -40,4 +40,4 @@ const routes: FastifyPluginAsync = async (fastify) => {
   fastify.register(userRoutes, { prefix: "/user" });
 };
 
-export default routes
+export default routes;

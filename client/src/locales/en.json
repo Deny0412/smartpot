@@ -188,7 +188,13 @@
             "not_active": "Not active",
             "free_flowerpot_counter": "Free flowerpots",
             "all_profiles": "All profiles",
-            "own_settings": "Own settings"
+            "own_settings": "Own settings",
+            "not_assigned": "Not assigned",
+            "assigned": "Assigned"
+        },
+        "profile": {
+            "assigned": "Profile assigned",
+            "not_assigned": "Profile not assigned"
         },
         "no_flowers": "No flowers",
         "flower_item": {
@@ -310,9 +316,14 @@
         "register": "Register",
         "password": "Password",
         "success": "Successfully logged in",
+        "forgot_password": "Forgot Password",
+        "reset_password": "Reset Password",
+        "back_to_login": "Back to Login",
+        "reset_success": "Password reset instructions have been sent to your email",
         "error": {
             "empty_fields": "Please fill in all fields",
-            "invalid_credentials": "Invalid login credentials"
+            "invalid_credentials": "Invalid login credentials",
+            "reset_failed": "Failed to send password reset instructions"
         }
     },
     "register_page": {
@@ -564,7 +575,7 @@
         "assigned_flower": "Assigned flower",
         "no_flower_assigned": "No flower assigned",
         "view_flower": "View flower",
-        "disconnect": "Disconnect",
+        "disconnect": "Disconnect from flower",
         "transplant": "Transplant",
         "disconnect_title": "Disconnect flowerpot",
         "disconnect_message": "Are you sure you want to disconnect this flowerpot from the flower? This action cannot be undone.",
@@ -587,7 +598,14 @@
         "select_flower": "Select flower",
         "select_flower_placeholder": "Select flower from household",
         "no_flowers_available": "No available flowers in this household",
-        "transplant_warning": "Warning: If you transplant a smart pot with an assigned flower, the flower will be deactivated"
+        "transplant_warning": "Warning: If you transplant a smart pot with an assigned flower, the flower will be deactivated",
+        "keep_flower": "Do you want to move the flower with the smart pot?",
+        "yes": "Yes",
+        "no": "No",
+        "assign_flower": "Do you want to assign the flower to another smart pot in this household?",
+        "select_new_smart_pot": "Select new smart pot",
+        "select_smart_pot_placeholder": "Select smart pot from household",
+        "disconnect_from_household": "Disconnect from household"
     },
     "not_found": {
         "title": "404",

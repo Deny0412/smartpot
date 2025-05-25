@@ -1,97 +1,101 @@
-import { FastifyInstance } from 'fastify'
-import { householdController } from '../controller/household-controller'
-import { authMiddleware } from '../middleware/auth-middleware'
-import { householdAuthMidlleware } from '../middleware/household-membership-middleware'
+import { FastifyInstance } from "fastify";
+import { householdController } from "../controller/household-controller";
+import { authMiddleware } from "../middleware/auth-middleware";
+import { householdAuthMidlleware } from "../middleware/household-membership-middleware";
 
-const MEMBER_ROLE = 'member'
-const OWNER_ROLE = 'owner'
+const MEMBER_ROLE = "member";
+const OWNER_ROLE = "owner";
 
 export default async function householdRoutes(fastify: FastifyInstance) {
-  fastify.post('/create', { onRequest: authMiddleware }, householdController.create)
+  fastify.post(
+    "/create",
+    { onRequest: authMiddleware },
+    householdController.create
+  );
   fastify.delete(
-    '/delete',
+    "/delete",
     {
       onRequest: [authMiddleware], // Authenticate first
       preHandler: [householdAuthMidlleware([OWNER_ROLE])], // Then check household auth
     },
     householdController.delete
-  )
+  );
   fastify.get(
-    '/get/:id',
+    "/get/:id",
     {
       onRequest: [authMiddleware], // Authenticate first
       preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
     },
     householdController.get
-  )
+  );
   fastify.put(
-    '/update',
+    "/update",
     {
       onRequest: [authMiddleware], // Authenticate first
       preHandler: [householdAuthMidlleware([OWNER_ROLE])], // Then check household auth
     },
     householdController.update
-  )
+  );
   fastify.get(
-    '/list',
+    "/list",
     {
       onRequest: [authMiddleware], // Then check household auth
     },
     householdController.list
-  )
+  );
   fastify.post(
-    '/invite',
+    "/invite",
     {
       onRequest: [authMiddleware], // Authenticate first
       preHandler: [householdAuthMidlleware([OWNER_ROLE])], // Then check household auth
     },
     householdController.invite
-  )
+  );
   fastify.put(
-    '/kick',
+    "/kick",
     {
       onRequest: [authMiddleware], // Authenticate first
       preHandler: [householdAuthMidlleware([OWNER_ROLE])], // Then check household auth
     },
     householdController.kick
-  )
+  );
   fastify.put(
-    '/changeOwner',
+    "/changeOwner",
     {
       onRequest: [authMiddleware], // Authenticate first
       preHandler: [householdAuthMidlleware([OWNER_ROLE])], // Then check household auth
     },
     householdController.changeOwner
-  )
+  );
   fastify.put(
-    '/decision',
+    "/decision",
     {
       onRequest: [authMiddleware], // Authenticate first
     },
     householdController.decision
-  )
+  );
   fastify.put(
-    '/leave',
+    "/leave",
     {
       onRequest: [authMiddleware], // Authenticate first
       preHandler: [householdAuthMidlleware([MEMBER_ROLE])], // Then check household auth
     },
     householdController.leave
-  )
+  );
   fastify.get(
-    '/getMembers/:id',
+    "/getMembers/:id",
     {
       onRequest: [authMiddleware], // Authenticate first
       preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
     },
     householdController.getMembers
-  )
+  );
   fastify.get(
-    '/getInvited/:id',
+    "/getInvited/:id",
     {
       onRequest: [authMiddleware], // Authenticate first
       preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
     },
     householdController.getInvitedUsers
-  )
+  );
 }

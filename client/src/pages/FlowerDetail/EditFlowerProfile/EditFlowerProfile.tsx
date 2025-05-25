@@ -74,38 +74,64 @@ const EditFlowerProfile: React.FC<EditFlowerProfileProps> = ({ isOpen, onClose, 
             return
         }
 
-        const updateData = {
+        let updateData: {
+            id: string
+            flower: {
+                profile_id: string | null
+                profile: {
+                    humidity: { min: number; max: number }
+                    temperature: { min: number; max: number }
+                    light: { min: number; max: number }
+                }
+            }
+        } = {
             id: flowerId,
             flower: {
-                profile_id: profileType === 'global' ? selectedProfileId : undefined,
-                profile:
-                    profileType === 'custom'
-                        ? {
-                              temperature: {
-                                  min: customProfile.temperature!.min,
-                                  max: customProfile.temperature!.max,
-                              },
-                              humidity: {
-                                  min: customProfile.humidity!.min,
-                                  max: customProfile.humidity!.max,
-                              },
-                              light: {
-                                  min: customProfile.light!.min,
-                                  max: customProfile.light!.max,
-                              },
-                          }
-                        : undefined,
+                profile_id: null,
+                profile: {
+                    humidity: { min: 40, max: 60 },
+                    temperature: { min: 18, max: 25 },
+                    light: { min: 30, max: 70 },
+                },
             },
+        }
+
+        if (profileType === 'global' && selectedProfileId) {
+            const selectedProfile = profiles.find(p => p._id === selectedProfileId)
+            if (selectedProfile) {
+                updateData = {
+                    ...updateData,
+                    flower: {
+                        profile_id: selectedProfileId,
+                        profile: {
+                            humidity: selectedProfile.humidity,
+                            temperature: selectedProfile.temperature,
+                            light: selectedProfile.light,
+                        },
+                    },
+                }
+            }
+        } else {
+            updateData = {
+                ...updateData,
+                flower: {
+                    profile_id: null,
+                    profile: {
+                        humidity: customProfile.humidity || { min: 40, max: 60 },
+                        temperature: customProfile.temperature || { min: 18, max: 25 },
+                        light: customProfile.light || { min: 30, max: 70 },
+                    },
+                },
+            }
         }
 
         try {
             setLoading(true)
             const result = await dispatch(updateFlowerData(updateData)).unwrap()
-            console.log(t('edit_flower_profile.console.update_result_prefix'), result)
+
             toast.success(t('edit_flower_profile.success.update_success'))
             onClose()
         } catch (error) {
-            console.error(t('edit_flower_profile.console.update_error_prefix'), error)
             toast.error(t('edit_flower_profile.error.update_error'))
         } finally {
             setLoading(false)

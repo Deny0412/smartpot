@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, useParams } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import Button from '../../components/Button/Button'
 import Loader from '../../components/Loader/Loader'
 import { H5 } from '../../components/Text/Heading/Heading'
@@ -37,6 +38,7 @@ const SmartPotDetail: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [showDisconnectModal, setShowDisconnectModal] = useState(false)
+    const [disconnectType, setDisconnectType] = useState<'flower' | 'household'>('flower')
     const [showTransplantModal, setShowTransplantModal] = useState(false)
     const smartPot = smartPots.find(pot => pot._id === smartPotId)
     const flowers = useSelector(selectFlowers)
@@ -92,8 +94,10 @@ const SmartPotDetail: React.FC = () => {
 
     useEffect(() => {
         if (householdId) {
-            dispatch(fetchSmartPots(householdId))
-            dispatch(loadFlowers(householdId))
+            setIsLoading(true)
+            Promise.all([dispatch(fetchSmartPots(householdId)), dispatch(loadFlowers(householdId))]).finally(() => {
+                setIsLoading(false)
+            })
         }
     }, [dispatch, householdId])
 
@@ -108,7 +112,6 @@ const SmartPotDetail: React.FC = () => {
         }
     }, [dispatch, flower, householdId])
 
-   
     const handleCloseDisconnectModal = () => {
         setShowDisconnectModal(false)
         if (householdId) {
@@ -116,16 +119,20 @@ const SmartPotDetail: React.FC = () => {
         }
     }
 
-    if (smartPotsLoading) {
+    if (isLoading || smartPotsLoading) {
         return <Loader />
     }
 
     if (smartPotsError || error) {
-        return <div>Error: {smartPotsError?.toString() || error}</div>
+        toast.error(t('smart_pot_detail.error_loading'))
+        navigate(`/households/${householdId}/smartPots`)
+        return null
     }
 
     if (!smartPot) {
-        return <div>Smart pot not found</div>
+        toast.error(t('smart_pot_detail.smart_pot_not_found'))
+        navigate(`/households/${householdId}/smartPots`)
+        return null
     }
 
     const smartPotData: SmartPotData = {
@@ -196,21 +203,35 @@ const SmartPotDetail: React.FC = () => {
                                 {t('smart_pot_detail.transplant')}
                             </Button>
                             {smartPotData.activeFlowerId && (
-                                <Button variant="warning" onClick={() => setShowDisconnectModal(true)}>
+                                <Button
+                                    variant="warning"
+                                    onClick={() => {
+                                        setDisconnectType('flower')
+                                        setShowDisconnectModal(true)
+                                    }}>
                                     {t('smart_pot_detail.disconnect')}
                                 </Button>
                             )}
+                            <Button
+                                variant="warning"
+                                onClick={() => {
+                                    setDisconnectType('household')
+                                    setShowDisconnectModal(true)
+                                }}>
+                                {t('smart_pot_detail.disconnect_from_household')}
+                            </Button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {showDisconnectModal && smartPotData.activeFlowerId && (
+            {showDisconnectModal && (
                 <DisconnectSmarpotModal
                     onClose={handleCloseDisconnectModal}
                     smartPotId={smartPotId || ''}
                     householdId={householdId || ''}
                     serialNumber={smartPotData.serialNumber}
+                    type={disconnectType}
                 />
             )}
 
@@ -221,6 +242,7 @@ const SmartPotDetail: React.FC = () => {
                     smartPotId={smartPotId || ''}
                     currentHouseholdId={householdId || ''}
                     serialNumber={smartPotData.serialNumber}
+                    activeFlowerId={smartPotData.activeFlowerId}
                 />
             )}
         </div>

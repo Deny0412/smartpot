@@ -8,7 +8,6 @@ interface MeasurementResponse {
 
 export const getMeasurementsForFlower = async (
     flowerId: string,
-    householdId: string,
     dateFrom: string,
     dateTo: string,
     typeOfData: 'water' | 'humidity' | 'temperature' | 'light' | 'battery',
@@ -21,7 +20,7 @@ export const getMeasurementsForFlower = async (
             dateTo,
         }
 
-        const response = await api.post('/flower/history', requestBody)
+        const response = await api.post(`/measurement/history`, requestBody)
 
         return response.data
     } catch (error) {

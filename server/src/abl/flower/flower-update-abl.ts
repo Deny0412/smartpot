@@ -15,31 +15,31 @@ import flowerGetDao from "../../dao/flower/flower-get-dao";
 import updateSmartPot from "../../dao/smartpot/smartpot-update-dao";
 import { ISmartPot } from "../../models/SmartPot";
 const SCHEMA = {
-  type: 'object',
+  type: "object",
   properties: {
-    id: { type: 'string' },
-    name: { type: 'string' },
-    serial_number: { type: 'string' },
-    household_id: { type: 'string' },
+    id: { type: "string" },
+    name: { type: "string" },
+    serial_number: { type: "string" },
+    household_id: { type: "string" },
     profile: {
-      type: 'object',
+      type: "object",
       properties: {
         humidity: {
-          type: 'object',
+          type: "object",
           properties: {
             min: { type: "number" },
             max: { type: "number" },
           },
         },
         temperature: {
-          type: 'object',
+          type: "object",
           properties: {
             min: { type: "number" },
             max: { type: "number" },
           },
         },
         light: {
-          type: 'object',
+          type: "object",
           properties: {
             min: { type: "number" },
             max: { type: "number" },
@@ -57,36 +57,46 @@ async function flowerUpdateAbl(data: IFlower, reply: FastifyReply) {
     const validate = ajv.compile(SCHEMA);
     const isValid = validate(data);
     if (!isValid) {
-      console.log('Validation errors:', validate.errors)
-      sendClientError(reply, JSON.stringify(validate.errors?.map((error) => error.message)))
-      return
+      console.log("Validation errors:", validate.errors);
+      sendClientError(
+        reply,
+        JSON.stringify(validate.errors?.map((error) => error.message))
+      );
+      return;
     }
 
-    const valid = MongoValidator.validateId(data.id)
+    const valid = MongoValidator.validateId(data.id);
     if (!valid) {
-      return sendClientError(reply, 'Invalid flower ID format')
+      return sendClientError(reply, "Invalid flower ID format");
     }
 
     if (data.serial_number) {
-      const doesSerialNumberExist = await smartpotGetBySerialNumberDao(data.serial_number)
+      const doesSerialNumberExist = await smartpotGetBySerialNumberDao(
+        data.serial_number
+      );
       if (!doesSerialNumberExist) {
-        sendClientError(reply, 'Smart pot with pasted serial number does not exist')
-        return
+        sendClientError(
+          reply,
+          "Smart pot with pasted serial number does not exist"
+        );
+        return;
       }
     }
 
-    const old_flower = await flowerGetDao(data.id)
+    const old_flower = await flowerGetDao(data.id);
     if (!old_flower) {
-      return sendNotFound(reply, 'Flower not found')
+      return sendNotFound(reply, "Flower not found");
     }
 
     // If household_id is not provided, use the existing one
     if (!data.household_id) {
-      data.household_id = old_flower.household_id
+      data.household_id = old_flower.household_id;
     }
 
-    const old_serial_number = old_flower.serial_number
-    const old_smart_pot = await smartpotGetBySerialNumberDao(String(old_serial_number))
+    const old_serial_number = old_flower.serial_number;
+    const old_smart_pot = await smartpotGetBySerialNumberDao(
+      String(old_serial_number)
+    );
 
     const new_smart_pot = data.serial_number
       ? await smartpotGetBySerialNumberDao(String(data.serial_number))
@@ -132,20 +142,20 @@ async function flowerUpdateAbl(data: IFlower, reply: FastifyReply) {
       return;
     }
 
-    // Handle household change *
-    /* if (data.household_id?.toString() !== old_flower.household_id?.toString()) {
-      data.serial_number = ''
-    } */
-
-    const updatedFlower = await updateFlower(String(data.id), data)
-    if (!updatedFlower) {
-      return sendNotFound(reply, 'Flower not found')
+    // Handle household change
+    if (data.household_id?.toString() !== old_flower.household_id?.toString()) {
+      data.serial_number = "";
     }
 
-    return sendSuccess(reply, updatedFlower, 'Flower updated successfully')
+    const updatedFlower = await updateFlower(String(data.id), data);
+    if (!updatedFlower) {
+      return sendNotFound(reply, "Flower not found");
+    }
+
+    return sendSuccess(reply, updatedFlower, "Flower updated successfully");
   } catch (error) {
-    console.error('Error updating flower:', error)
-    return sendError(reply, 'Failed to update flower')
+    console.error("Error updating flower:", error);
+    return sendError(reply, "Failed to update flower");
   }
 }
 

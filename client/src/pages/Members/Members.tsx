@@ -16,7 +16,7 @@ import {
     selectHouseholdsLoading,
 } from '../../redux/selectors/houseHoldSelectors'
 import { selectUsers, selectUsersLoading } from '../../redux/selectors/userSelectors'
-import { getMembers } from '../../redux/services/householdsApi'
+import { getInvited, getMembers } from '../../redux/services/householdsApi'
 import { loadHouseholds, makeOwnerAction, removeMemberAction } from '../../redux/slices/householdsSlice'
 import { fetchUsers } from '../../redux/slices/usersSlice'
 import { AppDispatch, RootState } from '../../redux/store/store'
@@ -34,10 +34,8 @@ const Members: React.FC = () => {
     const usersLoading = useSelector(selectUsersLoading)
     const user = useSelector(selectUser)
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
-    const [members, setMembers] = useState<{ members: any[]; invitedMembers: any[] }>({
-        members: [],
-        invitedMembers: [],
-    })
+    const [members, setMembers] = useState<Array<{ _id: string; email: string }>>([])
+    const [invitedMembers, setInvitedMembers] = useState<Array<{ _id: string; email: string }>>([])
 
     const household = useSelector((state: RootState) => selectHouseholdById(state, householdId || ''))
     const isOwner = household?.owner === user?.id
@@ -51,9 +49,6 @@ const Members: React.FC = () => {
             if (householdId && household) {
                 try {
                     const response = await getMembers(householdId)
-                    console.log('Members response:', response)
-                    console.log('Members data:', response.data.members)
-                    console.log('Invited members data:', response.data.invitedMembers)
                     setMembers(response.data)
                 } catch (error) {
                     console.error('Error fetching members:', error)
@@ -62,6 +57,21 @@ const Members: React.FC = () => {
             }
         }
         fetchMembers()
+    }, [householdId, household, t])
+
+    useEffect(() => {
+        const fetchInvitedMembers = async () => {
+            if (householdId && household) {
+                try {
+                    const response = await getInvited(householdId)
+                    setInvitedMembers(response.data)
+                } catch (error) {
+                    console.error('Error fetching invited members:', error)
+                    toast.error(t('manage_household.manage_members.toast.fetch_invited_members_error'))
+                }
+            }
+        }
+        fetchInvitedMembers()
     }, [householdId, household, t])
 
     useEffect(() => {
@@ -139,10 +149,10 @@ const Members: React.FC = () => {
                     </H4>
                     <div className="section-content">
                         <div className="members-list">
-                            {members?.members?.map(member => (
+                            {members?.map(member => (
                                 <div key={member._id} className="member-item">
                                     <div className="member-info">
-                                        <span className="member-name">{`${member.name} ${member.surname}`}</span>
+                                        <span className="member-name">{`${member.email}`}</span>
                                         <span className={member._id === household.owner ? 'owner-tag' : 'member-tag'}>
                                             {member._id === household.owner
                                                 ? t('manage_household.manage_members.roles.owner')
@@ -177,10 +187,10 @@ const Members: React.FC = () => {
                     </H4>
                     <div className="section-content">
                         <div className="members-list">
-                            {members?.invitedMembers?.map(invitedMember => (
+                            {invitedMembers?.map(invitedMember => (
                                 <div key={invitedMember._id} className="member-item">
                                     <div className="member-info">
-                                        <span className="member-name">{`${invitedMember.name} ${invitedMember.surname}`}</span>
+                                        <span className="member-name">{`${invitedMember.email}`}</span>
                                         <span className="invited-tag">
                                             {t('manage_household.manage_members.invited_tag')}
                                         </span>
@@ -200,7 +210,7 @@ const Members: React.FC = () => {
                 onClose={() => setIsInviteModalOpen(false)}
                 householdId={householdId || ''}
                 existingMembers={household.members}
-                invitedUsers={household.invites}
+                invitedUsers={invitedMembers.map(member => member._id)}
             />
         </div>
     )

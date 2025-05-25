@@ -327,14 +327,13 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
 
     useEffect(() => {
         if (flowerId && householdId) {
-            // Načítame dáta len raz pri inicializácii komponentu
             const now = new Date()
             const startDate = new Date(now)
-            startDate.setMonth(now.getMonth() - 1) // Načítame dáta za posledný mesiac
+            startDate.setMonth(now.getMonth() - 1) 
             const dateFrom = startDate.toISOString().split('T')[0]
             const dateTo = now.toISOString().split('T')[0]
 
-            // Check if we already have data
+            
             if (cachedData['initial']) {
                 console.log('Using cached data')
                 return
@@ -354,7 +353,7 @@ const FlowerpotMeasurment: React.FC<FlowerpotMeasurmentProps> = ({
         }
     }, [dispatch, flowerId, householdId])
 
-    // Clear cache when changing flowers
+    
     useEffect(() => {
         setCachedData({})
     }, [flowerId])

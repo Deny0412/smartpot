@@ -6,8 +6,6 @@ import { useNavigate } from 'react-router-dom'
 import GradientDiv from '../../../components/GradientDiv/GradientDiv'
 import { H4 } from '../../../components/Text/Heading/Heading'
 import { TranslationFunction } from '../../../i18n'
-import { selectFlower } from '../../../redux/selectors/flowerDetailSelectors'
-import { selectProfileById } from '../../../redux/selectors/flowerProfilesSelectors'
 import { selectMeasurementsForFlower } from '../../../redux/selectors/measurementSelectors'
 import { RootState } from '../../../redux/store/store'
 import './FlowerItem.sass'
@@ -16,52 +14,41 @@ interface FlowerItemProps {
     name: string
     flowerpot?: string
     id: string
-    profileId?: string
-    profileName?: string
     householdId: string
     avatar?: string
+    profile?: {
+        temperature: { min: number; max: number }
+        humidity: { min: number; max: number }
+        light: { min: number; max: number }
+    }
 }
 
-const FlowerItem: React.FC<FlowerItemProps> = ({
-    name,
-    flowerpot,
-    id,
-    profileId,
-    profileName,
-    householdId,
-    avatar,
-}) => {
+const FlowerItem: React.FC<FlowerItemProps> = ({ name, flowerpot, id, householdId, avatar, profile }) => {
     const { t } = useTranslation() as { t: TranslationFunction }
     const navigate = useNavigate()
     const dispatch = useDispatch()
     const [showWarning, setShowWarning] = useState(false)
     const [isImageLoaded, setIsImageLoaded] = useState(false)
 
-    
     const measurements = useSelector((state: RootState) => selectMeasurementsForFlower(state, id))
-    const flower = useSelector((state: RootState) => selectFlower(state))
-    const profile = useSelector((state: RootState) => selectProfileById(state, profileId || ''))
 
-    
     const checkMeasurementLimits = (type: 'temperature' | 'humidity' | 'light' | 'battery', value: number): boolean => {
         if (type === 'battery') {
             return value < 30 || value > 100
         }
 
-        const limits = profile?.[type] || flower?.profile?.[type]
+        const limits = profile?.[type]
         if (!limits) return false
 
         return value < limits.min || value > limits.max
     }
 
-    
     useEffect(() => {
         if (!measurements) {
-            setShowWarning(false) 
+            setShowWarning(false)
             return
         }
 
-       
         const relevantWarningTypes: Array<keyof Omit<typeof measurements, 'lastChange'>> = [
             'temperature',
             'humidity',
@@ -76,15 +63,14 @@ const FlowerItem: React.FC<FlowerItemProps> = ({
             }
             const lastValue = Number(valuesArray[0].value)
 
-            
             if (type === 'temperature' || type === 'humidity' || type === 'light' || type === 'battery') {
                 return checkMeasurementLimits(type, lastValue)
             }
-            return false 
+            return false
         })
 
         setShowWarning(hasWarning)
-    }, [measurements, profile, flower]) 
+    }, [measurements, profile])
 
     const handleDetailsClick = () => {
         if (householdId) {
@@ -100,10 +86,12 @@ const FlowerItem: React.FC<FlowerItemProps> = ({
                         <H4 variant="primary" className="flower-item-name">
                             {name}
                         </H4>
-                        {profileName ? (
-                            <div className="flower-item-profile-label">{profileName}</div>
+                        {profile ? (
+                            <div className="flower-item-profile-label">{t('flower_list.profile.assigned')}</div>
                         ) : (
-                            <div className="flower-item-profile-label flower-item-own-settings">Own settings</div>
+                            <div className="flower-item-profile-label flower-item-own-settings">
+                                {t('flower_list.profile.not_assigned')}
+                            </div>
                         )}
                         {flowerpot ? (
                             <div className="flower-item-flowerpot-label">{flowerpot}</div>

@@ -47,14 +47,13 @@ interface MeasurementSettings {
 export interface Flower {
     _id: string
     name: string
-    avatar: string
     household_id: string
-    profile_id: string | null
+    avatar?: string
     serial_number: string | null
-    keepSmartPot?: boolean
+    profile_id: string | null
     profile?: {
-        temperature: { min: number; max: number }
         humidity: { min: number; max: number }
+        temperature: { min: number; max: number }
         light: { min: number; max: number }
     }
 }
@@ -116,7 +115,7 @@ export interface ScheduleResponse {
 export interface SmartPot {
     _id: string
     serial_number: string
-    household_id: string
+    household_id: string | null
     active_flower_id: string | null
     createdAt: string
     updatedAt: string

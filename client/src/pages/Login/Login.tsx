@@ -8,13 +8,14 @@ import GradientDiv from '../../components/GradientDiv/GradientDiv'
 import { H2 } from '../../components/Text/Heading/Heading'
 import { TranslationFunction } from '../../i18n/index'
 import { selectAuthLoading } from '../../redux/selectors/authSelectors'
-import { checkAuthStatus, login } from '../../redux/slices/authSlice'
+import { checkAuthStatus, forgotPassword, login } from '../../redux/slices/authSlice'
 import { AppDispatch } from '../../redux/store/store'
 import './Login.sass'
 
 const Login: React.FC = () => {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const [isForgotPassword, setIsForgotPassword] = useState(false)
     const dispatch = useDispatch<AppDispatch>()
     const navigate = useNavigate()
     const loading = useSelector(selectAuthLoading)
@@ -28,18 +29,34 @@ const Login: React.FC = () => {
                     navigate('/')
                 }
             } catch (err) {
-                // toast.error(t('login_page.error.invalid_credentials')) 
+                // toast.error(t('login_page.error.invalid_credentials'))
             }
         }
         checkAuth()
-    }, [dispatch, navigate, t]) 
+    }, [dispatch, navigate, t])
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
         e.stopPropagation()
 
-        if (!email.trim() || !password.trim()) {
-            toast.error(t('login_page.error.empty_fields'))
+        if (!email.trim()) {
+            toast.error(t('login_page.error.empty_email'))
+            return
+        }
+
+        if (isForgotPassword) {
+            try {
+                await dispatch(forgotPassword({ email })).unwrap()
+                toast.success(t('login_page.forgot_password_success'))
+                setIsForgotPassword(false)
+            } catch (err: any) {
+                toast.error(err.response?.data?.error || err.message || t('login_page.forgot_password_error'))
+            }
+            return
+        }
+
+        if (!password.trim()) {
+            toast.error(t('login_page.error.empty_password'))
             return
         }
 
@@ -75,21 +92,36 @@ const Login: React.FC = () => {
                         />
                     </div>
 
-                    <div className="login-form-group">
-                        <label htmlFor="password">{t('login_page.password')}</label>
-                        <input
-                            type="password"
-                            id="password"
-                            value={password}
-                            onChange={e => setPassword(e.target.value)}
-                            required
-                            autoComplete="current-password"
-                        />
-                    </div>
+                    {!isForgotPassword && (
+                        <div className="login-form-group">
+                            <label htmlFor="password">{t('login_page.password')}</label>
+                            <input
+                                type="password"
+                                id="password"
+                                value={password}
+                                onChange={e => setPassword(e.target.value)}
+                                required
+                                autoComplete="current-password"
+                            />
+                        </div>
+                    )}
 
                     <Button type="submit" variant="default" className="login-form__button" disabled={loading}>
-                        {loading ? t('login_page.loading') : t('login_page.button')}
+                        {loading
+                            ? t('login_page.loading')
+                            : isForgotPassword
+                            ? t('login_page.reset_password_button')
+                            : t('login_page.button')}
                     </Button>
+
+                    <div className="login-form__links">
+                        <button
+                            type="button"
+                            className="forgot-password-link"
+                            onClick={() => setIsForgotPassword(!isForgotPassword)}>
+                            {isForgotPassword ? t('login_page.back_to_login') : t('login_page.forgot_password')}
+                        </button>
+                    </div>
                 </form>
             </GradientDiv>
         </div>

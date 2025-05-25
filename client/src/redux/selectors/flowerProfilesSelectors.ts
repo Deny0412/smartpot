@@ -39,12 +39,12 @@ export const selectIsValidProfile = (state: RootState, profileId: string) => {
     )
 }
 
-// Memoizovaný selector pre globálne profily
+
 export const selectGlobalProfiles = createSelector([selectProfiles], profiles =>
     profiles.filter(profile => profile.is_global),
 )
 
-// Memoizovaný selector pre vlastné profily
+
 export const selectCustomProfiles = createSelector([selectProfiles], profiles =>
     profiles.filter(profile => !profile.is_global),
 )

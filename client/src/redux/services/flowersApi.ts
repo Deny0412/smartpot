@@ -1,5 +1,7 @@
 import { AxiosError } from 'axios'
 import { Flower, FlowerProfile, Schedule, SmartPot } from '../../types/flowerTypes'
+import { selectFlower } from '../selectors/flowerDetailSelectors'
+import { store } from '../store/store'
 import { api } from './api'
 
 interface FlowerListResponse {
@@ -53,6 +55,20 @@ export const createFlowerProfile = async (
 }
 
 export const deleteFlower = async (id: string): Promise<void> => {
+    const flowerDetails = await fetchFlowerDetails(id)
+    const flower = flowerDetails.data
+
+    if (flower.serial_number) {
+        
+        await updateSmartPot(flower.serial_number, {
+            active_flower_id: null,
+            household_id: flower.household_id,
+        })
+        
+        await updateFlower(id, { serial_number: '' })
+    }
+
+    
     await api.delete(`/flower/delete/${id}`)
 }
 
@@ -62,7 +78,7 @@ export const fetchFlowerProfiles = async (): Promise<FlowerProfile[]> => {
 }
 
 export const fetchScheduleByFlower = async (flowerId: string): Promise<Schedule> => {
-    const response = await api.get<{ status: string; data: Schedule }>(`/schedule/get-flower-schedule/${flowerId}`)
+    const response = await api.get<{ status: string; data: Schedule }>(`/flower/getSchedule/${flowerId}`)
     return response.data.data
 }
 
@@ -146,13 +162,12 @@ export const transplantFlowerWithSmartPot = async (
     smartPotId: string,
 ): Promise<Flower> => {
     try {
-        // First check if the flower is already connected to a smart pot
         const flowerDetails = await fetchFlowerDetails(flowerId)
         if (!flowerDetails.data.serial_number) {
             throw new Error('Kvetina nemá pripojený smart pot')
         }
 
-        // Get the smart pot details from its current household
+        
         const smartPot = await api.get<{ status: string; data: SmartPot }>(
             `/smart-pot/get/${smartPotId}?household_id=${flowerDetails.data.household_id}`,
         )
@@ -163,28 +178,24 @@ export const transplantFlowerWithSmartPot = async (
 
         const serialNumber = smartPot.data.data.serial_number
 
-        // First disconnect the flower from the smart pot
         await api.put('/flower/update', {
             id: flowerId,
             serial_number: '',
             household_id: targetHouseholdId,
         })
 
-        // Update the smart pot to the new household
         await api.put('/smart-pot/update', {
             serial_number: serialNumber,
             active_flower_id: null,
             household_id: targetHouseholdId,
         })
 
-        // Finally reconnect the flower to the smart pot
         const response = await api.put<{ status: string; data: Flower }>('/flower/update', {
             id: flowerId,
             serial_number: serialNumber,
             household_id: targetHouseholdId,
         })
 
-        // Update the smart pot with the flower ID
         await api.put('/smart-pot/update', {
             serial_number: serialNumber,
             active_flower_id: flowerId,
@@ -213,28 +224,24 @@ export const transplantFlowerWithoutSmartPot = async (
         const serialNumber = flowerDetails.data.serial_number
 
         if (assignOldSmartPot) {
-            // First update the smart pot to remove its current flower connection
             await api.put('/smart-pot/update', {
                 serial_number: serialNumber,
                 household_id: flowerDetails.data.household_id,
                 active_flower_id: null,
             })
 
-            // Then update the flower to the new household
             await api.put('/flower/update', {
                 id: flowerId,
                 serial_number: '',
                 household_id: targetHouseholdId,
             })
 
-            // Update the new flower to the target household
             await api.put('/flower/update', {
                 id: newFlowerId,
                 serial_number: serialNumber,
                 household_id: flowerDetails.data.household_id,
             })
 
-            // Finally update the smart pot to point to the new flower
             await api.put('/smart-pot/update', {
                 serial_number: serialNumber,
                 active_flower_id: newFlowerId,
@@ -242,7 +249,6 @@ export const transplantFlowerWithoutSmartPot = async (
             })
         } else {
             if (flowerDetails.data.serial_number) {
-                // First update the smart pot to remove its flower connection
                 await api.put('/smart-pot/update', {
                     serial_number: serialNumber,
                     household_id: flowerDetails.data.household_id,
@@ -250,7 +256,6 @@ export const transplantFlowerWithoutSmartPot = async (
                 })
             }
 
-            // Then update the flower to the new household
             await api.put('/flower/update', {
                 id: flowerId,
                 serial_number: '',
@@ -278,7 +283,6 @@ export const transplantFlowerToSmartPot = async (
         const flowerDetails = await fetchFlowerDetails(flowerId)
         const oldSerialNumber = flowerDetails.data.serial_number
 
-        // Then check if the smart pot is already connected to a flower
         const smartPot = await api.get<{ status: string; data: SmartPot }>(
             `/smart-pot/get/${targetSmartPotId}?household_id=${householdId}`,
         )
@@ -286,7 +290,6 @@ export const transplantFlowerToSmartPot = async (
             throw new Error('Smart pot je už pripojený k inej kvetine')
         }
 
-        // If flower was connected to another smart pot, update that smart pot's active_flower_id to null
         if (oldSerialNumber) {
             await api.put('/smart-pot/update', {
                 serial_number: oldSerialNumber,
@@ -295,13 +298,11 @@ export const transplantFlowerToSmartPot = async (
             })
         }
 
-        // Update the flower with the smart pot's serial number
         const response = await api.put<{ status: string; data: Flower }>(`/flower/update`, {
             id: flowerId,
             serial_number: smartPot.data.data.serial_number,
         })
-
-        // Update the smart pot with the flower's ID
+        
         await api.put('/smart-pot/update', {
             serial_number: smartPot.data.data.serial_number,
             active_flower_id: flowerId,
@@ -320,7 +321,26 @@ export const transplantFlowerToSmartPot = async (
 }
 
 export const detachFlower = async (flowerId: string): Promise<void> => {
-    await api.put('/flower/update', { id: flowerId, serial_number: null })
+    try {
+        const flowerDetails = selectFlower(store.getState())
+        if (!flowerDetails) {
+            throw new Error('Flower not found in store')
+        }
+
+        const serialNumber = flowerDetails.serial_number
+
+        if (serialNumber) {
+            await api.put('/smart-pot/update', {
+                serial_number: serialNumber,
+                active_flower_id: null,
+                household_id: flowerDetails.household_id,
+            })
+        }
+        await api.put('/flower/update', { id: flowerId, serial_number: '' })
+    } catch (error) {
+        console.error('Error detaching flower:', error)
+        throw error
+    }
 }
 
 export const updateSmartPotFlower = async (serialNumber: string, flowerId: string | null, householdId: string) => {

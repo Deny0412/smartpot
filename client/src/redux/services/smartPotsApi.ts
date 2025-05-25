@@ -24,12 +24,12 @@ export const disconnectSmartPot = async (serialNumber: string, householdId: stri
             household_id: householdId,
             active_flower_id: null,
         }
-        const response = await api.put('/smart-pot/update', requestData)
 
-        
         if (activeFlowerId) {
             await updateFlower(activeFlowerId, { serial_number: '' })
         }
+
+        const response = await api.put('/smart-pot/update', requestData)
 
         return response.data.data
     } catch (error) {
@@ -43,14 +43,38 @@ export const disconnectSmartPot = async (serialNumber: string, householdId: stri
 }
 
 export const transplantSmartPotWithFlower = async (
-    smartPotId: string,
+    smartPotSerialNumber: string,
     targetHouseholdId: string,
-): Promise<SmartPot> => {
-    const response = await api.post<{ status: string; data: SmartPot }>(`/smart-pot/transplant-with-flower`, {
-        smartPotId,
-        targetHouseholdId,
-    })
-    return response.data.data
+    flowerId: string,
+): Promise<void> => {
+    try {
+        await api.put('/flower/update', {
+            id: flowerId,
+            serial_number: '',
+            household_id: targetHouseholdId,
+        })
+
+        await api.put('/smart-pot/update', {
+            serial_number: smartPotSerialNumber,
+            household_id: targetHouseholdId,
+            active_flower_id: null,
+        })
+
+        await api.put('/flower/update', {
+            id: flowerId,
+            serial_number: smartPotSerialNumber,
+            household_id: targetHouseholdId,
+        })
+
+        await api.put('/smart-pot/update', {
+            serial_number: smartPotSerialNumber,
+            household_id: targetHouseholdId,
+            active_flower_id: flowerId,
+        })
+    } catch (error) {
+        console.error('Transplant smartpot with flower error:', error)
+        throw error
+    }
 }
 
 export const transplantSmartPotWithoutFlower = async (
@@ -81,19 +105,17 @@ export const transplantSmartPotToFlower = async (smartPotId: string, targetFlowe
 
         const householdId = flowerResponse.data.data.household_id
 
-        
         const smartPotResponse = await api.get<{ status: string; data: SmartPot }>(
             `/smart-pot/get/${smartPotId}?household_id=${householdId}`,
         )
         const smartPot = smartPotResponse.data.data
 
-        
         const smartPotUpdateData = {
             serial_number: smartPot.serial_number,
             active_flower_id: targetFlowerId,
             household_id: householdId,
         }
-  
+
         const response = await api.put<{ status: string; data: SmartPot }>('/smart-pot/update', smartPotUpdateData)
 
         const flowerUpdateData = {

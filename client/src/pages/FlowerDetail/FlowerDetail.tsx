@@ -28,16 +28,10 @@ import { selectSchedule, selectScheduleLoading } from '../../redux/selectors/sch
 import { selectInactiveSmartPots } from '../../redux/selectors/smartPotSelectors'
 import { disconnectFlower } from '../../redux/services/flowersApi'
 import { loadFlowerProfiles } from '../../redux/slices/flowerProfilesSlice'
-import { loadFlowerDetails, removeFlower } from '../../redux/slices/flowersSlice'
-import {
-    cleanupWebSocket,
-    clearMeasurements,
-    fetchMeasurementsForFlower,
-    startWebSocketConnection,
-    stopWebSocketConnection,
-} from '../../redux/slices/measurementsSlice'
+import { loadFlowerDetails, removeFlower, updateFlowerData } from '../../redux/slices/flowersSlice'
+import { clearMeasurements, fetchMeasurementsForFlower } from '../../redux/slices/measurementsSlice'
 import { loadSchedule, updateSchedule } from '../../redux/slices/scheduleSlice'
-import { fetchInactiveSmartPots, fetchSmartPots } from '../../redux/slices/smartPotsSlice'
+import { fetchInactiveSmartPots, fetchSmartPots, updateSmartPotThunk } from '../../redux/slices/smartPotsSlice'
 import { AppDispatch, RootState } from '../../redux/store/store'
 import { MeasurementValue, Schedule } from '../../types/flowerTypes'
 import EditFlowerHousehold from './EditFlowerHousehold/EditFlowerHousehold'
@@ -100,6 +94,8 @@ const FlowerDetail: React.FC = () => {
     const [isTransplantModalOpen, setIsTransplantModalOpen] = useState(false)
     const navigate = useNavigate()
     const [cachedData, setCachedData] = useState<Record<string, any>>({})
+    const [retryCount, setRetryCount] = useState(0)
+    const MAX_RETRIES = 3
 
     const user = useSelector(selectUser)
     const flower = useSelector(selectFlower)
@@ -178,6 +174,21 @@ const FlowerDetail: React.FC = () => {
     const handleDeleteFlower = async () => {
         if (!flowerId) return
         try {
+            if (connectedSmartPot && flower?.serial_number) {
+                await dispatch(
+                    updateSmartPotThunk({
+                        serialNumber: connectedSmartPot.serial_number,
+                        activeFlowerId: null,
+                        householdId: connectedSmartPot.household_id,
+                    }),
+                ).unwrap()
+                await dispatch(
+                    updateFlowerData({
+                        id: flowerId,
+                        flower: { serial_number: '' },
+                    }),
+                ).unwrap()
+            }
             await dispatch(removeFlower(flowerId)).unwrap()
             toast.success(t('flower_detail.delete_success_toast'))
             navigate(`/households/${householdId}/flowers`)
@@ -192,16 +203,13 @@ const FlowerDetail: React.FC = () => {
                 try {
                     setIsLoading(true)
 
-                    // Load flower profiles first
                     await dispatch(loadFlowerProfiles()).unwrap()
 
-                    // Then load flower details
                     const flowerDetails = await dispatch(loadFlowerDetails(flowerId)).unwrap()
                     if (!flowerDetails) {
                         throw new Error('Failed to load flower details')
                     }
 
-                    // Then load other metadata
                     const metadataPromises: Promise<any>[] = [
                         dispatch(fetchSmartPots(householdId)),
                         dispatch(fetchInactiveSmartPots(householdId)),
@@ -227,24 +235,15 @@ const FlowerDetail: React.FC = () => {
     }, [dispatch, flowerId, householdId])
 
     useEffect(() => {
-        if (flowerId && !schedule && !scheduleLoading) {
+        if (flowerId && !schedule && !scheduleLoading && retryCount < MAX_RETRIES) {
             dispatch(loadSchedule(flowerId))
+                .unwrap()
+                .catch(() => {
+                    setRetryCount(prev => prev + 1)
+                })
         }
-    }, [dispatch, flowerId, schedule, scheduleLoading])
+    }, [dispatch, flowerId, schedule, scheduleLoading, retryCount])
 
-    useEffect(() => {
-        if (flowerId && flower?.serial_number) {
-            dispatch(startWebSocketConnection(flowerId))
-
-            return () => {
-                console.log('Cleaning up WebSocket connection')
-                dispatch(stopWebSocketConnection())
-                dispatch(cleanupWebSocket())
-            }
-        }
-    }, [dispatch, flowerId, flower?.serial_number])
-
-    // Add new useEffect for time range changes
     useEffect(() => {
         if (flowerId && householdId) {
             const now = new Date()
@@ -253,7 +252,6 @@ const FlowerDetail: React.FC = () => {
             const dateFrom = startDate.toISOString().split('T')[0]
             const dateTo = now.toISOString().split('T')[0]
 
-            // Check if we already have data
             if (cachedData['initial']) {
                 console.log('Using cached data')
                 return
@@ -289,30 +287,23 @@ const FlowerDetail: React.FC = () => {
         setCustomDateRange(range)
     }
 
-    // Add debug logging
-    useEffect(() => {
-        console.log('Debug profile data:', {
-            flowerId,
-            flowerProfileId: flower?.profile_id,
-            flowerProfileData,
-            profilesLoading,
-        })
-    }, [flowerId, flower?.profile_id, flowerProfileData, profilesLoading])
-
     if (isLoading) {
         return <Loader />
     }
 
     if (!flowerId || !householdId) {
-        return <div>{t('flower_detail.missing_params')}</div>
+        navigate(`/households/${householdId}/flowers`)
+        toast.error(t('flower_detail.missing_params'))
     }
 
     if (error) {
-        return <div>{t('flower_detail.error_loading', { error })}</div>
+        navigate(`/households/${householdId}/flowers`)
+        toast.error(t('flower_detail.error_loading'))
     }
 
     if (!flower) {
-        return <div>{t('flower_detail.flower_not_found')}</div>
+        navigate(`/households/${householdId}/flowers`)
+        toast.error(t('flower_detail.flower_not_found'))
     }
 
     if (!flowerpotData) {
@@ -341,10 +332,10 @@ const FlowerDetail: React.FC = () => {
             </div>
             <div className="smartpot-container">
                 <div className="smartpot-container-warning">
-                    {connectedSmartPot ? (
+                    {connectedSmartPot && flower?.serial_number ? (
                         <>
                             <Paragraph>
-                                {t('flower_detail.signed_into', { serialNumber: flower?.serial_number })}
+                                {t('flower_detail.signed_into', { serialNumber: flower.serial_number })}
                             </Paragraph>
 
                             {batteryStatus?.hasWarning ? (
@@ -394,16 +385,18 @@ const FlowerDetail: React.FC = () => {
                 currentAvatar={flower?.avatar || ''}
             />
 
-            <FlowerpotMeasurment
-                flowerId={flowerId}
-                householdId={householdId}
-                flowerpotData={flowerpotData}
-                flowerProfile={flowerProfileData}
-                timeRange={timeRange}
-                customDateRange={customDateRange}
-                onTimeRangeChange={handleTimeRangeChange}
-                onCustomDateRangeChange={handleCustomDateRangeChange}
-            />
+            {flowerId && householdId && (
+                <FlowerpotMeasurment
+                    flowerId={flowerId}
+                    householdId={householdId}
+                    flowerpotData={flowerpotData}
+                    flowerProfile={flowerProfileData}
+                    timeRange={timeRange}
+                    customDateRange={customDateRange}
+                    onTimeRangeChange={handleTimeRangeChange}
+                    onCustomDateRangeChange={handleCustomDateRangeChange}
+                />
+            )}
 
             {schedule && (
                 <div className="schedule-container">
@@ -517,64 +510,6 @@ const FlowerDetail: React.FC = () => {
                 {profilesLoading ? (
                     <div className="profile-loading">
                         <Loader />
-                    </div>
-                ) : flower?.profile_id ? (
-                    <div className="profile-info">
-                        <div className="profile-text">
-                            {t('flower_detail.assigned_profile')}{' '}
-                            <strong>
-                                {flowerProfileData ? flowerProfileData.name : t('flower_detail.profile_not_found')}
-                            </strong>
-                        </div>
-                        {flowerProfileData && (
-                            <div className="profile-settings">
-                                <div className="setting-group">
-                                    <div className="setting-title">{t('flower_detail.temperature')}</div>
-                                    <div className="setting-item">
-                                        <span>{t('flower_detail.min')}</span>
-                                        <span>
-                                            {flowerProfileData.temperature.min}
-                                            {t('flower_detail.unit.celsius')}
-                                        </span>
-                                    </div>
-                                    <div className="setting-item">
-                                        <span>{t('flower_detail.max')}</span>
-                                        <span>
-                                            {flowerProfileData.temperature.max}
-                                            {t('flower_detail.unit.celsius')}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="setting-group">
-                                    <div className="setting-title">{t('flower_detail.humidity')}</div>
-                                    <div className="setting-item">
-                                        <span>{t('flower_detail.min')}</span>
-                                        <span>
-                                            {flowerProfileData.humidity.min}
-                                            {t('flower_detail.unit.percent')}
-                                        </span>
-                                    </div>
-                                    <div className="setting-item">
-                                        <span>{t('flower_detail.max')}</span>
-                                        <span>
-                                            {flowerProfileData.humidity.max}
-                                            {t('flower_detail.unit.percent')}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="setting-group">
-                                    <div className="setting-title">{t('flower_detail.light')}</div>
-                                    <div className="setting-item">
-                                        <span>{t('flower_detail.min_light')}</span>
-                                        <span>{flowerProfileData.light.min} </span>
-                                    </div>
-                                    <div className="setting-item">
-                                        <span>{t('flower_detail.max_light')}</span>
-                                        <span>{flowerProfileData.light.max}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 ) : (
                     <div className="no-profile">

@@ -40,7 +40,7 @@ const start = async () => {
 
     // Start the server
     await server.listen({
-      port: /* Number(process.env.PORT) || */ 3003,
+      port: /* Number(process.env.PORT) ||  */3003,
       host: "0.0.0.0",
     });
     server.log.info(`Server is running on port ${/* process.env.PORT || */ 3003}`);

@@ -36,7 +36,6 @@ const FlowerList: React.FC = () => {
     const { t } = useTranslation() as { t: TranslationFunction }
     const { householdId } = useParams<{ householdId: string }>()
 
-    
     const user = useSelector(selectUser)
     const flowers = useSelector(selectFlowers)
     const profiles = useSelector(selectProfiles)
@@ -124,8 +123,7 @@ const FlowerList: React.FC = () => {
     const filteredFlowers = householdFlowers.filter(flower => {
         const hasSmartPot = flower.serial_number !== ''
         const matchesProfile =
-            profileFilter === 'all' ||
-            (profileFilter === 'own_settings' ? !flower.profile_id : flower.profile_id === profileFilter)
+            profileFilter === 'all' || (profileFilter === 'not_assigned' ? !flower.profile : flower.profile)
 
         switch (filterType) {
             case 'active':
@@ -178,13 +176,8 @@ const FlowerList: React.FC = () => {
                     value={profileFilter}
                     onChange={e => setProfileFilter(e.target.value)}>
                     <option value="all">{t('flower_list.filters.all_profiles')}</option>
-                    <option value="own_settings">{t('flower_list.filters.own_settings')}</option>
-                    {Array.isArray(profiles) &&
-                        profiles.map(profile => (
-                            <option key={profile._id} value={profile._id}>
-                                {profile.name}
-                            </option>
-                        ))}
+                    <option value="not_assigned">{t('flower_list.filters.not_assigned')}</option>
+                    <option value="assigned">{t('flower_list.filters.assigned')}</option>
                 </select>
             </div>
 
@@ -196,10 +189,9 @@ const FlowerList: React.FC = () => {
                             name={flower.name}
                             flowerpot={flower.serial_number ? flower.serial_number : ''}
                             id={flower._id}
-                            profileId={flower.profile_id || undefined}
-                            profileName={getProfileName(flower.profile_id)}
                             avatar={flower.avatar}
                             householdId={householdId}
+                            profile={flower.profile}
                         />
                     ))
                 ) : (
