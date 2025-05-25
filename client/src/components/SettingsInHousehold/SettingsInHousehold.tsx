@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { selectUserId } from '../../redux/selectors/authSelectors'
 import { selectHouseholdById, selectIsHouseholdOwner } from '../../redux/selectors/houseHoldSelectors'
+import { deleteHousehold } from '../../redux/services/householdsApi'
 import { leaveHouseholdAction, loadHouseholds, updateHouseholdData } from '../../redux/slices/householdsSlice'
 import { AppDispatch, RootState } from '../../redux/store/store'
 import Button from '../Button/Button'
@@ -43,7 +44,6 @@ const SettingsInHousehold: React.FC<SettingsInHouseholdProps> = ({ isOpen, onClo
             setNewHouseholdName('')
             onClose()
         } catch (error) {
-            console.error('Error renaming household:', error)
             toast.error(t('settings.toast.rename_error'))
         } finally {
             setLoading(false)
@@ -67,10 +67,13 @@ const SettingsInHousehold: React.FC<SettingsInHouseholdProps> = ({ isOpen, onClo
     const handleDeleteHousehold = async () => {
         setLoading(true)
         try {
-            // TODO: Implement delete household action
+            await deleteHousehold(householdId)
+            await dispatch(loadHouseholds()).unwrap()
             toast.success(t('settings.toast.delete_success'))
             onClose()
+            navigate('/households')
         } catch (error) {
+            console.error('Error deleting household:', error)
             toast.error(t('settings.toast.delete_error'))
         } finally {
             setLoading(false)

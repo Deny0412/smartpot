@@ -154,8 +154,12 @@ const Notifications: React.FC = () => {
                     <div className="invites-list">
                         {invites.map(invite => (
                             <HouseholdInvite
-                                key={invite.id}
-                                {...invite}
+                                key={invite._id}
+                                id={invite._id}
+                                household_name={invite.name}
+                                inviter_name={invite.owner}
+                                timestamp={invite.createdAt}
+                                status="pending"
                                 onAccept={handleAcceptInvite}
                                 onReject={handleRejectInvite}
                                 formatDate={formatDate}

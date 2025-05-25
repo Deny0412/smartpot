@@ -1,38 +1,38 @@
-import { Document, Schema, model } from 'mongoose'
+import { Schema, model, Document, Types } from "mongoose";
 
 export interface IFlower extends Document {
-  profile_id: string
-  name: string
-  household_id: string
-  serial_number: string | null
-  avatar: string
-  keepSmartPot?: boolean
+  profile_id: string;
+  name: string;
+  household_id: Types.ObjectId;
+  serial_number: string;
+  avatar: string;
   profile: {
     humidity: {
-      min: number | null
-      max: number | null
-    }
+      min: number | null;
+      max: number | null;
+    };
     temperature: {
-      min: number | null
-      max: number | null
-    }
+      min: number | null;
+      max: number | null;
+    };
     light: {
-      min: number | null
-      max: number | null
-    }
-  }
+      min: number | null;
+      max: number | null;
+    };
+
+  };
 }
 
 const flowerSchema = new Schema<IFlower>(
   {
     name: { type: String, required: true },
     household_id: {
-      type: String,
+      type: Schema.Types.ObjectId,
+      ref: "Household",
       required: false,
     },
-    serial_number: { type: String, required: false, default: null },
     avatar: { type: String, required: false, default: null },
-    profile_id: { type: String, required: false, default: null },
+    serial_number: { type: String, required: false, default: null },
     profile: {
       humidity: {
         min: { type: Number, required: false, default: null },
@@ -49,11 +49,12 @@ const flowerSchema = new Schema<IFlower>(
       water_level: {
         min: { type: Number, required: false, default: null },
       },
-    },
+
+    }
   },
   { timestamps: true }
-) // Adds `createdAt` & `updatedAt` fields
+); // Adds `createdAt` & `updatedAt` fields
 
-const FlowerModel = model<IFlower>('Flower', flowerSchema)
+const FlowerModel = model<IFlower>("Flower", flowerSchema);
 
-export default FlowerModel
+export default FlowerModel;

@@ -194,7 +194,13 @@
             "not_active": "Neaktivní",
             "free_flowerpot_counter": "Volné květináče",
             "all_profiles": "Všechny profily",
-            "own_settings": "Vlastní nastavení"
+            "own_settings": "Vlastní nastavení",
+            "not_assigned": "Nepřiřazeno",
+            "assigned": "Přiřazeno"
+        },
+        "profile": {
+            "assigned": "Profil přiřazen",
+            "not_assigned": "Profil nepřiřazen"
         },
         "no_flowers": "Žádné květiny",
         "flower_item": {
@@ -316,9 +322,14 @@
         "register": "Registrace",
         "password": "Heslo",
         "success": "Úspěšně přihlášeno",
+        "forgot_password": "Zapomenuté heslo",
+        "reset_password": "Obnovit heslo",
+        "back_to_login": "Zpět na přihlášení",
+        "reset_success": "Pokyny pro obnovení hesla byly odeslány na váš email",
         "error": {
             "empty_fields": "Prosím vyplňte všechna pole",
-            "invalid_credentials": "Neplatné přihlašovací údaje"
+            "invalid_credentials": "Neplatné přihlašovací údaje",
+            "reset_failed": "Nepodařilo se odeslat instrukce pro obnovení hesla"
         }
     },
     "register_page": {
@@ -430,6 +441,7 @@
         "auto_watering_settings": "Nastavení profilu automatického zavlažování",
         "assigned_profile": "Květina má přiřazený profil:",
         "custom_settings": "Květina je na vlastních nastaveních",
+        "loading": "Načítání profilu...",
         "temperature": "Teplota",
         "humidity": "Vlhkost",
         "light": "Světlení",
@@ -502,7 +514,7 @@
         "websocket_status": {
             "idle": "Sledování kvetu není aktívne.",
             "connecting": "Pripájam sa k vášmu kvetu pre sledovanie v reálnom čase...",
-            "connected": "Ste úspešne pripojení k vášmu kvetu. Dáta sa sledujú v reálnom čase.",
+            "connected": "Ste uspesne pripojení k vášmu kvetu. Dáta sa sledujú v reálnom čase.",
             "reconnecting": "Spojenie bolo prerušené. Pokúšam sa znovu pripojiť...",
             "disconnected": "Nepodarilo sa pripojiť k vášmu kvetu pre sledovanie v reálnom čase. Skontrolujte pripojenie zariadenia.",
             "error": "Vyskytla sa chyba pripojenia k vášmu kvetu. Skúste obnoviť stránku.",
@@ -569,7 +581,7 @@
         "assigned_flower": "Přiřazená květina",
         "no_flower_assigned": "Žádná květina není přiřazena",
         "view_flower": "Zobrazit květinu",
-        "disconnect": "Odpojit",
+        "disconnect": "Odpojit od květiny",
         "transplant": "Přesadit",
         "disconnect_title": "Odpojit květináč",
         "disconnect_message": "Jste si jistý, že chcete odpojit tento květináč od květiny? Tato akce je nevratná.",
@@ -592,7 +604,14 @@
         "select_flower": "Vyberte květinu",
         "select_flower_placeholder": "Vyberte květinu z domácnosti",
         "no_flowers_available": "V této domácnosti nejsou žádné dostupné květiny",
-        "transplant_warning": "Upozornění: Pokud přesadíte smart pot s přiřazenou květinou, květina bude deaktivována"
+        "transplant_warning": "Upozornění: Pokud přesadíte smart pot s přiřazenou květinou, květina bude deaktivována",
+        "keep_flower": "Chcete přesadit květinu spolu se smart potem?",
+        "yes": "Ano",
+        "no": "Ne",
+        "assign_flower": "Chcete přiřadit květinu k jinému květináči v této domácnosti?",
+        "select_new_smart_pot": "Vyberte nový květináč",
+        "select_smart_pot_placeholder": "Vyberte květináč z domácnosti",
+        "disconnect_from_household": "Odpojit od domácnosti"
     },
     "add_smart_pot": {
         "title": "Přidat chytrý květináč",

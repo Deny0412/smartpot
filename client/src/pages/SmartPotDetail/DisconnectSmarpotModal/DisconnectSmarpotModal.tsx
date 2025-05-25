@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { toast } from 'react-toastify'
 import { H5 } from '../../../components/Text/Heading/Heading'
 import { selectSmartPots } from '../../../redux/selectors/smartPotSelectors'
-import { disconnectSmartPot } from '../../../redux/slices/smartPotsSlice'
+import { disconnectSmartPot, updateSmartPotThunk } from '../../../redux/slices/smartPotsSlice'
 import { AppDispatch } from '../../../redux/store/store'
 import './DisconnectSmarpotModal.sass'
 
@@ -13,6 +13,7 @@ interface DisconnectSmarpotModalProps {
     smartPotId: string
     householdId: string
     serialNumber: string
+    type: 'flower' | 'household'
 }
 
 const DisconnectSmarpotModal: React.FC<DisconnectSmarpotModalProps> = ({
@@ -20,6 +21,7 @@ const DisconnectSmarpotModal: React.FC<DisconnectSmarpotModalProps> = ({
     smartPotId,
     householdId,
     serialNumber,
+    type,
 }) => {
     const { t } = useTranslation()
     const dispatch = useDispatch<AppDispatch>()
@@ -29,24 +31,29 @@ const DisconnectSmarpotModal: React.FC<DisconnectSmarpotModalProps> = ({
 
     const handleDisconnect = async () => {
         if (!smartPot) {
-            console.error('Smart pot not found')
             toast.error(t('smart_pot_detail.disconnect_error'))
             return
         }
-
         try {
             setIsLoading(true)
-            console.log('Disconnecting smart pot with data:', {
-                serialNumber,
-                smartPotId,
-                householdId,
-            })
-            await dispatch(disconnectSmartPot({ serialNumber, householdId }))
-            toast.success('Smart pot bol úspešne odpojený')
+            if (type === 'flower') {
+                await dispatch(
+                    disconnectSmartPot({ serialNumber, householdId, activeFlowerId: smartPot.active_flower_id }),
+                )
+                toast.success(t('smart_pot_detail.disconnect_success'))
+            } else {
+                await dispatch(
+                    updateSmartPotThunk({
+                        serialNumber,
+                        activeFlowerId: null,
+                        householdId: null,
+                    }),
+                ).unwrap()
+                toast.success(t('smart_pot_detail.disconnect_from_household_success'))
+            }
             onClose()
         } catch (error) {
-            console.error('Error disconnecting smart pot:', error)
-            toast.error('Nepodarilo sa odpojiť smart pot')
+            toast.error(t('smart_pot_detail.disconnect_error'))
         } finally {
             setIsLoading(false)
         }
@@ -71,10 +78,16 @@ const DisconnectSmarpotModal: React.FC<DisconnectSmarpotModalProps> = ({
                             {t('smart_pot_detail.cancel')}
                         </button>
                         <button
-                            className="disconnect-smartpot-button disconnect-smartpot-button--confirm"
+                            className={`disconnect-smartpot-button disconnect-smartpot-button--confirm${
+                                type === 'household' ? ' disconnect-smartpot-button--danger' : ''
+                            }`}
                             onClick={handleDisconnect}
                             disabled={isLoading}>
-                            {isLoading ? t('smart_pot_detail.disconnecting') : t('smart_pot_detail.confirm_disconnect')}
+                            {isLoading
+                                ? t('smart_pot_detail.disconnecting')
+                                : type === 'flower'
+                                ? t('smart_pot_detail.confirm_disconnect')
+                                : t('smart_pot_detail.disconnect_from_household')}
                         </button>
                     </div>
                 </div>

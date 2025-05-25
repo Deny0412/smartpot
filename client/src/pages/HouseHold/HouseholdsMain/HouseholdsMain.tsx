@@ -48,9 +48,13 @@ const HouseholdsMain: React.FC = () => {
         setIsCreateModalOpen(false)
     }
 
-    const handleCreateSuccess = () => {
+    const handleCreateSuccess = async () => {
         setIsCreateModalOpen(false)
-        dispatch(loadHouseholds())
+        try {
+            await dispatch(loadHouseholds()).unwrap()
+        } catch (error) {
+            console.error('Error loading households:', error)
+        }
     }
 
     return (

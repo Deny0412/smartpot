@@ -1,11 +1,14 @@
 import axios from 'axios'
 
+const API_URL = process.env.REACT_APP_SERVER_API
 export const api = axios.create({
-    baseURL: 'http://localhost:3001/api',
+    baseURL: API_URL || 'http://localhost:3001/api',
     headers: {
         'Content-Type': 'application/json',
     },
 })
+
+
 
 api.interceptors.request.use(config => {
     const token = localStorage.getItem('token')
@@ -18,9 +21,7 @@ api.interceptors.request.use(config => {
     const householdId = localStorage.getItem('householdId')
     if (householdId) {
         config.headers['x-household-id'] = householdId
-    } else {
-        console.warn('No householdId found in localStorage')
-    }
+    } 
 
     return config
 })

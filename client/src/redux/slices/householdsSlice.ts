@@ -31,7 +31,7 @@ interface HouseholdResponse {
     data: Household[]
 }
 
-export const loadHouseholds = createAsyncThunk('households/load', async (_, { rejectWithValue }) => {
+export const loadHouseholds = createAsyncThunk('households/load', async (_, { getState, rejectWithValue }) => {
     try {
         return await fetchHouseholds()
     } catch (error) {
@@ -119,11 +119,14 @@ const householdsSlice = createSlice({
         clearError: state => {
             state.error = null
         },
+        resetHouseholds: () => initialState,
     },
     extraReducers: builder => {
         builder
             .addCase(loadHouseholds.pending, state => {
-                state.loading = true
+                if (!state.households.length) {
+                    state.loading = true
+                }
                 state.error = null
             })
             .addCase(loadHouseholds.fulfilled, (state, action: PayloadAction<HouseholdResponse>) => {
@@ -237,5 +240,5 @@ const householdsSlice = createSlice({
     },
 })
 
-export const { clearError } = householdsSlice.actions
+export const { clearError, resetHouseholds } = householdsSlice.actions
 export default householdsSlice.reducer

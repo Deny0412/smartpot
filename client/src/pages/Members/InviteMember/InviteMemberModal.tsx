@@ -11,7 +11,7 @@ import { AppDispatch } from '../../../redux/store/store'
 import './InviteMember.sass'
 
 interface User {
-    id: string
+    _id: string
     name: string
     surname: string
     email: string
@@ -44,7 +44,7 @@ const InviteMember: React.FC<InviteMemberProps> = ({ isOpen, onClose, householdI
             try {
                 const response = await api.get(`/user/search?query=${encodeURIComponent(searchQuery)}`)
                 const filteredUsers = response.data.data.filter(
-                    (user: User) => !existingMembers.includes(user.id) && !invitedUsers.includes(user.id),
+                    (user: User) => !existingMembers.includes(user._id) && !invitedUsers.includes(user._id),
                 )
                 setSearchResults(filteredUsers)
             } catch (err) {
@@ -67,12 +67,12 @@ const InviteMember: React.FC<InviteMemberProps> = ({ isOpen, onClose, householdI
             return
         }
 
-        if (existingMembers.includes(selectedUser.id)) {
+        if (existingMembers.includes(selectedUser._id)) {
             setError(t('manage_household.manage_members.add_member.error.user_already_member'))
             return
         }
 
-        if (invitedUsers.includes(selectedUser.id)) {
+        if (invitedUsers.includes(selectedUser._id)) {
             setError(t('manage_household.manage_members.add_member.error.user_already_invited'))
             return
         }
@@ -81,7 +81,7 @@ const InviteMember: React.FC<InviteMemberProps> = ({ isOpen, onClose, householdI
         setError(null)
 
         try {
-            await dispatch(inviteMemberAction({ householdId, userId: selectedUser.id })).unwrap()
+            await dispatch(inviteMemberAction({ householdId, userId: selectedUser._id })).unwrap()
             toast.success(t('manage_household.manage_members.add_member.toast.invite_sent_success'))
             setSearchQuery('')
             setSelectedUser(null)
@@ -125,9 +125,10 @@ const InviteMember: React.FC<InviteMemberProps> = ({ isOpen, onClose, householdI
                                 <div className="search-results">
                                     {searchResults.map(user => (
                                         <div
-                                            key={user.id}
+                                            key={user._id}
                                             className="search-result-item"
                                             onClick={() => {
+                                                console.log('Selected user:', user)
                                                 setSelectedUser(user)
                                                 setSearchQuery(`${user.name} ${user.surname}`)
                                                 setSearchResults([])

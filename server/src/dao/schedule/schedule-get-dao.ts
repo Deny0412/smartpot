@@ -1,9 +1,8 @@
-import ScheduleModel from '../../models/Schedule';
+import ScheduleModel from "../../models/Schedule";
 
-async function getSchedule(id: string) {
-    
-    const schedule = await ScheduleModel.findById(id);
-    return schedule;
+async function scheduleGetDao(id: string) {
+  const schedule = await ScheduleModel.findById(id);
+  return schedule;
 }
 
-export default getSchedule;
+export default scheduleGetDao;

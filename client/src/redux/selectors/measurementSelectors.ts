@@ -2,16 +2,16 @@ import { createSelector } from '@reduxjs/toolkit'
 import { MeasurementsState } from '../../types/flowerTypes'
 import { RootState } from '../store/store'
 
-// Základný selektor pre merania
+
 const selectMeasurementsState = (state: RootState) => state.measurements
 
-// Memoizovaný selektor pre merania konkrétnej kvetiny
+
 export const selectMeasurementsForFlower = createSelector(
     [selectMeasurementsState, (_, flowerId: string) => flowerId],
     (measurementsState, flowerId) => measurementsState.measurements[flowerId] || null,
 )
 
-// Memoizovaný selektor pre spracované merania
+
 export const selectProcessedMeasurements = createSelector([selectMeasurementsForFlower], measurements => {
     if (!measurements) {
         return {
@@ -32,16 +32,16 @@ export const selectProcessedMeasurements = createSelector([selectMeasurementsFor
     }
 })
 
-// Memoizovaný selektor pre načítavanie
+
 export const selectMeasurementsLoading = createSelector([selectMeasurementsState], state => state.loading)
 
-// Memoizovaný selektor pre chyby
+
 export const selectMeasurementsError = (state: RootState) => state.measurements.error
 
-// Memoizovaný selektor pre aktívne WebSocket pripojenie
+
 export const selectActiveWebSocketFlowerId = (state: RootState) => state.measurements.activeWebSocketFlowerId
 
-// Memoizovaný selektor pre poslednú zmenu
+
 export const selectLastChange = createSelector(
     [selectMeasurementsState],
     (state: MeasurementsState) => state.lastChange,
@@ -168,15 +168,7 @@ export const selectMeasurementLimits = (
         return defaults[measurementType]
     }
 
-    if (flower.profile_id) {
-        const profile = state.flowerProfiles.profiles.find(p => p._id === flower.profile_id)
-        if (profile?.[measurementType]) {
-            return {
-                min: profile[measurementType].min,
-                max: profile[measurementType].max,
-            }
-        }
-    }
+   
 
     if (flower.profile?.[measurementType]) {
         return {

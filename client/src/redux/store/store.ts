@@ -3,6 +3,7 @@ import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux'
 import { initializeWebSocket } from '../slices/measurementsSlice'
 import rootReducer from './rootReducer'
 
+
 export const store = configureStore({
     reducer: rootReducer,
 })

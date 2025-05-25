@@ -6,6 +6,7 @@ import {
     transplantSmartPotToFlower,
     transplantSmartPotWithFlower,
     transplantSmartPotWithoutFlower,
+    updateSmartPot as updateSmartPotApi,
 } from '../services/smartPotsApi'
 import { RootState } from '../store/rootReducer'
 
@@ -39,14 +40,18 @@ export const fetchSmartPots = createAsyncThunk(
 
 export const disconnectSmartPot = createAsyncThunk(
     'smartPots/disconnectSmartPot',
-    async ({ serialNumber, householdId }: { serialNumber: string; householdId: string }, { dispatch }) => {
+    async (
+        {
+            serialNumber,
+            householdId,
+            activeFlowerId,
+        }: { serialNumber: string; householdId: string; activeFlowerId: string | null },
+        { dispatch },
+    ) => {
         try {
-       
-            const response = await disconnectSmartPotApi(serialNumber, householdId)
-          
+            const response = await disconnectSmartPotApi(serialNumber, householdId, activeFlowerId)
             return response
         } catch (error) {
-           
             throw error
         }
     },
@@ -80,17 +85,19 @@ export const transplantSmartPotToFlowerThunk = createAsyncThunk(
 )
 
 export const transplantSmartPotWithFlowerThunk = createAsyncThunk(
-    'smartPots/transplantWithFlower',
+    'smartPots/transplantSmartPotWithFlower',
     async (
-        { smartPotId, targetHouseholdId }: { smartPotId: string; targetHouseholdId: string },
+        {
+            smartPotSerialNumber,
+            targetHouseholdId,
+            flowerId,
+        }: { smartPotSerialNumber: string; targetHouseholdId: string; flowerId: string },
         { rejectWithValue },
     ) => {
         try {
-            return await transplantSmartPotWithFlower(smartPotId, targetHouseholdId)
+            await transplantSmartPotWithFlower(smartPotSerialNumber, targetHouseholdId, flowerId)
         } catch (error) {
-            return rejectWithValue(
-                error instanceof Error ? error.message : 'Chyba pri presadzovaní kvetináča s kvetinou',
-            )
+            return rejectWithValue(error instanceof Error ? error.message : 'Chyba pri presádzaní smartpotu s kvetinou')
         }
     },
 )
@@ -117,6 +124,27 @@ export const transplantSmartPotWithoutFlowerThunk = createAsyncThunk(
             return rejectWithValue(
                 error instanceof Error ? error.message : 'Chyba pri presadzovaní kvetináča bez kvetiny',
             )
+        }
+    },
+)
+
+export const updateSmartPotThunk = createAsyncThunk(
+    'smartPots/updateSmartPot',
+    async (
+        {
+            serialNumber,
+            activeFlowerId,
+            householdId,
+        }: { serialNumber: string; activeFlowerId: string | null; householdId: string | null },
+        { rejectWithValue },
+    ) => {
+        try {
+            return await updateSmartPotApi(serialNumber, {
+                active_flower_id: activeFlowerId,
+                household_id: householdId,
+            })
+        } catch (error) {
+            return rejectWithValue(error instanceof Error ? error.message : 'Chyba pri update smartpotu')
         }
     },
 )
@@ -199,11 +227,7 @@ const smartPotsSlice = createSlice({
                 state.loading = true
                 state.error = null
             })
-            .addCase(transplantSmartPotWithFlowerThunk.fulfilled, (state, action: PayloadAction<SmartPot>) => {
-                const index = state.smartPots.findIndex(pot => pot._id === action.payload._id)
-                if (index !== -1) {
-                    state.smartPots[index] = action.payload
-                }
+            .addCase(transplantSmartPotWithFlowerThunk.fulfilled, state => {
                 state.loading = false
             })
             .addCase(transplantSmartPotWithFlowerThunk.rejected, (state, action) => {
@@ -226,11 +250,25 @@ const smartPotsSlice = createSlice({
                 state.loading = false
                 state.error = action.payload as string
             })
+            .addCase(updateSmartPotThunk.fulfilled, (state, action: PayloadAction<SmartPot>) => {
+                const index = state.smartPots.findIndex(pot => pot.serial_number === action.payload.serial_number)
+                if (index !== -1) {
+                    state.smartPots[index] = action.payload
+                }
+                state.loading = false
+            })
+            .addCase(updateSmartPotThunk.pending, state => {
+                state.loading = true
+                state.error = null
+            })
+            .addCase(updateSmartPotThunk.rejected, (state, action) => {
+                state.loading = false
+                state.error = action.payload as string
+            })
     },
 })
 
 export const { clearError, clearSmartPots } = smartPotsSlice.actions
-
 
 export const selectInactiveSmartPots = (state: RootState) => state.smartPots.inactiveSmartPots
 

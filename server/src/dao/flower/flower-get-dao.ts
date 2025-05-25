@@ -1,23 +1,8 @@
-import { Types } from 'mongoose'
-import FlowerModel from '../../models/Flower'
-import FlowerScheduleModel from '../../models/Schedule'
+import FlowerModel from "../../models/Flower";
 
-export async function getFlower(id: string) {
-  const flower = await FlowerModel.findById(id).lean()
-  if (!flower) return null
-
-
-  return {
-    ...flower,
-    _id: flower._id.toString(),
-  }
+async function flowerGetDao(id: string) {
+  const flower = await FlowerModel.findById(id);
+  return flower;
 }
 
-export async function getFlowerSchedule(flowerId: string) {
-  const flowerSchedule = await FlowerScheduleModel.findOne({ flower_id: flowerId }).lean()
-  if (!flowerSchedule) {
-    console.log('No schedule found for flowerId:', flowerId)
-    return null
-  }
-  return flowerSchedule
-}
+export default flowerGetDao;

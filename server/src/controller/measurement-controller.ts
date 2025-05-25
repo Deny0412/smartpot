@@ -1,13 +1,15 @@
-import { FastifyReply, FastifyRequest } from 'fastify'
-import measurementHistoryAbl, { getLatestMeasurementsAbl } from '../abl/measurement/measurement-history-abl'
-import { sendError } from '../middleware/response-handler'
-import measurementCreateAbl from '../abl/measurement/measurement-create-abl'
+import { FastifyRequest, FastifyReply } from "fastify";
+import measurementCreateAbl from "../abl/measurement/measurement-create-abl";
+import measurementHistoryAbl from "../abl/measurement/measurement-history-abl";
+import measurementGetLatestAbl from "../abl/measurement/measurement-getLatest-abl";
 
-interface RequestBody {
-  id: string
-  householdId: string
-  dateFrom?: string
-  dateTo?: string
+import { sendError } from "../middleware/response-handler";
+
+interface Params {
+  id: string;
+  flowerId?: string;
+  dateFrom: Date;
+  dateTo: Date;
 }
 
 export const measurementController = {
@@ -22,27 +24,18 @@ export const measurementController = {
   },
   history: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const body = request.body as RequestBody
-
-      if (!body.householdId) {
-        throw new Error('Missing householdId')
-      }
-
-      await measurementHistoryAbl(
-        {
-          id: body.id,
-          householdId: body.householdId,
-          dateFrom: body.dateFrom,
-          dateTo: body.dateTo,
-        },
-        reply
-      )
+      const data = request.body as Params;
+      await measurementHistoryAbl(data, reply);
     } catch (error) {
-      sendError(reply, error)
+      sendError(reply, error);
     }
   },
-
   getLatest: async (request: FastifyRequest, reply: FastifyReply) => {
-    await getLatestMeasurementsAbl(request.body as any, reply)
+    try {
+      const id = (request.params as Params).flowerId!;
+      await measurementGetLatestAbl(id, reply);
+    } catch (error) {
+      sendError(reply, error);
+    }
   },
-}
+};

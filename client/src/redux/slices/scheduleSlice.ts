@@ -25,8 +25,8 @@ export const loadSchedule = createAsyncThunk('schedule/load', async (flowerId: s
 
 export const updateSchedule = createAsyncThunk(
     'schedule/updateSchedule',
-    async ({ flowerId, schedule }: { flowerId: string; schedule: Schedule }) => {
-        const response = await updateScheduleByFlower(flowerId, schedule)
+    async ({  schedule }: {  schedule: Schedule }) => {
+        const response = await updateScheduleByFlower( schedule)
         return response
     },
 )

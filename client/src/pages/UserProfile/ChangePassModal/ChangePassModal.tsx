@@ -5,7 +5,7 @@ import { useDispatch } from 'react-redux'
 import { toast } from 'react-toastify'
 import { H5 } from '../../../components/Text/Heading/Heading'
 import { TranslationFunction } from '../../../i18n'
-import { changePassword as changePasswordAction } from '../../../redux/slices/authSlice'
+
 import { AppDispatch } from '../../../redux/store/store'
 import './ChangePassModal.sass'
 
@@ -23,7 +23,6 @@ const ChangePassModal: React.FC<ChangePassModalProps> = ({ isOpen, onClose }) =>
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
-    // Reset form when modal opens or closes
     useEffect(() => {
         if (isOpen) {
             setCurrentPassword('')
@@ -35,7 +34,7 @@ const ChangePassModal: React.FC<ChangePassModalProps> = ({ isOpen, onClose }) =>
     }, [isOpen])
 
     const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
+    /*     e.preventDefault()
         setError(null)
 
         if (!currentPassword || !newPassword || !confirmNewPassword) {
@@ -44,7 +43,6 @@ const ChangePassModal: React.FC<ChangePassModalProps> = ({ isOpen, onClose }) =>
         }
 
         if (newPassword.length < 6) {
-            // Example validation
             setError(t('changePassModal.error.password_too_short'))
             return
         }
@@ -56,24 +54,19 @@ const ChangePassModal: React.FC<ChangePassModalProps> = ({ isOpen, onClose }) =>
 
         setLoading(true)
         try {
-           
             const resultAction = await dispatch(
                 changePasswordAction({ currentPassword, newPassword, confirmNewPassword }),
             )
-            unwrapResult(resultAction) // Throws error if rejected
-
-            // If unwrapResult doesn't throw, the action was fulfilled
+            unwrapResult(resultAction)
             toast.success(t('changePassModal.success.password_changed'))
             onClose()
         } catch (err: any) {
             console.error('Error changing password:', err)
-            // Extract error message from actual API error if possible
-            // err will be the payload from rejectWithValue (the error message from API)
             setError(err || t('changePassModal.error.change_failed_unexpected'))
             toast.error(t('changePassModal.error.change_failed_toast'))
         } finally {
             setLoading(false)
-        }
+        } */
     }
 
     if (!isOpen) {

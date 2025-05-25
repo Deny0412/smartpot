@@ -1,34 +1,20 @@
-import { FastifyInstance } from 'fastify'
-import { WebSocketServer } from 'ws'
-import { handleConnection } from './connection'
-import { handleUpgrade } from './upgrade'
+import { FastifyInstance } from "fastify";
+import { WebSocketServer } from "ws";
+import { handleUpgrade } from "./upgrade";
+import { handleConnection } from "./connection";
 
 export const websocketPlugin = async (fastify: FastifyInstance) => {
-  return new Promise<void>((resolve) => {
-    const wss = new WebSocketServer({ noServer: true })
+  const wss = new WebSocketServer({ noServer: true });
 
-    wss.on('connection', handleConnection(fastify))
+  wss.on("connection", handleConnection(fastify));
 
-    fastify.decorate('wss', wss)
+  fastify.server.on("upgrade", (req, socket, head) => {
+    handleUpgrade(req, socket, head, wss, fastify);
+  });
 
-    fastify.server.on('upgrade', (request, socket, head) => {
-      handleUpgrade(request, socket, head, wss)
-    })
-
-    fastify.get('/ws', (_, reply) => {
-      reply.send({
-        message: 'WebSocket server is running and requires token authentication',
-      })
-    })
-
-    setImmediate(() => {
-      resolve()
-    })
-  })
-}
-
-declare module 'fastify' {
-  interface FastifyInstance {
-    wss: WebSocketServer
-  }
-}
+  fastify.get("/ws", (_, reply) => {
+    reply.send({
+      message: "WebSocket server is running and requires token authentication",
+    });
+  });
+};

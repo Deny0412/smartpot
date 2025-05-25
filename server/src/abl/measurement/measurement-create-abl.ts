@@ -1,6 +1,6 @@
 import { FastifyReply } from "fastify";
 import createMeasurement from "../../dao/measurement/measurement-create-dao";
-import getSmartpot from "../../dao/smartpot/smart-pot-get-by-serial-number";
+import getSmartpot from "../../dao/smartpot/smartpot-getBySerial-dao";
 import getFlower from "../../dao/flower/flower-get-dao";
 import { Types } from "mongoose";
 import { isValueOutOfRange } from "../../utils/flower/flower-range-util";
@@ -32,7 +32,7 @@ const schema = {
 
 const ajv = new Ajv();
 
-async function createMeasurementAbl(data: any, reply: FastifyReply, user: any) {
+async function measurementCreateAbl(data: any, reply: FastifyReply, user: any) {
   try {
     const validate = ajv.compile(schema);
     const valid = validate(data);
@@ -116,4 +116,4 @@ async function createMeasurementAbl(data: any, reply: FastifyReply, user: any) {
   }
 }
 
-export default createMeasurementAbl;
+export default measurementCreateAbl;

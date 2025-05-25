@@ -1,12 +1,13 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import {
-    changePassword as changePasswordApi,
+    authApi,
     checkAuth,
     loginUser,
     logoutUser,
     registerUser,
     UserData,
 } from '../services/authApi'
+import { RootState } from '../store/store'
 import { clearMeasurements, stopWebSocketConnection } from './measurementsSlice'
 
 interface AuthState {
@@ -17,8 +18,8 @@ interface AuthState {
 }
 
 const initialState: AuthState = {
-    isAuthenticated: false,
-    user: null,
+    isAuthenticated: !!localStorage.getItem('token'),
+    user: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!) : null,
     loading: false,
     error: null,
 }
@@ -63,14 +64,16 @@ export const checkAuthStatus = createAsyncThunk('auth/check', async () => {
     return user
 })
 
-export const changePassword = createAsyncThunk(
-    'auth/changePassword',
-    async (credentials: ChangePasswordCredentials, { rejectWithValue }) => {
+
+
+export const forgotPassword = createAsyncThunk(
+    'auth/forgotPassword',
+    async ({ email }: { email: string }, { rejectWithValue }) => {
         try {
-            const response = await changePasswordApi(credentials)
-            return response.message
+            const response = await authApi.post('/forgotPassword', { email })
+            return response.data
         } catch (error: any) {
-            return rejectWithValue(error.message)
+            return rejectWithValue(error.response?.data?.error || error.message)
         }
     },
 )
@@ -117,19 +120,20 @@ const authSlice = createSlice({
                 state.isAuthenticated = false
                 state.user = null
             })
-            .addCase(changePassword.pending, state => {
+            .addCase(forgotPassword.pending, state => {
                 state.loading = true
                 state.error = null
             })
-            .addCase(changePassword.fulfilled, state => {
+            .addCase(forgotPassword.fulfilled, state => {
                 state.loading = false
-                state.error = null
             })
-            .addCase(changePassword.rejected, (state, action) => {
+            .addCase(forgotPassword.rejected, (state, action) => {
                 state.loading = false
                 state.error = action.payload as string
             })
     },
 })
+
+export const selectUser = (state: RootState) => state.auth.user
 
 export default authSlice.reducer

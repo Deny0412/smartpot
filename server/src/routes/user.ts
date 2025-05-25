@@ -1,21 +1,20 @@
-import { FastifyInstance } from 'fastify'
-import { userController } from '../controller/user-controller'
-import { authMiddleware } from '../middleware/auth-middleware'
+import { userController } from "../controller/user-controller";
+import { FastifyInstance } from "fastify";
+import { authMiddleware } from "../middleware/auth-middleware";
 
-export default async function userRoutes(fastify: FastifyInstance) {
+export default async function flowerRoutes(fastify: FastifyInstance) {
   fastify.get(
-    '/search',
+    "/search",
     {
       onRequest: [authMiddleware],
     },
     userController.search
-  )
-
+  );
   fastify.get(
-    '/invites',
+    "/invites",
     {
       onRequest: [authMiddleware],
     },
-    userController.getInvites
-  )
+    userController.invites
+  );
 }

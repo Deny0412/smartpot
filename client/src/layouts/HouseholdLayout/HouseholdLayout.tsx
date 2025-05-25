@@ -13,6 +13,7 @@ import './HouseholdLayout.sass'
 import { useNavigate } from 'react-router-dom'
 
 import { CaretRight, Flower, Gear, House, PottedPlant, Users } from '@phosphor-icons/react'
+import Loader from '../../components/Loader/Loader'
 import SettingsInHousehold from '../../components/SettingsInHousehold/SettingsInHousehold'
 
 const HouseholdLayout = () => {
@@ -26,61 +27,47 @@ const HouseholdLayout = () => {
     const households = useSelector(selectHouseholds)
     const userId = useSelector(selectUserId)
     const householdsLoading = useSelector((state: RootState) => state.households.loading)
+    const isOwner = useSelector((state: RootState) => selectIsHouseholdOwner(state, householdId || ''))
+    const household = households.find((h: { id: string }) => h.id === householdId)
 
-    // State for access check
+    
     const [accessStatus, setAccessStatus] = useState<'checking' | 'granted' | 'denied'>('checking')
+    const [initialLoadAttempted, setInitialLoadAttempted] = useState(false)
 
-    // Load households (runs once on mount)
     useEffect(() => {
-        dispatch(loadHouseholds())
-    }, [dispatch])
-
-    // Check access after households load or householdId changes
-    useEffect(() => {
-        // Ak ešte načítavame domácnosti, počkáme.
-        if (householdsLoading) {
-            // Nastavíme stav na 'checking', ak ešte nie je, aby sa zobrazil Loader
-            if (accessStatus !== 'checking') {
-                setAccessStatus('checking')
-            }
-            return // Nepokračujeme, kým sa nenačíta
+        if (!initialLoadAttempted) {
+            dispatch(loadHouseholds())
+            setInitialLoadAttempted(true)
         }
+    }, [dispatch, initialLoadAttempted])
 
-        // Ak nemáme householdId v URL, je to neplatný stav pre tento layout
-        if (!householdId) {
-            // Nastavíme denied a presmerujeme len ak sme neboli už presmerovaní
-            if (accessStatus !== 'denied') {
-                setAccessStatus('denied')
-                navigate('/households', { replace: true })
-            }
+    
+    useEffect(() => {
+        if (householdsLoading) {
             return
         }
 
-        // Skontrolujeme, či načítaný zoznam obsahuje dané householdId
+        if (!householdId) {
+            setAccessStatus('denied')
+            navigate('/households', { replace: true })
+            return
+        }
+
         const currentHouseholdExists = households.some((h: { id: string }) => h.id === householdId)
 
         if (currentHouseholdExists) {
-            // Ak sme našli a stav nie je 'granted', nastavíme ho
-            if (accessStatus !== 'granted') {
-                setAccessStatus('granted')
-            }
-        } else {
-            // Domácnosť sa nenašla v zozname používateľa
-            console.warn(`User does not have access to household ${householdId} or it doesn't exist. Redirecting.`)
-            // Nastavíme denied a presmerujeme len ak sme neboli už presmerovaní
-            if (accessStatus !== 'denied') {
-                toast.error(t('households.access_denied_toast'))
-                setAccessStatus('denied')
-                navigate('/households', { replace: true })
-            }
+            setAccessStatus('granted')
+        } else if (initialLoadAttempted) {
+           
+            toast.error(t('households.access_denied_toast'))
+            setAccessStatus('denied')
+            navigate('/households', { replace: true })
         }
+    }, [householdsLoading, householdId, households, navigate, t, initialLoadAttempted])
 
-        // Závislosti: efekt sa spustí, keď sa zmení stav načítania, ID v URL,
-        // zoznam domácností, alebo funkcia navigate (čo by nemalo).
-    }, [householdsLoading, householdId, households, navigate, accessStatus, t]) // Pridal som accessStatus ako závislosť
-
-    const household = households.find((h: { id: string }) => h.id === householdId)
-    const isOwner = useSelector((state: RootState) => selectIsHouseholdOwner(state, householdId || ''))
+    if (householdsLoading || accessStatus === 'checking') {
+        return <Loader />
+    }
 
     const getActiveClass = (path: string) => {
         return location.pathname.includes(path) ? 'active' : ''

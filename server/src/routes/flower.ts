@@ -1,162 +1,77 @@
-import { Type } from '@sinclair/typebox'
-import { FastifyPluginAsync } from 'fastify'
-import { flowerDisconnectAbl } from '../abl/flower/flower-disconnect-abl'
-import { flowerController } from '../controller/flower-controller'
-import { authMiddleware } from '../middleware/auth-middleware'
-import { householdAuthMidlleware } from '../middleware/household-membership-middleware'
+import { flowerController } from "../controller/flower-controller";
+import { measurementController } from "../controller/measurement-controller";
 
-const MEMBER_ROLE = 'member'
-const OWNER_ROLE = 'owner'
+import { FastifyInstance } from "fastify";
+import { authMiddleware } from "../middleware/auth-middleware";
+import { householdAuthMidlleware } from "../middleware/household-membership-middleware";
 
-const flowerRoutes: FastifyPluginAsync = async (fastify) => {
+const MEMBER_ROLE = "member";
+const OWNER_ROLE = "owner";
+
+export default async function flowerRoutes(fastify: FastifyInstance) {
   fastify.post(
-    '/add',
+    "/add",
     {
-      onRequest: [authMiddleware],
-      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])],
+      onRequest: [authMiddleware], // Authenticate first
+      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
     },
     flowerController.create
-  )
+  );
 
   fastify.delete(
-    '/delete/:id',
+    "/delete/:id",
     {
-      onRequest: [authMiddleware],
-      preHandler: [householdAuthMidlleware([OWNER_ROLE])],
+      onRequest: [authMiddleware], // Authenticate first
+      preHandler: [householdAuthMidlleware([OWNER_ROLE])], // Then check household auth
     },
     flowerController.delete
-  )
+  );
   fastify.get(
-    '/get/:id',
+    "/get/:id",
     {
-      onRequest: [authMiddleware],
-      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])],
+      onRequest: [authMiddleware], // Authenticate first
+      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
     },
     flowerController.get
-  )
+  );
   fastify.get(
-    '/list',
+    "/list",
     {
-      onRequest: [authMiddleware],
-      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])],
+      onRequest: [authMiddleware], // Authenticate first
+      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
     },
     flowerController.list
-  )
+  );
   fastify.put(
-    '/update',
+    "/update",
     {
-      onRequest: [authMiddleware],
-      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])],
+      onRequest: [authMiddleware], // Authenticate first
+      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
     },
     flowerController.update
-  )
-
-  fastify.get(
-    '/listactive',
+  );
+  fastify.post(
+    "/history",
     {
-      onRequest: [authMiddleware],
-      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])],
+      onRequest: [authMiddleware], // Authenticate first
+      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
+    },
+    measurementController.history
+  );
+  fastify.get(
+    "/listactive",
+    {
+      onRequest: [authMiddleware], // Authenticate first
+      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
     },
     flowerController.listActive
-  )
+  );
   fastify.get(
-    '/schedule/:id',
+    "/getSchedule/:id",
     {
-      onRequest: [authMiddleware],
-      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])],
+      onRequest: [authMiddleware], // Authenticate first
+      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
     },
     flowerController.getSchedule
-  )
-  fastify.put(
-    '/schedule/:id',
-    {
-      onRequest: [authMiddleware],
-      preHandler: [householdAuthMidlleware([OWNER_ROLE])],
-    },
-    flowerController.updateSchedule
-  )
-
-  fastify.post(
-    '/export',
-    {
-      onRequest: [authMiddleware],
-      preHandler: [householdAuthMidlleware([OWNER_ROLE])],
-    },
-    flowerController.export
-  )
-
-  // Disconnect flower from smartpot
-  fastify.post(
-    '/disconnect',
-    {
-      onRequest: [authMiddleware],
-      preHandler: [householdAuthMidlleware([OWNER_ROLE])],
-      schema: {
-        body: Type.Object({
-          id: Type.String(),
-        }),
-        response: {
-          200: Type.Object({
-            success: Type.Boolean(),
-            message: Type.String(),
-          }),
-        },
-      },
-    },
-    async (request, reply) => {
-      await flowerDisconnectAbl(request.body, reply)
-    }
-  )
-
-  // Transplant flower with smartpot to another household
-  fastify.post(
-    '/transplant-with-smartpot',
-    {
-      onRequest: [authMiddleware],
-      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])],
-      schema: {
-        body: Type.Object({
-          flowerId: Type.String(),
-          targetHouseholdId: Type.String(),
-        }),
-      },
-    },
-    flowerController.transplantWithSmartPot
-  )
-
-  // Transplant flower without smartpot to another household
-  fastify.post(
-    '/transplant-without-smartpot',
-    {
-      onRequest: [authMiddleware],
-      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])],
-      schema: {
-        body: Type.Object({
-          flowerId: Type.String(),
-          targetHouseholdId: Type.String(),
-          assignOldSmartPot: Type.Boolean(),
-          newFlowerId: Type.Optional(Type.String()),
-        }),
-      },
-    },
-    flowerController.transplantWithoutSmartPot
-  )
-
-  // Transplant flower to another smartpot in same household
-  fastify.post(
-    '/transplant-to-smartpot',
-    {
-      onRequest: [authMiddleware],
-      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])],
-      schema: {
-        body: Type.Object({
-          flowerId: Type.String(),
-          targetSmartPotId: Type.String(),
-        }),
-      },
-    },
-    flowerController.transplantToSmartPot
-  )
+  );
 }
-
-export default flowerRoutes

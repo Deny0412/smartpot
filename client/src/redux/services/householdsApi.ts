@@ -10,6 +10,22 @@ interface HouseholdResponse {
     data: ApiHousehold[]
 }
 
+interface MembersResponse {
+    status: string
+    data: Array<{
+        _id: string
+        email: string
+    }>
+}
+
+interface InvitedResponse {
+    status: string
+    data: Array<{
+        _id: string
+        email: string
+    }>
+}
+
 export const fetchHouseholds = async (): Promise<HouseholdResponse> => {
     const response = await api.get<HouseholdResponse>('/household/list')
     return {
@@ -50,7 +66,7 @@ export const inviteMember = async (householdId: string, userId: string): Promise
         id: householdId,
         invited_user_id: userId,
     }
-    console.log('Sending invite request with data:', data)
+    console.log('Sending invite request with data:', JSON.stringify(data))
     const response = await api.post<{ message: string }>('/household/invite', data)
     return response.data
 }
@@ -68,5 +84,15 @@ export const makeOwner = async (householdId: string, newOwnerId: string): Promis
         id: householdId,
         new_owner_id: newOwnerId,
     })
+    return response.data
+}
+
+export const getMembers = async (householdId: string): Promise<MembersResponse> => {
+    const response = await api.get<MembersResponse>(`/household/getMembers/${householdId}`)
+    return response.data
+}
+
+export const getInvited = async (householdId: string): Promise<InvitedResponse> => {
+    const response = await api.get<InvitedResponse>(`/household/getInvited/${householdId}`)
     return response.data
 }

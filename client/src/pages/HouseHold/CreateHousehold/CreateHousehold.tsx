@@ -6,7 +6,7 @@ import Button from '../../../components/Button/Button'
 import GradientDiv from '../../../components/GradientDiv/GradientDiv'
 import { H5 } from '../../../components/Text/Heading/Heading'
 import { TranslationFunction } from '../../../i18n'
-import { createHousehold } from '../../../redux/slices/householdsSlice'
+import { createHousehold, loadHouseholds } from '../../../redux/slices/householdsSlice'
 import { AppDispatch } from '../../../redux/store/store'
 import './CreateHousehold.sass'
 
@@ -44,9 +44,12 @@ const CreateHousehold: React.FC<CreateHouseholdProps> = ({ isOpen, onClose, onSu
                     invites: [],
                 }),
             ).unwrap()
+
+            await dispatch(loadHouseholds()).unwrap()
+
+            toast.success('Household created successfully')
             onSuccess()
             onClose()
-            toast.success('Household created successfully')
         } catch (err: any) {
             if (err.status === 401) {
                 setError(t('create_household.error.unauthorized'))

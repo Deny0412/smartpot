@@ -1,11 +1,14 @@
 import { api } from './api'
 
 export interface HouseholdInvite {
-    id: string
-    household_name: string
-    inviter_name: string
-    timestamp: string
-    status: string
+    _id: string
+    name: string
+    owner: string
+    members: string[]
+    invites: string[]
+    createdAt: string
+    updatedAt: string
+    // ...add more fields if needed
 }
 
 export const invitesApi = {

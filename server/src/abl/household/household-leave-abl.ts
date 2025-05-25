@@ -1,15 +1,49 @@
-import { FastifyReply } from 'fastify'
-import { householdLeaveDao } from '../../dao/household/household-leave-dao'
-import { sendError } from '../../middleware/response-handler'
+import Ajv from "ajv";
+const ajv = new Ajv();
+import { FastifyReply } from "fastify";
+import householdLeaveDao from "../../dao/household/household-leave-dao";
+import householdGetDao from "../../dao/household/household-get-dao";
 
-export default async function householdLeaveAbl(householdId: string, userId: string, reply: FastifyReply) {
+import {
+  sendError,
+  sendSuccess,
+  sendClientError,
+  sendNotFound,
+} from "../../middleware/response-handler";
+const schema = {
+  type: "object",
+  properties: {
+    id: { type: "string" },
+  },
+  required: ["id"],
+};
+
+async function householdLeaveAbl(
+  household_id: string,
+  user_id: string,
+  reply: FastifyReply
+) {
   try {
-    const household = await householdLeaveDao.leave(householdId, userId)
-    return reply.status(200).send({
-      message: 'Successfully left the household',
-      household,
-    })
+    const idObject = { id: household_id };
+    const validate = ajv.compile(schema);
+    const valid = validate(idObject);
+    if (!valid) {
+      sendClientError(
+        reply,
+        JSON.stringify(validate.errors?.map((error) => error.message))
+      );
+      return;
+    }
+    const household = await householdGetDao(household_id);
+    if (!household) {
+      sendNotFound(reply, "Household does not exist");
+    }
+
+    const updatedHousehold = await householdLeaveDao(household_id, user_id);
+    sendSuccess(reply, updatedHousehold, "User left household successfully");
   } catch (error) {
-    sendError(reply, error)
+    sendError(reply, error);
   }
 }
+
+export default householdLeaveAbl;

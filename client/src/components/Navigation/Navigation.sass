@@ -220,7 +220,6 @@
   .navbar__user-info
     display: none
 
-// Štýly pre Scroll to Top tlačidlo
 .navbar__scroll-top-button
   position: fixed
   bottom: 50px
@@ -229,20 +228,16 @@
   color: rgba(76, 175, 80, 0.7)
   border: none
   border-radius: 50%
-  padding: 8px // Menší padding pre kruhové tlačidlo
+  padding: 8px 
   cursor: pointer
-  z-index: 1001 // Aby bolo nad ostatným obsahom, ale pod otvoreným mobilným menu (ak by prekážalo)
-  display: flex // Pre centrovanie ikony vnútri
+  z-index: 1001 
+  display: flex 
   align-items: center
   justify-content: center
-  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out // Animácia pre zobrazenie/skrytie
+  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out 
 
   &:hover
-    background-color: rgba(76, 175, 80, 1) // Plná zelená pri hoveri
+    background-color: rgba(76, 175, 80, 1) 
     color: white
-    transform: scale(1.1) // Mierne zväčšenie pri hoveri
+    transform: scale(1.1) 
 
-  // Ak by sme chceli explicitne animovať opacity cez CSS namiesto len podmienečného renderovania
-  // &.hidden
-  //   opacity: 0
-  //   transform: translateY(20px) // Príklad jednoduchej animácie skrytia
