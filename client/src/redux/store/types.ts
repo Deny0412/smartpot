@@ -1,5 +1,7 @@
-import { MeasurementType, MeasurementValue, Schedule } from '../../types/flowerTypes'
+import { Flower, FlowerProfile, MeasurementType, MeasurementValue, Schedule, SmartPot } from '../../types/flowerTypes'
+import { Household } from '../../types/householdTypes'
 import { User } from '../../types/userTypes'
+import { UserData } from '../services/authApi'
 import { HouseholdInvite } from '../services/invitesApi'
 
 export interface ScheduleState {
@@ -9,20 +11,20 @@ export interface ScheduleState {
 }
 
 export interface AuthState {
-    user: any | null
+    user: UserData | null
     loading: boolean
     error: string | null
 }
 
 export interface FlowersState {
-    flowers: any[]
-    selectedFlower: any | null
+    flowers: Flower[]
+    selectedFlower: Flower | null
     loading: boolean
     error: string | null
 }
 
 export interface FlowerProfilesState {
-    profiles: any[]
+    profiles: FlowerProfile[]
     loading: boolean
     error: string | null
 }
@@ -35,7 +37,7 @@ export interface FlowerpotsState {
 }
 
 export interface HouseholdsState {
-    households: any[]
+    households: Household[]
     loading: boolean
     error: string | null
 }
@@ -44,6 +46,13 @@ export interface MeasurementsState {
     measurements: { [key: string]: { [key in MeasurementType]: MeasurementValue[] } }
     loading: boolean
     error: string | null
+    activeWebSocketFlowerId: string | null
+    webSocketStatus: 'idle' | 'connecting' | 'connected' | 'reconnecting' | 'disconnected' | 'error' | 'closing'
+    lastChange: {
+        flowerId: string
+        type: MeasurementType
+        timestamp: string
+    } | null
 }
 
 export interface UsersState {
@@ -59,8 +68,8 @@ export interface InvitesState {
 }
 
 export interface SmartPotsState {
-    smartPots: any[]
-    inactiveSmartPots: any[]
+    smartPots: SmartPot[]
+    inactiveSmartPots: SmartPot[]
     loading: boolean
     error: string | null
     status: string

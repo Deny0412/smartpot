@@ -178,7 +178,13 @@
             "owner": "Vlastník",
             "member": "Člen"
         },
-        "access_denied_toast": "K této domácnosti již nemáte přístup."
+        "access_denied_toast": "K této domácnosti již nemáte přístup.",
+        "filters": {
+            "all": "Vše",
+            "owner": "Vlastník",
+            "member": "Člen",
+            "search_placeholder": "Hledat domácnost..."
+        }
     },
     "flower_list": {
         "title": "Květiny v",
@@ -395,6 +401,12 @@
     "flower_detail": {
         "schedule": "Rozvrh zalévání",
         "no_schedule": "Žádný rozvrh",
+        "schedule_activated": "Rozvrh byl aktivován",
+        "schedule_deactivated": "Rozvrh byl deaktivován",
+        "schedule_toggle_error": "Nepodařilo se přepnout rozvrh",
+        "enable_schedule": "Povolit rozvrh",
+        "disable_schedule": "Zakázat rozvrh",
+        "transplant_description": "Můžete přesadit svou květinu do jiného chytrého květináče ve stejné domácnosti nebo ji přesunout do jiné domácnosti. Při přesunu do jiné domácnosti můžete zvolit, zda si ponechat současný chytrý květináč nebo ho přiřadit k jiné květině.",
         "edit_schedule": {
             "title": "Upravit rozvrh zalévání",
             "error": {
@@ -489,7 +501,8 @@
         "schedule_no_time_placeholder": "-",
         "unit": {
             "celsius": "°C",
-            "percent": "%"
+            "percent": "%",
+            "lightness": "Lux"
         },
         "console": {
             "disconnect_error_prefix": "Chyba při odpojení květiny:",

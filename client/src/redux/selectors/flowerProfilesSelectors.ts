@@ -39,12 +39,10 @@ export const selectIsValidProfile = (state: RootState, profileId: string) => {
     )
 }
 
-
 export const selectGlobalProfiles = createSelector([selectProfiles], profiles =>
-    profiles.filter(profile => profile.is_global),
+    profiles.filter(profile => profile.is_global === true),
 )
 
-
 export const selectCustomProfiles = createSelector([selectProfiles], profiles =>
-    profiles.filter(profile => !profile.is_global),
+    profiles.filter(profile => profile.is_global === false),
 )

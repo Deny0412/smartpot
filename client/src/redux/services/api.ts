@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { toast } from 'react-toastify'
 
 const API_URL = process.env.REACT_APP_SERVER_API
 export const api = axios.create({
@@ -31,7 +32,7 @@ api.interceptors.response.use(
         return response
     },
     error => {
-        console.error('API Error:', error)
+        toast.error('Error')
         if (error.response?.status === 401) {
             if (window.location.pathname !== '/login') {
                 console.warn('Unauthorized - Removing token and redirecting to login')

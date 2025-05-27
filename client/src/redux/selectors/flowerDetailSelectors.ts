@@ -4,7 +4,9 @@ import { ScheduleResponse } from '../../types/flowerTypes'
 import { RootState } from '../store/rootReducer'
 import { selectAllSmartPots, selectSmartPots } from './smartPotSelectors'
 
-export const selectFlower = (state: RootState) => state.flowers.selectedFlower
+export const selectFlower = (state: RootState) => {
+    return state.flowers.selectedFlower
+}
 
 export const selectFlowers = (state: RootState) => state.flowers.flowers
 
@@ -65,7 +67,6 @@ export const selectBatteryStatus = createSelector([selectMeasurements], measurem
 export const selectFlowerpotData = createSelector([selectFlower, selectMeasurements], (flower, measurements) => {
     if (!flower) return null
 
-    
     const mapToNumber = (data: Array<{ createdAt: string; value: any }>) =>
         data.map(m => ({ timestamp: m.createdAt, value: Number(m.value) }))
 
@@ -87,12 +88,12 @@ export const selectFlowerpotData = createSelector([selectFlower, selectMeasureme
     }))
     const water_measurement = measurements.water.map(m => ({
         timestamp: m.createdAt,
-        water: m.value, 
+        water: m.value,
     }))
 
     return {
         name: flower.name,
-        status: 'active', 
+        status: 'active',
         flower_avatar: flower.avatar,
         humidity_measurement,
         temperature_measurement,

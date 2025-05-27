@@ -3,8 +3,11 @@ import { Provider } from 'react-redux'
 
 import App from './App'
 import './i18n'
-import { store } from './redux/store/store'
+import { initializeStore, store } from './redux/store/store'
 import './styles/global.sass'
+
+
+initializeStore()
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
 root.render(

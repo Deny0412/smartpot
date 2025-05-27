@@ -1,4 +1,5 @@
 import { Bell, CaretCircleUp, X } from '@phosphor-icons/react'
+import { motion } from 'framer-motion'
 import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDispatch, useSelector } from 'react-redux'
@@ -130,12 +131,17 @@ const Navigation: React.FC = () => {
                 </button>
                 {isAuthenticated && (
                     <div className="navbar__bell-wrapper">
-                        <Bell
-                            size={25}
-                            className="navbar__bell-icon"
-                            onClick={() => handleNavigation('/notifications')}
-                            style={{ cursor: 'pointer' }}
-                        />
+                        <motion.div
+                            animate={invites.length > 0 ? { rotate: [0, -20, 20, -15, 15, -10, 10, 0] } : {}}
+                            transition={invites.length > 0 ? { duration: 0.8, repeat: Infinity, repeatDelay: 2 } : {}}
+                            style={{ display: 'inline-block' }}>
+                            <Bell
+                                size={25}
+                                className="navbar__bell-icon"
+                                onClick={() => handleNavigation('/notifications')}
+                                style={{ cursor: 'pointer' }}
+                            />
+                        </motion.div>
                         {!invitesLoading && invites.length > 0 && (
                             <span className="navbar__notification-badge">{invites.length}</span>
                         )}

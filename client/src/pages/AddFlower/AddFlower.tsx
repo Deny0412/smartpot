@@ -1,12 +1,14 @@
+import { AnimatePresence, motion } from 'framer-motion'
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDispatch, useSelector } from 'react-redux'
 import { useParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
+import Button from '../../components/Button/Button'
 import { H5 } from '../../components/Text/Heading/Heading'
 import { selectProfiles } from '../../redux/selectors/flowerProfilesSelectors'
 import { createSchedule } from '../../redux/services/flowersApi'
-import { createFlower, loadFlowers } from '../../redux/slices/flowersSlice'
+import { createFlower } from '../../redux/slices/flowersSlice'
 import { AppDispatch } from '../../redux/store/store'
 import { FlowerProfile } from '../../types/flowerTypes'
 import './AddFlower.sass'
@@ -33,6 +35,26 @@ interface ScheduleData {
     saturday: { from: string | null; to: string | null }
     sunday: { from: string | null; to: string | null }
     active: boolean
+}
+
+const modalVariants = {
+    hidden: { opacity: 0, scale: 0.8 },
+    visible: {
+        opacity: 1,
+        scale: 1,
+        transition: {
+            duration: 0.3,
+            ease: 'easeOut',
+        },
+    },
+    exit: {
+        opacity: 0,
+        scale: 0.8,
+        transition: {
+            duration: 0.2,
+            ease: 'easeIn',
+        },
+    },
 }
 
 const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
@@ -163,7 +185,6 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
             }
 
             if (profileType === 'global' && selectedProfileId) {
-                // Find the selected global profile
                 const selectedProfile = profiles.find(p => p._id === selectedProfileId)
                 if (selectedProfile) {
                     flowerData = {
@@ -177,7 +198,6 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
                     }
                 }
             } else {
-                
                 flowerData = {
                     ...flowerData,
                     profile: {
@@ -210,8 +230,6 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
                 throw new Error(t('add_flower.error.schedule_creation_failed'))
             }
 
-            await dispatch(loadFlowers(householdId || ''))
-
             onClose()
             toast.success(t('add_flower.success.flower_added'))
         } catch (err) {
@@ -223,221 +241,252 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
     }
 
     return (
-        <div className="add-flower-container">
-            <div className="add-flower-step-container">
-                <button className="add-flower-close-button" onClick={onClose}>
-                    ×
-                </button>
-                <H5 variant="primary">{t('add_flower.title')}</H5>
-
-                <form onSubmit={handleSubmit} className="add-flower-form">
-                    <div className="add-flower-form-group">
-                        <label className="add-flower-input-label">{t('add_flower.name')}</label>
-                        <input
-                            type="text"
-                            className="add-flower-input"
-                            placeholder={t('add_flower.name_placeholder')}
-                            value={name}
-                            onChange={e => setName(e.target.value)}
-                        />
-                    </div>
-
-                    <div className="add-flower-option-section">
-                        <div className="add-flower-profile-type-selection">
-                            <label className="add-flower-profile-type-label">
-                                <input
-                                    type="radio"
-                                    className="add-flower-profile-type-radio"
-                                    value="global"
-                                    checked={profileType === 'global'}
-                                    onChange={e => setProfileType(e.target.value as 'global' | 'custom')}
-                                />
-                                {t('add_flower.use_existing_profile')}
-                            </label>
-                            <label className="add-flower-profile-type-label">
-                                <input
-                                    type="radio"
-                                    className="add-flower-profile-type-radio"
-                                    value="custom"
-                                    checked={profileType === 'custom'}
-                                    onChange={e => setProfileType(e.target.value as 'global' | 'custom')}
-                                />
-                                {t('add_flower.custom_settings')}
-                            </label>
-                        </div>
-
-                        {profileType === 'global' ? (
-                            <div className="add-flower-form-group">
-                                <label className="add-flower-input-label">{t('add_flower.select_profile')}</label>
-                                <select
-                                    className="add-flower-input"
-                                    value={selectedProfileId}
-                                    onChange={e => setSelectedProfileId(e.target.value)}>
-                                    <option value="">{t('add_flower.select_profile_placeholder')}</option>
-                                    {profiles.map(profile => (
-                                        <option key={profile._id} value={profile._id}>
-                                            {profile.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        ) : (
-                            <div className="add-flower-profile-settings">
-                                <div className="add-flower-form-group">
-                                    <label className="add-flower-input-label">{t('add_flower.temperature')}</label>
-                                    <div className="add-flower-range-inputs">
-                                        <input
-                                            type="number"
-                                            className="add-flower-range-input"
-                                            value={customProfile.temperature?.min}
-                                            onChange={e =>
-                                                handleCustomProfileChange(
-                                                    'temperature',
-                                                    'min',
-                                                    parseInt(e.target.value),
-                                                )
-                                            }
-                                            placeholder={t('add_flower.placeholder_min')}
-                                        />
-                                        <span className="add-flower-range-separator">
-                                            {t('add_flower.range_separator')}
-                                        </span>
-                                        <input
-                                            type="number"
-                                            className="add-flower-range-input"
-                                            value={customProfile.temperature?.max}
-                                            onChange={e =>
-                                                handleCustomProfileChange(
-                                                    'temperature',
-                                                    'max',
-                                                    parseInt(e.target.value),
-                                                )
-                                            }
-                                            placeholder={t('add_flower.placeholder_max')}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="add-flower-form-group">
-                                    <label className="add-flower-input-label">{t('add_flower.humidity')}</label>
-                                    <div className="add-flower-range-inputs">
-                                        <input
-                                            type="number"
-                                            className="add-flower-range-input"
-                                            value={customProfile.humidity?.min}
-                                            onChange={e =>
-                                                handleCustomProfileChange('humidity', 'min', parseInt(e.target.value))
-                                            }
-                                            placeholder={t('add_flower.placeholder_min')}
-                                        />
-                                        <span className="add-flower-range-separator">
-                                            {t('add_flower.range_separator')}
-                                        </span>
-                                        <input
-                                            type="number"
-                                            className="add-flower-range-input"
-                                            value={customProfile.humidity?.max}
-                                            onChange={e =>
-                                                handleCustomProfileChange('humidity', 'max', parseInt(e.target.value))
-                                            }
-                                            placeholder={t('add_flower.placeholder_max')}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="add-flower-form-group">
-                                    <label className="add-flower-input-label">{t('add_flower.light')}</label>
-                                    <div className="add-flower-range-inputs">
-                                        <input
-                                            type="number"
-                                            className="add-flower-range-input"
-                                            value={customProfile.light?.min}
-                                            onChange={e =>
-                                                handleCustomProfileChange('light', 'min', parseInt(e.target.value))
-                                            }
-                                            placeholder={t('add_flower.placeholder_min')}
-                                        />
-                                        <span className="add-flower-range-separator">
-                                            {t('add_flower.range_separator')}
-                                        </span>
-                                        <input
-                                            type="number"
-                                            className="add-flower-range-input"
-                                            value={customProfile.light?.max}
-                                            onChange={e =>
-                                                handleCustomProfileChange('light', 'max', parseInt(e.target.value))
-                                            }
-                                            placeholder={t('add_flower.placeholder_max')}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="add-flower-avatar-section">
-                        <label className="add-flower-input-label">{t('add_flower.avatar')}</label>
-                        <div className="add-flower-avatar-grid">
-                            {avatars.map((avatar, index) => (
-                                <img
-                                    src={avatar}
-                                    alt={t('add_flower.avatar_alt_text', { index: index + 1 })}
-                                    key={index}
-                                    className={`add-flower-avatar-image ${
-                                        selectedAvatar === avatar ? 'add-flower-avatar-image--selected' : ''
-                                    }`}
-                                    onClick={() => setSelectedAvatar(avatar)}
-                                />
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="add-flower-schedule-section">
-                        <div className="add-flower-schedule-days">
-                            {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(day => (
-                                <div key={day} className="add-flower-schedule-day">
-                                    <span className="add-flower-schedule-day-label">{dayTranslations[day]}</span>
-                                    <div className="add-flower-time-inputs">
-                                        <label className="add-flower-time-label">{t('add_flower.schedule_from')}</label>
-                                        <input
-                                            type="time"
-                                            className="add-flower-time-input"
-                                            value={scheduleData[day as keyof Omit<ScheduleData, 'active'>].from || ''}
-                                            onChange={e =>
-                                                handleTimeChange(
-                                                    day as keyof Omit<ScheduleData, 'active'>,
-                                                    'from',
-                                                    e.target.value,
-                                                )
-                                            }
-                                        />
-                                        <label className="add-flower-time-label">{t('add_flower.schedule_to')}</label>
-                                        <input
-                                            type="time"
-                                            className="add-flower-time-input"
-                                            value={scheduleData[day as keyof Omit<ScheduleData, 'active'>].to || ''}
-                                            onChange={e =>
-                                                handleTimeChange(
-                                                    day as keyof Omit<ScheduleData, 'active'>,
-                                                    'to',
-                                                    e.target.value,
-                                                )
-                                            }
-                                        />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {error && <div className="add-flower-error-message">{error}</div>}
-
-                    <button type="submit" className="add-flower-button add-flower-button--default" disabled={loading}>
-                        {loading ? t('add_flower.saving') : t('add_flower.final_button')}
+        <AnimatePresence>
+            <motion.div
+                className="add-flower-container"
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                variants={modalVariants}>
+                <div className="add-flower-step-container">
+                    <button className="add-flower-close-button" onClick={onClose}>
+                        ×
                     </button>
-                </form>
-            </div>
-        </div>
+                    <H5 variant="primary">{t('add_flower.title')}</H5>
+
+                    <form onSubmit={handleSubmit} className="add-flower-form">
+                        <div className="add-flower-form-group">
+                            <label className="add-flower-input-label">{t('add_flower.name')}</label>
+                            <input
+                                type="text"
+                                className="add-flower-input"
+                                placeholder={t('add_flower.name_placeholder')}
+                                value={name}
+                                onChange={e => setName(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="add-flower-option-section">
+                            <div className="add-flower-profile-type-selection">
+                                <label className="add-flower-profile-type-label">
+                                    <input
+                                        type="radio"
+                                        className="add-flower-profile-type-radio"
+                                        value="global"
+                                        checked={profileType === 'global'}
+                                        onChange={e => setProfileType(e.target.value as 'global' | 'custom')}
+                                    />
+                                    {t('add_flower.use_existing_profile')}
+                                </label>
+                                <label className="add-flower-profile-type-label">
+                                    <input
+                                        type="radio"
+                                        className="add-flower-profile-type-radio"
+                                        value="custom"
+                                        checked={profileType === 'custom'}
+                                        onChange={e => setProfileType(e.target.value as 'global' | 'custom')}
+                                    />
+                                    {t('add_flower.custom_settings')}
+                                </label>
+                            </div>
+
+                            {profileType === 'global' ? (
+                                <div className="add-flower-form-group">
+                                    <label className="add-flower-input-label">{t('add_flower.select_profile')}</label>
+                                    <select
+                                        className="add-flower-input"
+                                        value={selectedProfileId}
+                                        onChange={e => setSelectedProfileId(e.target.value)}>
+                                        <option value="">{t('add_flower.select_profile_placeholder')}</option>
+                                        {profiles.map(profile => (
+                                            <option key={profile._id} value={profile._id}>
+                                                {profile.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            ) : (
+                                <div className="add-flower-profile-settings">
+                                    <div className="add-flower-form-group">
+                                        <label className="add-flower-input-label">{t('add_flower.temperature')}</label>
+                                        <div className="add-flower-range-inputs">
+                                            <input
+                                                type="number"
+                                                className="add-flower-range-input"
+                                                value={customProfile.temperature?.min}
+                                                onChange={e =>
+                                                    handleCustomProfileChange(
+                                                        'temperature',
+                                                        'min',
+                                                        parseInt(e.target.value),
+                                                    )
+                                                }
+                                                placeholder={t('add_flower.placeholder_min')}
+                                            />
+                                            <span className="add-flower-range-separator">
+                                                {t('add_flower.range_separator')}
+                                            </span>
+                                            <input
+                                                type="number"
+                                                className="add-flower-range-input"
+                                                value={customProfile.temperature?.max}
+                                                onChange={e =>
+                                                    handleCustomProfileChange(
+                                                        'temperature',
+                                                        'max',
+                                                        parseInt(e.target.value),
+                                                    )
+                                                }
+                                                placeholder={t('add_flower.placeholder_max')}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="add-flower-form-group">
+                                        <label className="add-flower-input-label">{t('add_flower.humidity')}</label>
+                                        <div className="add-flower-range-inputs">
+                                            <input
+                                                type="number"
+                                                className="add-flower-range-input"
+                                                value={customProfile.humidity?.min}
+                                                onChange={e =>
+                                                    handleCustomProfileChange(
+                                                        'humidity',
+                                                        'min',
+                                                        parseInt(e.target.value),
+                                                    )
+                                                }
+                                                placeholder={t('add_flower.placeholder_min')}
+                                            />
+                                            <span className="add-flower-range-separator">
+                                                {t('add_flower.range_separator')}
+                                            </span>
+                                            <input
+                                                type="number"
+                                                className="add-flower-range-input"
+                                                value={customProfile.humidity?.max}
+                                                onChange={e =>
+                                                    handleCustomProfileChange(
+                                                        'humidity',
+                                                        'max',
+                                                        parseInt(e.target.value),
+                                                    )
+                                                }
+                                                placeholder={t('add_flower.placeholder_max')}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="add-flower-form-group">
+                                        <label className="add-flower-input-label">{t('add_flower.light')}</label>
+                                        <div className="add-flower-range-inputs">
+                                            <input
+                                                type="number"
+                                                className="add-flower-range-input"
+                                                value={customProfile.light?.min}
+                                                onChange={e =>
+                                                    handleCustomProfileChange('light', 'min', parseInt(e.target.value))
+                                                }
+                                                placeholder={t('add_flower.placeholder_min')}
+                                            />
+                                            <span className="add-flower-range-separator">
+                                                {t('add_flower.range_separator')}
+                                            </span>
+                                            <input
+                                                type="number"
+                                                className="add-flower-range-input"
+                                                value={customProfile.light?.max}
+                                                onChange={e =>
+                                                    handleCustomProfileChange('light', 'max', parseInt(e.target.value))
+                                                }
+                                                placeholder={t('add_flower.placeholder_max')}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="add-flower-avatar-section">
+                            <label className="add-flower-input-label">{t('add_flower.avatar')}</label>
+                            <div className="add-flower-avatar-grid">
+                                {avatars.map((avatar, index) => (
+                                    <img
+                                        src={avatar}
+                                        alt={t('add_flower.avatar_alt_text', { index: index + 1 })}
+                                        key={index}
+                                        className={`add-flower-avatar-image ${
+                                            selectedAvatar === avatar ? 'add-flower-avatar-image--selected' : ''
+                                        }`}
+                                        onClick={() => setSelectedAvatar(avatar)}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="add-flower-schedule-section">
+                            <div className="add-flower-schedule-days">
+                                {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(
+                                    day => (
+                                        <div key={day} className="add-flower-schedule-day">
+                                            <span className="add-flower-schedule-day-label">
+                                                {dayTranslations[day]}
+                                            </span>
+                                            <div className="add-flower-time-inputs">
+                                                <label className="add-flower-time-label">
+                                                    {t('add_flower.schedule_from')}
+                                                </label>
+                                                <input
+                                                    type="time"
+                                                    className="add-flower-time-input"
+                                                    value={
+                                                        scheduleData[day as keyof Omit<ScheduleData, 'active'>].from ||
+                                                        ''
+                                                    }
+                                                    onChange={e =>
+                                                        handleTimeChange(
+                                                            day as keyof Omit<ScheduleData, 'active'>,
+                                                            'from',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                />
+                                                <label className="add-flower-time-label">
+                                                    {t('add_flower.schedule_to')}
+                                                </label>
+                                                <input
+                                                    type="time"
+                                                    className="add-flower-time-input"
+                                                    value={
+                                                        scheduleData[day as keyof Omit<ScheduleData, 'active'>].to || ''
+                                                    }
+                                                    onChange={e =>
+                                                        handleTimeChange(
+                                                            day as keyof Omit<ScheduleData, 'active'>,
+                                                            'to',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
+                                    ),
+                                )}
+                            </div>
+                        </div>
+
+                        {error && <div className="add-flower-error-message">{error}</div>}
+
+                        <Button
+                            type="submit"
+                            className="add-flower-button add-flower-button--default"
+                            disabled={loading}>
+                            {loading ? t('add_flower.saving') : t('add_flower.final_button')}
+                        </Button>
+                    </form>
+                </div>
+            </motion.div>
+        </AnimatePresence>
     )
 }
 

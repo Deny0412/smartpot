@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -10,8 +10,6 @@ import { TranslationFunction } from '../../i18n'
 import { selectUser } from '../../redux/selectors/authSelectors'
 import { selectHouseholdById } from '../../redux/selectors/houseHoldSelectors'
 import { selectSmartPots } from '../../redux/selectors/smartPotSelectors'
-import { fetchLatestMeasurements } from '../../redux/slices/measurementsSlice'
-import { clearSmartPots, fetchInactiveSmartPots, fetchSmartPots } from '../../redux/slices/smartPotsSlice'
 import { AppDispatch, RootState } from '../../redux/store/store'
 import AddSmartPot from './AddSmartPot/AddSmartPot'
 import SmartPotItem from './SmartPotItem/SmartPotItem'
@@ -36,51 +34,6 @@ const SmartPotList: React.FC = () => {
 
     const householdSmartPots = Array.isArray(smartPots) ? smartPots.filter(pot => pot.household_id === householdId) : []
     const emptySmartPots = householdSmartPots.length === 0
-
-    useEffect(() => {
-        if (!householdId) {
-            navigate('/')
-            return
-        }
-
-        dispatch(clearSmartPots())
-
-        const loadSmartPots = async () => {
-            try {
-                await Promise.all([
-                    dispatch(fetchSmartPots(householdId)).unwrap(),
-                    dispatch(fetchInactiveSmartPots(householdId)).unwrap(),
-                ])
-            } catch (error: any) {
-                if (error.response?.status !== 404) {
-                    console.error('Error loading flowerpots:', error)
-                }
-            }
-        }
-
-        loadSmartPots()
-    }, [dispatch, householdId, navigate])
-
-    useEffect(() => {
-        if (user && currentHousehold) {
-            setIsOwner(currentHousehold.owner === user.id)
-        }
-    }, [currentHousehold, user])
-
-    useEffect(() => {
-        if (householdId && householdSmartPots.length > 0) {
-            householdSmartPots.forEach(pot => {
-                if (pot.active_flower_id) {
-                    dispatch(
-                        fetchLatestMeasurements({
-                            flowerId: pot.active_flower_id,
-                            householdId,
-                        }),
-                    )
-                }
-            })
-        }
-    }, [dispatch, householdId, householdSmartPots])
 
     if (!householdId) {
         return null
@@ -107,16 +60,17 @@ const SmartPotList: React.FC = () => {
         return <Loader />
     }
 
-     
     if (smartPotsError && !smartPotsError.toString().includes('404')) {
         return <div>Error: {smartPotsError}</div>
     }
 
     return (
         <div className="smart-pot-list-container">
-            <H3 variant="secondary" className="main-title">
-                {t('smart_pot_list.title')} {currentHousehold?.name}
-            </H3>
+            <div className="main-title">
+                <H3 variant="secondary">
+                    {t('smart_pot_list.title')} {currentHousehold?.name}
+                </H3>
+            </div>
 
             <div className="filter-buttons">
                 <Button variant="default" onClick={() => setFilterType('all')}>
@@ -142,9 +96,11 @@ const SmartPotList: React.FC = () => {
                         />
                     ))
                 ) : (
-                    <Paragraph variant="primary" size="md" className="no-smart-pots-text">
-                        {t('smart_pot_list.no_smart_pots')}
-                    </Paragraph>
+                    <div className="no-smart-pots-text">
+                        <Paragraph variant="primary" size="md">
+                            {t('smart_pot_list.no_smart_pots')}
+                        </Paragraph>
+                    </div>
                 )}
             </div>
 

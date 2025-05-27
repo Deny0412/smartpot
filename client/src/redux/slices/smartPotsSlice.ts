@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { SmartPot } from '../../types/flowerTypes'
+import { api } from '../services/api'
 import {
     disconnectSmartPot as disconnectSmartPotApi,
     loadSmartPots,
@@ -75,7 +76,11 @@ export const transplantSmartPotToFlowerThunk = createAsyncThunk(
     'smartPots/transplantToFlower',
     async ({ smartPotId, targetFlowerId }: { smartPotId: string; targetFlowerId: string }, { rejectWithValue }) => {
         try {
-            return await transplantSmartPotToFlower(smartPotId, targetFlowerId)
+            const result = await transplantSmartPotToFlower(smartPotId, targetFlowerId)
+            if (!result.success) {
+                return rejectWithValue(result.message || 'Chyba pri presadzovaní kvetináča k kvetine')
+            }
+            return result
         } catch (error) {
             return rejectWithValue(
                 error instanceof Error ? error.message : 'Chyba pri presadzovaní kvetináča k kvetine',
@@ -109,17 +114,56 @@ export const transplantSmartPotWithoutFlowerThunk = createAsyncThunk(
             smartPotId,
             targetHouseholdId,
             assignOldFlower,
-            newFlowerId,
+            oldFlowerId,
+            oldHouseholdId,
+            selectedNewSmartPotId,
         }: {
             smartPotId: string
             targetHouseholdId: string
             assignOldFlower: boolean
-            newFlowerId: string
+            oldFlowerId: string
+            oldHouseholdId: string
+            selectedNewSmartPotId: string
         },
         { rejectWithValue },
     ) => {
         try {
-            return await transplantSmartPotWithoutFlower(smartPotId, targetHouseholdId, assignOldFlower, newFlowerId)
+           
+            const currentSmartPotResponse = await api.get<{ status: string; data: SmartPot }>(
+                `/smart-pot/get/${smartPotId}?household_id=${oldHouseholdId}`,
+            )
+            const currentSmartPot = currentSmartPotResponse.data.data
+
+            if (!currentSmartPot.serial_number) {
+                throw new Error('Current smart pot has no serial number')
+            }
+
+            if (!currentSmartPot.household_id) {
+                throw new Error('Current smart pot has no household ID')
+            }
+
+            
+            let newSmartPotSerialNumber = ''
+            if (assignOldFlower) {
+                const newSmartPotResponse = await api.get<{ status: string; data: SmartPot }>(
+                    `/smart-pot/get/${selectedNewSmartPotId}?household_id=${oldHouseholdId}`,
+                )
+                const newSmartPot = newSmartPotResponse.data.data
+
+                if (!newSmartPot.serial_number) {
+                    throw new Error('New smart pot has no serial number')
+                }
+                newSmartPotSerialNumber = newSmartPot.serial_number
+            }
+
+            return await transplantSmartPotWithoutFlower(
+                currentSmartPot.serial_number,
+                newSmartPotSerialNumber,
+                targetHouseholdId,
+                oldHouseholdId,
+                assignOldFlower,
+                oldFlowerId,
+            )
         } catch (error) {
             return rejectWithValue(
                 error instanceof Error ? error.message : 'Chyba pri presadzovaní kvetináča bez kvetiny',
@@ -161,6 +205,19 @@ const smartPotsSlice = createSlice({
             state.inactiveSmartPots = []
             state.error = null
         },
+        updateSmartPotLocally: (
+            state,
+            action: PayloadAction<{
+                smartPotId: string
+                updates: Partial<SmartPot>
+            }>,
+        ) => {
+            const { smartPotId, updates } = action.payload
+            const index = state.smartPots.findIndex(pot => pot._id === smartPotId)
+            if (index !== -1) {
+                state.smartPots[index] = { ...state.smartPots[index], ...updates }
+            }
+        },
     },
     extraReducers: builder => {
         builder
@@ -183,9 +240,13 @@ const smartPotsSlice = createSlice({
             })
             .addCase(disconnectSmartPot.fulfilled, (state, action) => {
                 state.status = 'succeeded'
-                const index = state.smartPots.findIndex(pot => pot.serial_number === action.payload.serial_number)
-                if (index !== -1) {
-                    state.smartPots[index] = action.payload
+                if (action.payload.data) {
+                    const index = state.smartPots.findIndex(
+                        pot => pot.serial_number === action.payload.data?.serial_number,
+                    )
+                    if (index !== -1) {
+                        state.smartPots[index] = action.payload.data
+                    }
                 }
             })
             .addCase(disconnectSmartPot.rejected, (state, action) => {
@@ -211,12 +272,17 @@ const smartPotsSlice = createSlice({
                 state.loading = true
                 state.error = null
             })
-            .addCase(transplantSmartPotToFlowerThunk.fulfilled, (state, action: PayloadAction<SmartPot>) => {
-                const index = state.smartPots.findIndex(pot => pot._id === action.payload._id)
-                if (index !== -1) {
-                    state.smartPots[index] = action.payload
+            .addCase(transplantSmartPotToFlowerThunk.fulfilled, (state, action) => {
+                if (action.payload.data) {
+                    const index = state.smartPots.findIndex(pot => pot._id === action.payload.data?._id)
+                    if (index !== -1) {
+                        state.smartPots[index] = action.payload.data
+                    } else {
+                        state.smartPots.push(action.payload.data)
+                    }
                 }
                 state.loading = false
+                state.error = null
             })
             .addCase(transplantSmartPotToFlowerThunk.rejected, (state, action) => {
                 state.loading = false
@@ -239,10 +305,12 @@ const smartPotsSlice = createSlice({
                 state.loading = true
                 state.error = null
             })
-            .addCase(transplantSmartPotWithoutFlowerThunk.fulfilled, (state, action: PayloadAction<SmartPot>) => {
-                const index = state.smartPots.findIndex(pot => pot._id === action.payload._id)
-                if (index !== -1) {
-                    state.smartPots[index] = action.payload
+            .addCase(transplantSmartPotWithoutFlowerThunk.fulfilled, (state, action) => {
+                if (action.payload.data) {
+                    const index = state.smartPots.findIndex(pot => pot._id === action.payload.data?._id)
+                    if (index !== -1) {
+                        state.smartPots[index] = action.payload.data
+                    }
                 }
                 state.loading = false
             })
@@ -268,7 +336,7 @@ const smartPotsSlice = createSlice({
     },
 })
 
-export const { clearError, clearSmartPots } = smartPotsSlice.actions
+export const { clearError, clearSmartPots, updateSmartPotLocally } = smartPotsSlice.actions
 
 export const selectInactiveSmartPots = (state: RootState) => state.smartPots.inactiveSmartPots
 

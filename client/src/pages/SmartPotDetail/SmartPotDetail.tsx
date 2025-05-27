@@ -86,23 +86,30 @@ const SmartPotDetail: React.FC = () => {
                 setMeasurementPage(prev => prev + 1)
             }
         } catch (error) {
-            console.error('Chyba pri načítaní meraní:', error)
         } finally {
             setIsLoadingMeasurements(false)
         }
     }, [dispatch, smartPot?.active_flower_id, householdId, measurementPage, isLoadingMeasurements, hasMoreMeasurements])
 
     useEffect(() => {
-        if (householdId) {
-            setIsLoading(true)
-            Promise.all([dispatch(fetchSmartPots(householdId)), dispatch(loadFlowers(householdId))]).finally(() => {
-                setIsLoading(false)
-            })
+        const loadData = async () => {
+            if (householdId) {
+                setIsLoading(true)
+                try {
+                    await Promise.all([dispatch(fetchSmartPots(householdId)), dispatch(loadFlowers(householdId))])
+                } catch (error) {
+                    setError('Failed to load data')
+                } finally {
+                    setIsLoading(false)
+                }
+            }
         }
+
+        loadData()
     }, [dispatch, householdId])
 
     useEffect(() => {
-        if (flower && householdId) {
+        if (flower && householdId && !measurements) {
             dispatch(
                 fetchLatestMeasurements({
                     flowerId: flower._id,
@@ -110,13 +117,10 @@ const SmartPotDetail: React.FC = () => {
                 }),
             )
         }
-    }, [dispatch, flower, householdId])
+    }, [dispatch, flower, householdId, measurements])
 
     const handleCloseDisconnectModal = () => {
         setShowDisconnectModal(false)
-        if (householdId) {
-            dispatch(loadFlowers(householdId))
-        }
     }
 
     if (isLoading || smartPotsLoading) {

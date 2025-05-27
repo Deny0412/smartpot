@@ -65,23 +65,31 @@
 
     &-input
         background: transparent
-        border: 1px solid #333333
-        border-radius: 20px
+        border: 1px solid #ffffff
+        border-radius: 30px
         padding: 0.8rem 1rem
         color: #ffffff
         font-size: 0.9rem
+        cursor: pointer
+        transition: all 0.3s ease
 
         &::placeholder
             color: #666666
 
-        &:focus
+        &:hover, &:focus
+            background-color: rgba(255,255,255,0.1)
+            border-color: #ffffff
             outline: none
-            border-color: #666666
 
         &[type="time"]
             color: #ffffff
             &::-webkit-calendar-picker-indicator
                 filter: invert(1)
+
+        option
+            background-color: #000000
+            color: #ffffff
+            padding: 0.5rem
 
     &-option-section
         margin-top: 2rem

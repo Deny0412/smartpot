@@ -11,6 +11,7 @@ import {
     transplantFlowerWithSmartPot,
     updateFlower,
 } from '../services/flowersApi'
+import { RootState } from '../store/store'
 import { logout } from './authSlice'
 
 interface FlowersState {
@@ -73,7 +74,14 @@ export const updateFlowerData = createAsyncThunk<Flower, { id: string; flower: P
 
 export const transplantFlowerToSmartPotThunk = createAsyncThunk(
     'flowers/transplantToSmartPot',
-    async ({ flowerId, targetSmartPotId, householdId }: { flowerId: string; targetSmartPotId: string; householdId: string }, { rejectWithValue }) => {
+    async (
+        {
+            flowerId,
+            targetSmartPotId,
+            householdId,
+        }: { flowerId: string; targetSmartPotId: string; householdId: string },
+        { rejectWithValue },
+    ) => {
         try {
             return await transplantFlowerToSmartPot(flowerId, targetSmartPotId, householdId)
         } catch (error) {
@@ -86,7 +94,14 @@ export const transplantFlowerToSmartPotThunk = createAsyncThunk(
 
 export const transplantFlowerWithSmartPotThunk = createAsyncThunk(
     'flowers/transplantWithSmartPot',
-    async ({ flowerId, targetHouseholdId , smartPotId}: { flowerId: string; targetHouseholdId: string; smartPotId: string }, { rejectWithValue }) => {
+    async (
+        {
+            flowerId,
+            targetHouseholdId,
+            smartPotId,
+        }: { flowerId: string; targetHouseholdId: string; smartPotId: string },
+        { rejectWithValue },
+    ) => {
         try {
             return await transplantFlowerWithSmartPot(flowerId, targetHouseholdId, smartPotId)
         } catch (error) {
@@ -123,14 +138,21 @@ export const transplantFlowerWithoutSmartPotThunk = createAsyncThunk(
     },
 )
 
-export const detachFlowerFromPotThunk = createAsyncThunk(
+export const detachFlowerFromPotThunk = createAsyncThunk<string, string, { state: RootState }>(
     'flowers/detachFromPot',
-    async (flowerId: string, { rejectWithValue }) => {
+    async (flowerId: string, { getState, rejectWithValue }) => {
         try {
-            await detachFlower(flowerId)
+            const state = getState()
+            const flower = state.flowers.selectedFlower
+            const response = await detachFlower(flowerId, flower?.serial_number)
+
+            if (!response.success) {
+                return rejectWithValue(response.message || 'Failed to detach flower')
+            }
+
             return flowerId
         } catch (error) {
-            return rejectWithValue(error instanceof Error ? error.message : 'Chyba pri odpojení kvetiny od kvetináča')
+            return rejectWithValue(error instanceof Error ? error.message : 'Failed to detach flower')
         }
     },
 )
@@ -144,6 +166,16 @@ const flowersSlice = createSlice({
         },
         clearError: state => {
             state.error = null
+        },
+        updateFlowerLocally: (state, action: PayloadAction<{ id: string; updates: Partial<Flower> }>) => {
+            const { id, updates } = action.payload
+            const flowerIndex = state.flowers.findIndex(flower => flower._id === id)
+            if (flowerIndex !== -1) {
+                state.flowers[flowerIndex] = { ...state.flowers[flowerIndex], ...updates }
+            }
+            if (state.selectedFlower?._id === id) {
+                state.selectedFlower = { ...state.selectedFlower, ...updates }
+            }
         },
     },
     extraReducers: builder => {
@@ -276,12 +308,13 @@ const flowersSlice = createSlice({
             .addCase(detachFlowerFromPotThunk.fulfilled, (state, action: PayloadAction<string>) => {
                 const index = state.flowers.findIndex(flower => flower._id === action.payload)
                 if (index !== -1) {
-                    state.flowers[index] = { ...state.flowers[index], serial_number: null }
+                    state.flowers[index] = { ...state.flowers[index], serial_number: '' }
                 }
                 if (state.selectedFlower?._id === action.payload) {
-                    state.selectedFlower = { ...state.selectedFlower, serial_number: null }
+                    state.selectedFlower = { ...state.selectedFlower, serial_number: '' }
                 }
                 state.loading = false
+                state.error = null
             })
             .addCase(detachFlowerFromPotThunk.rejected, (state, action) => {
                 state.loading = false

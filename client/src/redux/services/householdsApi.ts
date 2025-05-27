@@ -1,13 +1,9 @@
 import { CreateHouseholdData, Household } from '../../types/householdTypes'
 import { api } from './api'
 
-interface ApiHousehold extends Household {
-    _id?: string
-}
-
-interface HouseholdResponse {
+interface ApiHouseholdResponse {
     status: string
-    data: ApiHousehold[]
+    data: Array<Omit<Household, '_id'> & { _id?: string }>
 }
 
 interface MembersResponse {
@@ -26,24 +22,24 @@ interface InvitedResponse {
     }>
 }
 
-export const fetchHouseholds = async (): Promise<HouseholdResponse> => {
-    const response = await api.get<HouseholdResponse>('/household/list')
+export const fetchHouseholds = async (): Promise<ApiHouseholdResponse> => {
+    const response = await api.get<ApiHouseholdResponse>('/household/list')
     return {
-        ...response.data,
+        status: response.data.status,
         data: response.data.data.map(household => ({
             ...household,
-            id: household._id || household.id,
+            _id: household._id || '',
         })),
     }
 }
 
 export const addHousehold = async (data: CreateHouseholdData): Promise<Household> => {
-    const response = await api.post<Household>('/household/create', {
+    const response = await api.post<{ status: string; data: Household }>('/household/create', {
         name: data.name,
         members: [],
         invites: [],
     })
-    return response.data
+    return response.data.data
 }
 
 export const deleteHousehold = async (id: string): Promise<{ message: string }> => {

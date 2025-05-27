@@ -1,219 +1,268 @@
+import { AnimatePresence, motion } from 'framer-motion'
 import { UserCirclePlus } from 'phosphor-react'
-import React, { useEffect, useState } from 'react'
+import React, { memo, useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useDispatch, useSelector } from 'react-redux'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useDispatch } from 'react-redux'
+import { useNavigate, useOutletContext } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import Button from '../../components/Button/Button'
 import GradientDiv from '../../components/GradientDiv/GradientDiv'
-import Loader from '../../components/Loader/Loader'
 import { H3, H4 } from '../../components/Text/Heading/Heading'
 import { TranslationFunction } from '../../i18n'
-import { selectUser } from '../../redux/selectors/authSelectors'
 import {
-    selectHouseholdById,
-    selectHouseholds,
-    selectHouseholdsLoading,
-} from '../../redux/selectors/houseHoldSelectors'
-import { selectUsers, selectUsersLoading } from '../../redux/selectors/userSelectors'
-import { getInvited, getMembers } from '../../redux/services/householdsApi'
-import { loadHouseholds, makeOwnerAction, removeMemberAction } from '../../redux/slices/householdsSlice'
-import { fetchUsers } from '../../redux/slices/usersSlice'
-import { AppDispatch, RootState } from '../../redux/store/store'
+    makeOwnerAction,
+    removeMemberAction,
+    removeMemberFromState,
+    updateHouseholdInvites,
+    updateHouseholdOwner,
+} from '../../redux/slices/householdsSlice'
+import { AppDispatch } from '../../redux/store/store'
 import InviteMember from './InviteMember/InviteMemberModal'
 import './Members.sass'
+
+const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.1,
+        },
+    },
+}
+
+const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+        opacity: 1,
+        y: 0,
+        transition: {
+            duration: 0.5,
+            ease: 'easeOut',
+        },
+    },
+    exit: {
+        opacity: 0,
+        y: -20,
+        transition: {
+            duration: 0.3,
+            ease: 'easeIn',
+        },
+    },
+}
+
+interface MemberItemProps {
+    member: { _id: string; email: string }
+    household: any
+    onMakeOwner: (memberId: string) => void
+    onRemoveMember: (memberId: string) => void
+    t: TranslationFunction
+}
+
+const MemberItem = memo(({ member, household, onMakeOwner, onRemoveMember, t }: MemberItemProps) => {
+    const isOwner = member._id === household.owner
+
+    return (
+        <motion.div className="member-item" variants={itemVariants} initial="hidden" animate="visible" exit="exit">
+            <div className="member-info">
+                <span className="member-name">{`${member.email}`}</span>
+                <motion.span
+                    className={isOwner ? 'owner-tag' : 'member-tag'}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}>
+                    {isOwner
+                        ? t('manage_household.manage_members.roles.owner')
+                        : t('manage_household.manage_members.roles.member')}
+                </motion.span>
+            </div>
+            {!isOwner && (
+                <div className="member-actions">
+                    <Button variant="default" className="make-owner-button" onClick={() => onMakeOwner(member._id)}>
+                        {t('manage_household.manage_members.actions.make_owner')}
+                    </Button>
+                    <Button variant="default" className="remove-button" onClick={() => onRemoveMember(member._id)}>
+                        {t('manage_household.manage_members.actions.remove')}
+                    </Button>
+                </div>
+            )}
+        </motion.div>
+    )
+})
+
+MemberItem.displayName = 'MemberItem'
+
+interface InvitedMemberItemProps {
+    invitedMember: { _id: string; email: string }
+    t: TranslationFunction
+}
+
+const InvitedMemberItem = memo(({ invitedMember, t }: InvitedMemberItemProps) => (
+    <motion.div className="member-item" variants={itemVariants} initial="hidden" animate="visible" exit="exit">
+        <div className="member-info">
+            <span className="member-name">{`${invitedMember.email}`}</span>
+            <motion.span className="invited-tag" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                {t('manage_household.manage_members.invited_tag')}
+            </motion.span>
+        </div>
+    </motion.div>
+))
+
+InvitedMemberItem.displayName = 'InvitedMemberItem'
+
+interface ContextType {
+    members: Array<{ _id: string; email: string }>
+    invitedMembers: Array<{ _id: string; email: string }>
+    setMembers: React.Dispatch<React.SetStateAction<Array<{ _id: string; email: string }>>>
+    setInvitedMembers: React.Dispatch<React.SetStateAction<Array<{ _id: string; email: string }>>>
+    household: any
+    isOwner: boolean
+}
 
 const Members: React.FC = () => {
     const { t } = useTranslation() as { t: TranslationFunction }
     const navigate = useNavigate()
     const dispatch = useDispatch<AppDispatch>()
-    const { householdId } = useParams<{ householdId: string }>()
-    const households = useSelector(selectHouseholds)
-    const householdsLoading = useSelector(selectHouseholdsLoading)
-    const users = useSelector(selectUsers)
-    const usersLoading = useSelector(selectUsersLoading)
-    const user = useSelector(selectUser)
+    const { members, invitedMembers, setMembers, setInvitedMembers, household, isOwner } =
+        useOutletContext<ContextType>()
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
-    const [members, setMembers] = useState<Array<{ _id: string; email: string }>>([])
-    const [invitedMembers, setInvitedMembers] = useState<Array<{ _id: string; email: string }>>([])
+    const [existingMembers, setExistingMembers] = useState<string[]>(household?.members || [])
 
-    const household = useSelector((state: RootState) => selectHouseholdById(state, householdId || ''))
-    const isOwner = household?.owner === user?.id
+    const handleRemoveMember = useCallback(
+        async (memberId: string) => {
+            if (!household?._id) return
+            try {
+                await dispatch(removeMemberAction({ householdId: household._id, memberId })).unwrap()
+                toast.success(t('manage_household.manage_members.toast.remove_member_success'))
 
-    useEffect(() => {
-        dispatch(loadHouseholds())
-    }, [dispatch])
+                setMembers(prevMembers => prevMembers.filter(member => member._id !== memberId))
+                setExistingMembers(prev => prev.filter(id => id !== memberId))
 
-    useEffect(() => {
-        const fetchMembers = async () => {
-            if (householdId && household) {
-                try {
-                    const response = await getMembers(householdId)
-                    setMembers(response.data)
-                } catch (error) {
-                    console.error('Error fetching members:', error)
-                    toast.error(t('manage_household.manage_members.toast.fetch_members_error'))
-                }
+                dispatch(removeMemberFromState({ householdId: household._id, memberId }))
+            } catch (error) {
+                
+                toast.error(t('manage_household.manage_members.toast.remove_member_error'))
             }
-        }
-        fetchMembers()
-    }, [householdId, household, t])
+        },
+        [dispatch, household, setMembers, t],
+    )
 
-    useEffect(() => {
-        const fetchInvitedMembers = async () => {
-            if (householdId && household) {
-                try {
-                    const response = await getInvited(householdId)
-                    setInvitedMembers(response.data)
-                } catch (error) {
-                    console.error('Error fetching invited members:', error)
-                    toast.error(t('manage_household.manage_members.toast.fetch_invited_members_error'))
-                }
+    const handleMakeOwner = useCallback(
+        async (memberId: string) => {
+            if (!household?._id) return
+            try {
+                await dispatch(
+                    makeOwnerAction({
+                        householdId: household._id,
+                        newOwnerId: memberId,
+                    }),
+                ).unwrap()
+                toast.success(t('manage_household.manage_members.toast.make_owner_success'))
+
+                dispatch(updateHouseholdOwner({ householdId: household._id, newOwnerId: memberId }))
+            } catch (error) {
+               
+                toast.error(t('manage_household.manage_members.toast.make_owner_error'))
             }
-        }
-        fetchInvitedMembers()
-    }, [householdId, household, t])
+        },
+        [dispatch, household?._id, t],
+    )
 
-    useEffect(() => {
-        if (household && !isOwner && !householdsLoading) {
-            navigate('/households')
-        }
-    }, [household, isOwner, householdsLoading, navigate])
+    const handleInviteModalOpen = useCallback(() => {
+        setIsInviteModalOpen(true)
+    }, [])
 
-    const handleRemoveMember = async (memberId: string) => {
-        if (!householdId) return
-        try {
-            await dispatch(removeMemberAction({ householdId, memberId })).unwrap()
-            toast.success(t('manage_household.manage_members.toast.remove_member_success'))
-            dispatch(loadHouseholds())
-            if (household?.id) {
-                dispatch(fetchUsers(household.id))
-            }
-        } catch (error) {
-            console.error(t('manage_household.manage_members.console.remove_member_error_prefix'), error)
-            toast.error(t('manage_household.manage_members.toast.remove_member_error'))
-        }
-    }
+    const handleInviteModalClose = useCallback(() => {
+        setIsInviteModalOpen(false)
+    }, [])
 
-    const handleMakeOwner = async (memberId: string) => {
-        if (!householdId) return
-        try {
-            await dispatch(makeOwnerAction({ householdId, newOwnerId: memberId })).unwrap()
-            toast.success(t('manage_household.manage_members.toast.make_owner_success'))
-            dispatch(loadHouseholds())
-            if (household?.id) {
-                dispatch(fetchUsers(household.id))
-            }
-        } catch (error) {
-            console.error(t('manage_household.manage_members.console.make_owner_error_prefix'), error)
-            toast.error(t('manage_household.manage_members.toast.make_owner_error'))
-        }
-    }
-
-    const getMemberName = (memberId: string) => {
-        if (householdsLoading || usersLoading) return t('common.loading_text')
-        const user = users[memberId]
-        return user ? `${user.name} ${user.surname}` : t('manage_household.manage_members.unknown_user')
-    }
-
-    const getMemberRole = (memberId: string) => {
-        if (householdsLoading || usersLoading) return t('common.loading_text')
-        const user = users[memberId]
-        return user?.role === 'owner'
-            ? t('manage_household.manage_members.roles.owner')
-            : t('manage_household.manage_members.roles.member')
-    }
-
-    if (householdsLoading) {
-        return <Loader />
-    }
+    const handleInviteSuccess = useCallback(
+        (invitedUser: { _id: string; email: string }) => {
+            setInvitedMembers(prev => [...prev, invitedUser])
+            dispatch(updateHouseholdInvites({ householdId: household._id, invitedUser }))
+        },
+        [dispatch, household._id, setInvitedMembers],
+    )
 
     if (!household) {
         return <div>{t('manage_household.manage_members.household_not_found')}</div>
     }
 
     if (!isOwner) {
-        return <div>{t('manage_household.manage_members.no_permission')}</div>
+        navigate('/households')
+        return null
     }
 
     return (
-        <div className="manage-members-container">
-            <H3 variant="secondary" className="manage-members-title">
-                {t('manage_household.manage_members.title')} {household.name}
-            </H3>
+        <motion.div
+            className="manage-members-container"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible">
+            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+                <H3 variant="secondary" className="manage-members-title">
+                    {t('manage_household.manage_members.title')} {household.name}
+                </H3>
+            </motion.div>
 
             <GradientDiv className="manage-members-content">
-                <div className="members-section">
+                <motion.div className="members-section" variants={containerVariants}>
                     <H4 variant="primary" className="section-title">
                         {t('manage_household.manage_members.active_members')}
                     </H4>
                     <div className="section-content">
-                        <div className="members-list">
-                            {members?.map(member => (
-                                <div key={member._id} className="member-item">
-                                    <div className="member-info">
-                                        <span className="member-name">{`${member.email}`}</span>
-                                        <span className={member._id === household.owner ? 'owner-tag' : 'member-tag'}>
-                                            {member._id === household.owner
-                                                ? t('manage_household.manage_members.roles.owner')
-                                                : t('manage_household.manage_members.roles.member')}
-                                        </span>
-                                    </div>
-                                    {member._id !== household.owner && (
-                                        <div className="member-actions">
-                                            <Button
-                                                variant="default"
-                                                className="make-owner-button"
-                                                onClick={() => handleMakeOwner(member._id)}>
-                                                {t('manage_household.manage_members.actions.make_owner')}
-                                            </Button>
-                                            <Button
-                                                variant="default"
-                                                className="remove-button"
-                                                onClick={() => handleRemoveMember(member._id)}>
-                                                {t('manage_household.manage_members.actions.remove')}
-                                            </Button>
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
+                        <AnimatePresence mode="wait">
+                            <motion.div className="members-list">
+                                {members?.map(member => (
+                                    <MemberItem
+                                        key={member._id}
+                                        member={member}
+                                        household={household}
+                                        onMakeOwner={handleMakeOwner}
+                                        onRemoveMember={handleRemoveMember}
+                                        t={t}
+                                    />
+                                ))}
+                            </motion.div>
+                        </AnimatePresence>
                     </div>
-                </div>
+                </motion.div>
 
-                <div className="members-section">
+                <motion.div className="members-section" variants={containerVariants}>
                     <H4 variant="primary" className="section-title">
                         {t('manage_household.manage_members.invited_users')}
                     </H4>
                     <div className="section-content">
-                        <div className="members-list">
-                            {invitedMembers?.map(invitedMember => (
-                                <div key={invitedMember._id} className="member-item">
-                                    <div className="member-info">
-                                        <span className="member-name">{`${invitedMember.email}`}</span>
-                                        <span className="invited-tag">
-                                            {t('manage_household.manage_members.invited_tag')}
-                                        </span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                        <div className="add-member-icon" onClick={() => setIsInviteModalOpen(true)}>
+                        <AnimatePresence mode="wait">
+                            <motion.div className="members-list">
+                                {invitedMembers?.map(invitedMember => (
+                                    <InvitedMemberItem key={invitedMember._id} invitedMember={invitedMember} t={t} />
+                                ))}
+                            </motion.div>
+                        </AnimatePresence>
+                        <motion.div
+                            className="add-member-icon"
+                            onClick={handleInviteModalOpen}
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}>
                             <UserCirclePlus size={32} color="#bfbfbf" />
-                        </div>
+                        </motion.div>
                     </div>
-                </div>
+                </motion.div>
             </GradientDiv>
 
-            <InviteMember
-                isOpen={isInviteModalOpen}
-                onClose={() => setIsInviteModalOpen(false)}
-                householdId={householdId || ''}
-                existingMembers={household.members}
-                invitedUsers={invitedMembers.map(member => member._id)}
-            />
-        </div>
+            <AnimatePresence>
+                {isInviteModalOpen && (
+                    <InviteMember
+                        isOpen={isInviteModalOpen}
+                        onClose={handleInviteModalClose}
+                        householdId={household._id}
+                        existingMembers={existingMembers}
+                        invitedUsers={invitedMembers.map(member => member._id)}
+                        onInviteSuccess={handleInviteSuccess}
+                    />
+                )}
+            </AnimatePresence>
+        </motion.div>
     )
 }
 
-export default Members
+export default memo(Members)

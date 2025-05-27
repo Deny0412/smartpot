@@ -33,7 +33,7 @@ const SmartPotItem: React.FC<SmartPotItemProps> = ({ serialNumber, id, activeFlo
     const hasLowBattery = batteryLevel !== null && batteryLevel < 30
 
     useEffect(() => {
-        if (activeFlowerId) {
+        if (activeFlowerId && !measurements) {
             const now = new Date()
             const startDate = new Date(now)
             startDate.setFullYear(now.getFullYear() - 1)
@@ -47,7 +47,7 @@ const SmartPotItem: React.FC<SmartPotItemProps> = ({ serialNumber, id, activeFlo
                 }),
             )
         }
-    }, [dispatch, activeFlowerId, householdId])
+    }, [dispatch, activeFlowerId, householdId, measurements])
 
     const handleDetailsClick = () => {
         if (householdId) {
@@ -56,35 +56,40 @@ const SmartPotItem: React.FC<SmartPotItemProps> = ({ serialNumber, id, activeFlo
     }
 
     return (
-        <GradientDiv className="smart-pot-list-item" onClick={handleDetailsClick}>
-            <div className="smart-pot-list-content">
-                <div className="smart-pot-list-header">
-                    <div className="smart-pot-list-header-content">
-                        <H4 variant="primary" className="smart-pot-list-name">
-                            {serialNumber}
-                        </H4>
-                        {activeFlowerId ? (
-                            <div className="smart-pot-list-status smart-pot-list-active">
-                                {t('smart_pot_list.flower_item.assigned')}
-                            </div>
-                        ) : (
-                            <div className="smart-pot-list-status smart-pot-list-inactive">
-                                {t('smart_pot_list.flower_item.not_assigned')}
-                            </div>
-                        )}
+        <div className="smart-pot-item-wrapper">
+            <GradientDiv className="smart-pot-item-container" onClick={handleDetailsClick}>
+                <div className="smart-pot-item-content">
+                    <div className="smart-pot-item-header">
+                        <div className="smart-pot-item-header-content">
+                            <H4 variant="primary" className="smart-pot-item-name">
+                                {serialNumber}
+                            </H4>
+                            {activeFlowerId ? (
+                                <div className="smart-pot-item-status smart-pot-item-active">
+                                    {t('smart_pot_list.flower_item.assigned')}
+                                </div>
+                            ) : (
+                                <div className="smart-pot-item-status smart-pot-item-inactive">
+                                    {t('smart_pot_list.flower_item.not_assigned')}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div className="smart-pot-list-image">
-                <img src={emptySmartPot} alt={`${serialNumber} smart pot`} className="smart-pot-list-image-img" />
-            </div>
-            {activeFlowerId &&
-                (hasLowBattery ? (
-                    <WarningCircle size={32} color="#f93333" />
-                ) : (
-                    <CheckCircle size={32} color="#4CAF50" />
-                ))}
-        </GradientDiv>
+                <div className="smart-pot-item-image">
+                    <img src={emptySmartPot} alt={`${serialNumber} smart pot`} className="smart-pot-item-image-img" />
+                </div>
+                {activeFlowerId && (
+                    <div className="smart-pot-item-warning-wrapper">
+                        {hasLowBattery ? (
+                            <WarningCircle size={32} color="#f93333" />
+                        ) : (
+                            <CheckCircle size={32} color="#4CAF50" />
+                        )}
+                    </div>
+                )}
+            </GradientDiv>
+        </div>
     )
 }
 

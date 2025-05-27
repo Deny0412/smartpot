@@ -20,23 +20,56 @@ import SmartPotDetail from './pages/SmartPotDetail/SmartPotDetail'
 import SmartPotList from './pages/SmartPotList/SmartPotList'
 import UserProfile from './pages/UserProfile/UserProfile'
 import { selectUser } from './redux/selectors/authSelectors'
+import { selectWebSocketStatus } from './redux/selectors/measurementSelectors'
 import { checkAuthStatus } from './redux/slices/authSlice'
-import { initializeWebSocket, startWebSocketConnection } from './redux/slices/measurementsSlice'
+import {
+    cleanupWebSocket,
+    initializeWebSocket,
+    startWebSocketConnection,
+    stopWebSocketConnection,
+} from './redux/slices/measurementsSlice'
 import { AppDispatch } from './redux/store/store'
 
 const App = () => {
     const dispatch = useDispatch<AppDispatch>()
     const user = useSelector(selectUser)
+    const webSocketStatus = useSelector(selectWebSocketStatus)
 
     useEffect(() => {
-        dispatch(checkAuthStatus())
-        initializeWebSocket(dispatch)
+        const initializeApp = async () => {
+            await dispatch(checkAuthStatus())
+            initializeWebSocket(dispatch)
+        }
+        initializeApp()
     }, [dispatch])
 
-    
+  
+    useEffect(() => {
+        if (user && ['disconnected', 'error', 'idle'].includes(webSocketStatus)) {
+            dispatch(startWebSocketConnection())
+        }
+    }, [dispatch, user, webSocketStatus])
+
+ 
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible' && user) {
+                dispatch(startWebSocketConnection())
+            }
+        }
+
+        document.addEventListener('visibilitychange', handleVisibilityChange)
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange)
+        }
+    }, [dispatch, user])
+
     useEffect(() => {
         if (user) {
             dispatch(startWebSocketConnection())
+        } else {
+            dispatch(stopWebSocketConnection())
+            dispatch(cleanupWebSocket())
         }
     }, [dispatch, user])
 

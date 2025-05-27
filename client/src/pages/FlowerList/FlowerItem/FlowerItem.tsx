@@ -79,45 +79,51 @@ const FlowerItem: React.FC<FlowerItemProps> = ({ name, flowerpot, id, householdI
     }
 
     return (
-        <GradientDiv className="flower-item-container" onClick={handleDetailsClick}>
-            <div className="flower-item-content">
-                <div className="flower-item-header">
-                    <div className="flower-item-header-content">
-                        <H4 variant="primary" className="flower-item-name">
-                            {name}
-                        </H4>
-                        {profile ? (
-                            <div className="flower-item-profile-label">{t('flower_list.profile.assigned')}</div>
-                        ) : (
-                            <div className="flower-item-profile-label flower-item-own-settings">
-                                {t('flower_list.profile.not_assigned')}
-                            </div>
-                        )}
-                        {flowerpot ? (
-                            <div className="flower-item-flowerpot-label">{flowerpot}</div>
-                        ) : (
-                            <div className="flower-item-flowerpot-label flower-item-no-flowerpot">
-                                No flowerpot assigned
-                            </div>
-                        )}
+        <div className="flower-item-wrapper">
+            <GradientDiv className="flower-item-container" onClick={handleDetailsClick}>
+                <div className="flower-item-content">
+                    <div className="flower-item-header">
+                        <div className="flower-item-header-content">
+                            <H4 variant="primary" className="flower-item-name">
+                                {name}
+                            </H4>
+                            {profile ? (
+                                <div className="flower-item-profile-label">{t('flower_list.profile.assigned')}</div>
+                            ) : (
+                                <div className="flower-item-profile-label flower-item-own-settings">
+                                    {t('flower_list.profile.not_assigned')}
+                                </div>
+                            )}
+                            {flowerpot ? (
+                                <div className="flower-item-flowerpot-label">{flowerpot}</div>
+                            ) : (
+                                <div className="flower-item-flowerpot-label flower-item-no-flowerpot">
+                                    No flowerpot assigned
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div className="flower-item-image">
-                <img
-                    src={avatar}
-                    alt={`${name} flower pot`}
-                    className={`flower-item-image-img ${isImageLoaded ? 'loaded' : ''}`}
-                    onLoad={() => setIsImageLoaded(true)}
-                    onError={e => {
-                        const target = e.target as HTMLImageElement
-                        target.src = '/default-flower.png'
-                        setIsImageLoaded(true)
-                    }}
-                />
-            </div>
-            {showWarning && <WarningCircle size={32} color="#f93333" className="flower-item-warning" />}
-        </GradientDiv>
+                <div className="flower-item-image">
+                    <img
+                        src={avatar}
+                        alt={`${name} flower pot`}
+                        className={`flower-item-image-img ${isImageLoaded ? 'loaded' : ''}`}
+                        onLoad={() => setIsImageLoaded(true)}
+                        onError={e => {
+                            const target = e.target as HTMLImageElement
+                            target.src = '/default-flower.png'
+                            setIsImageLoaded(true)
+                        }}
+                    />
+                </div>
+                {showWarning && (
+                    <div className="flower-item-warning-wrapper">
+                        <WarningCircle size={32} color="#f93333" className="flower-item-warning" />
+                    </div>
+                )}
+            </GradientDiv>
+        </div>
     )
 }
 

@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { toast } from 'react-toastify'
 
 export const authApi = axios.create({
     baseURL: process.env.REACT_APP_AUTH_API || 'http://localhost:3003/auth',
@@ -28,7 +29,6 @@ export const loginUser = async (email: string, password: string): Promise<UserDa
         const { token } = response.data
         console.log(token)
 
-        
         const decodedToken = JSON.parse(atob(token.split('.')[1]))
         const userData = {
             id: decodedToken.user.id,
@@ -79,12 +79,9 @@ export const checkAuth = async (): Promise<UserData | null> => {
             surname: userData.surname,
         }
     } catch (error) {
-        console.error('Auth check failed:', error)
+        toast.error('Auth check failed')
         localStorage.removeItem('token')
         localStorage.removeItem('user')
         return null
     }
 }
-
-
-

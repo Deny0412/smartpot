@@ -8,7 +8,7 @@ export interface HouseholdInvite {
     invites: string[]
     createdAt: string
     updatedAt: string
-    // ...add more fields if needed
+   
 }
 
 export const invitesApi = {

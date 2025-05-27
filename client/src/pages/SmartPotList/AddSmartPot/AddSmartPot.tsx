@@ -6,6 +6,7 @@ import { toast } from 'react-toastify'
 import { H5 } from '../../../components/Text/Heading/Heading'
 import { AppDispatch } from '../../../redux/store/store'
 import './AddSmartPot.sass'
+import Button from '../../../components/Button/Button'
 
 interface AddSmartPotProps {
     onClose: () => void
@@ -37,7 +38,7 @@ const AddSmartPot: React.FC<AddSmartPotProps> = ({ onClose }) => {
             toast.success(t('add_smart_pot.success'))
         } catch (err) {
             setError(t('add_smart_pot.error.general'))
-            console.error('Error adding smart pot:', err)
+            
             toast.error(t('add_smart_pot.error.general'))
         } finally {
             setLoading(false)
@@ -66,12 +67,12 @@ const AddSmartPot: React.FC<AddSmartPotProps> = ({ onClose }) => {
 
                     {error && <div className="add-smart-pot-error-message">{error}</div>}
 
-                    <button
+                    <Button
                         type="submit"
                         className="add-smart-pot-button add-smart-pot-button--default"
                         disabled={loading}>
                         {loading ? t('add_smart_pot.saving') : t('add_smart_pot.final_button')}
-                    </button>
+                    </Button>
                 </form>
             </div>
         </div>

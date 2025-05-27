@@ -1,3 +1,5 @@
+import { WebSocketConnectionStatus } from '../redux/slices/measurementsSlice'
+
 export interface BaseMeasurement {
     _id: string
     flower_id: string
@@ -61,7 +63,7 @@ export interface Flower {
 export interface FlowerProfile {
     _id: string
     name: string
-
+    is_global: boolean
     temperature: {
         min: number
         max: number
@@ -76,19 +78,6 @@ export interface FlowerProfile {
     }
     created_at: string
     updated_at: string
-}
-
-export interface Gateway {
-    _id: string
-    serialNumber: string
-    idHousehold: string
-    status: 'online' | 'offline'
-    lastSync: Date
-    connectedDevices: {
-        deviceId: string
-        status: 'active' | 'inactive'
-        lastUpdate: Date
-    }[]
 }
 
 export interface Schedule {
@@ -135,10 +124,13 @@ export interface MeasurementsState {
     }
     loading: boolean
     error: string | null
-    activeWebSocketFlowerId: string | null
+    webSocketStatus: WebSocketConnectionStatus
     lastChange: {
         flowerId: string
         type: MeasurementType
         timestamp: string
     } | null
+    processedMeasurements: {
+        [flowerId: string]: Measurements
+    }
 }

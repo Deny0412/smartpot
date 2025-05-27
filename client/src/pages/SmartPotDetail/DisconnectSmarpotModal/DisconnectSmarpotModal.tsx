@@ -4,7 +4,8 @@ import { useDispatch, useSelector } from 'react-redux'
 import { toast } from 'react-toastify'
 import { H5 } from '../../../components/Text/Heading/Heading'
 import { selectSmartPots } from '../../../redux/selectors/smartPotSelectors'
-import { disconnectSmartPot, updateSmartPotThunk } from '../../../redux/slices/smartPotsSlice'
+import { updateFlowerData } from '../../../redux/slices/flowersSlice'
+import { disconnectSmartPot, updateSmartPotLocally, updateSmartPotThunk } from '../../../redux/slices/smartPotsSlice'
 import { AppDispatch } from '../../../redux/store/store'
 import './DisconnectSmarpotModal.sass'
 
@@ -37,19 +38,59 @@ const DisconnectSmarpotModal: React.FC<DisconnectSmarpotModalProps> = ({
         try {
             setIsLoading(true)
             if (type === 'flower') {
-                await dispatch(
+                const response = await dispatch(
                     disconnectSmartPot({ serialNumber, householdId, activeFlowerId: smartPot.active_flower_id }),
-                )
-                toast.success(t('smart_pot_detail.disconnect_success'))
+                ).unwrap()
+
+                if (response.success) {
+                    dispatch(
+                        updateSmartPotLocally({
+                            smartPotId,
+                            updates: { active_flower_id: null },
+                        }),
+                    )
+
+                    if (smartPot.active_flower_id) {
+                        dispatch(
+                            updateFlowerData({
+                                id: smartPot.active_flower_id,
+                                flower: { serial_number: '' },
+                            }),
+                        )
+                    }
+
+                    toast.success(t('smart_pot_detail.disconnect_success'))
+                } else {
+                    toast.error(response.message || t('smart_pot_detail.disconnect_error'))
+                }
             } else {
-                await dispatch(
+                const response = await dispatch(
                     updateSmartPotThunk({
                         serialNumber,
                         activeFlowerId: null,
                         householdId: null,
                     }),
                 ).unwrap()
-                toast.success(t('smart_pot_detail.disconnect_from_household_success'))
+
+                if (response) {
+                    dispatch(
+                        updateSmartPotLocally({
+                            smartPotId,
+                            updates: { active_flower_id: null, household_id: null },
+                        }),
+                    )
+
+                    if (smartPot.active_flower_id) {
+                        dispatch(
+                            updateFlowerData({
+                                id: smartPot.active_flower_id,
+                                flower: { serial_number: '' },
+                            }),
+                        )
+                    }
+
+                    toast.success(t('smart_pot_detail.disconnect_from_household_success'))
+                }
             }
             onClose()
         } catch (error) {

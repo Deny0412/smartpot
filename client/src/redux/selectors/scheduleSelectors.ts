@@ -31,7 +31,6 @@ export const selectScheduleTimeSlots = (state: RootState, day: string) => {
     }
 }
 
-// Selektory pre kontrolu rozvrhu
 export const selectHasSchedule = (state: RootState) => !!state.schedule.schedule
 
 export const selectIsScheduleActive = (state: RootState) => state.schedule.schedule?.active || false

@@ -1,14 +1,7 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
-import {
-    authApi,
-    checkAuth,
-    loginUser,
-    logoutUser,
-    registerUser,
-    UserData,
-} from '../services/authApi'
+import { authApi, checkAuth, loginUser, logoutUser, registerUser, UserData } from '../services/authApi'
 import { RootState } from '../store/store'
-import { clearMeasurements, stopWebSocketConnection } from './measurementsSlice'
+import { cleanupWebSocket, clearMeasurements, stopWebSocketConnection } from './measurementsSlice'
 
 interface AuthState {
     isAuthenticated: boolean
@@ -54,6 +47,7 @@ export const logout = createAsyncThunk('auth/logout', async (_, { dispatch }) =>
     await logoutUser()
     dispatch(stopWebSocketConnection())
     dispatch(clearMeasurements())
+    dispatch(cleanupWebSocket())
 })
 
 export const checkAuthStatus = createAsyncThunk('auth/check', async () => {
@@ -63,8 +57,6 @@ export const checkAuthStatus = createAsyncThunk('auth/check', async () => {
     }
     return user
 })
-
-
 
 export const forgotPassword = createAsyncThunk(
     'auth/forgotPassword',

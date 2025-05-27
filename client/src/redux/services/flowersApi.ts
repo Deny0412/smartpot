@@ -1,7 +1,5 @@
 import { AxiosError } from 'axios'
-import { Flower, FlowerProfile, Schedule, SmartPot } from '../../types/flowerTypes'
-import { selectFlower } from '../selectors/flowerDetailSelectors'
-import { store } from '../store/store'
+import { Flower, FlowerProfile, Schedule, ScheduleResponse, SmartPot } from '../../types/flowerTypes'
 import { api } from './api'
 
 interface FlowerListResponse {
@@ -25,7 +23,6 @@ export const fetchFlowersByHousehold = async (householdId: string): Promise<Flow
     const response = await api.get<FlowerListResponse>(`/flower/list?household_id=${householdId}&page=1&limit=100`)
 
     if (!response.data.data?.itemList) {
-        console.error('No itemList in response:', response.data)
         return []
     }
     return response.data.data.itemList.map(flower => ({
@@ -42,7 +39,7 @@ export const addFlower = async (flower: Omit<Flower, '_id'>): Promise<Flower> =>
     const response = await api.post<{ status: string; data: Flower }>('/flower/add', flower)
 
     if (!response.data.data) {
-        throw new Error('ID kvetiny nebolo vrátené zo servera')
+        throw new Error('ID from flower not returned from server')
     }
     return response.data.data
 }
@@ -59,16 +56,14 @@ export const deleteFlower = async (id: string): Promise<void> => {
     const flower = flowerDetails.data
 
     if (flower.serial_number) {
-        
         await updateSmartPot(flower.serial_number, {
             active_flower_id: null,
             household_id: flower.household_id,
         })
-        
+
         await updateFlower(id, { serial_number: '' })
     }
 
-    
     await api.delete(`/flower/delete/${id}`)
 }
 
@@ -164,16 +159,15 @@ export const transplantFlowerWithSmartPot = async (
     try {
         const flowerDetails = await fetchFlowerDetails(flowerId)
         if (!flowerDetails.data.serial_number) {
-            throw new Error('Kvetina nemá pripojený smart pot')
+            throw new Error('Flower has no smart pot')
         }
 
-        
         const smartPot = await api.get<{ status: string; data: SmartPot }>(
-            `/smart-pot/get/${smartPotId}?household_id=${flowerDetails.data.household_id}`,
+            `/smart-pot/get/household_id=${flowerDetails.data.household_id}`,
         )
 
         if (!smartPot.data.data) {
-            throw new Error('Smart pot nebol nájdený')
+            throw new Error('Smart pot not found')
         }
 
         const serialNumber = smartPot.data.data.serial_number
@@ -204,11 +198,6 @@ export const transplantFlowerWithSmartPot = async (
 
         return response.data.data
     } catch (error) {
-        console.error('Transplant error details:', error)
-        if (error instanceof AxiosError) {
-            console.error('Request data:', error.config?.data)
-            console.error('Response data:', error.response?.data)
-        }
         throw error
     }
 }
@@ -266,10 +255,6 @@ export const transplantFlowerWithoutSmartPot = async (
         const updatedFlower = await fetchFlowerDetails(flowerId)
         return updatedFlower.data
     } catch (error) {
-        if (error instanceof AxiosError) {
-            console.error('Request data:', error.config?.data)
-            console.error('Response data:', error.response?.data)
-        }
         throw error
     }
 }
@@ -287,7 +272,7 @@ export const transplantFlowerToSmartPot = async (
             `/smart-pot/get/${targetSmartPotId}?household_id=${householdId}`,
         )
         if (smartPot.data.data.active_flower_id) {
-            throw new Error('Smart pot je už pripojený k inej kvetine')
+            throw new Error('Smartpot is already connected to another flower')
         }
 
         if (oldSerialNumber) {
@@ -302,7 +287,7 @@ export const transplantFlowerToSmartPot = async (
             id: flowerId,
             serial_number: smartPot.data.data.serial_number,
         })
-        
+
         await api.put('/smart-pot/update', {
             serial_number: smartPot.data.data.serial_number,
             active_flower_id: flowerId,
@@ -311,35 +296,34 @@ export const transplantFlowerToSmartPot = async (
 
         return response.data.data
     } catch (error) {
-        console.error('Transplant error details:', error)
-        if (error instanceof AxiosError) {
-            console.error('Request data:', error.config?.data)
-            console.error('Response data:', error.response?.data)
-        }
         throw error
     }
 }
 
-export const detachFlower = async (flowerId: string): Promise<void> => {
+export const detachFlower = async (
+    flowerId: string,
+    serialNumber: string | null | undefined,
+): Promise<{ success: boolean; message?: string }> => {
     try {
-        const flowerDetails = selectFlower(store.getState())
-        if (!flowerDetails) {
+        const flowerDetails = await fetchFlowerDetails(flowerId)
+        if (!flowerDetails.data.serial_number) {
             throw new Error('Flower not found in store')
         }
-
-        const serialNumber = flowerDetails.serial_number
 
         if (serialNumber) {
             await api.put('/smart-pot/update', {
                 serial_number: serialNumber,
                 active_flower_id: null,
-                household_id: flowerDetails.household_id,
+                household_id: flowerDetails.data.household_id,
             })
         }
         await api.put('/flower/update', { id: flowerId, serial_number: '' })
+        return { success: true }
     } catch (error) {
-        console.error('Error detaching flower:', error)
-        throw error
+        return {
+            success: false,
+            message: error instanceof Error ? error.message : 'Failed to detach flower',
+        }
     }
 }
 
@@ -352,26 +336,9 @@ export const updateSmartPotFlower = async (serialNumber: string, flowerId: strin
     return response.data.data
 }
 
-const updateScheduleByFlower = async (schedule: Schedule): Promise<Schedule> => {
-    const response = await api.put<Schedule>(`/schedule/update`, schedule)
+const updateScheduleByFlower = async (schedule: Schedule): Promise<ScheduleResponse> => {
+    const response = await api.put<ScheduleResponse>(`/schedule/update`, schedule)
     return response.data
 }
 
 export { updateScheduleByFlower }
-
-export const disconnectFlower = async (flowerId: string) => {
-    try {
-        const response = await updateFlower(flowerId, { serial_number: '' })
-        return {
-            success: true,
-            message: 'Kvetina bola úspešne odpojená',
-            data: response,
-        }
-    } catch (error) {
-        console.error('Chyba pri odpojení kvetiny:', error)
-        return {
-            success: false,
-            message: error instanceof Error ? error.message : 'Nepodarilo sa odpojiť kvetinu',
-        }
-    }
-}

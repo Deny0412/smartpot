@@ -6,7 +6,12 @@ import { toast } from 'react-toastify'
 import { selectUserId } from '../../redux/selectors/authSelectors'
 import { selectHouseholdById, selectIsHouseholdOwner } from '../../redux/selectors/houseHoldSelectors'
 import { deleteHousehold } from '../../redux/services/householdsApi'
-import { leaveHouseholdAction, loadHouseholds, updateHouseholdData } from '../../redux/slices/householdsSlice'
+import {
+    leaveHouseholdAction,
+    loadHouseholds,
+    updateHouseholdData,
+    updateHouseholdName,
+} from '../../redux/slices/householdsSlice'
 import { AppDispatch, RootState } from '../../redux/store/store'
 import Button from '../Button/Button'
 import GradientDiv from '../GradientDiv/GradientDiv'
@@ -39,7 +44,7 @@ const SettingsInHousehold: React.FC<SettingsInHouseholdProps> = ({ isOpen, onClo
         setLoading(true)
         try {
             await dispatch(updateHouseholdData({ id: householdId, data: { name: newHouseholdName } })).unwrap()
-            await dispatch(loadHouseholds()).unwrap()
+            dispatch(updateHouseholdName({ householdId, newName: newHouseholdName }))
             toast.success(t('settings.toast.rename_success'))
             setNewHouseholdName('')
             onClose()
@@ -53,10 +58,10 @@ const SettingsInHousehold: React.FC<SettingsInHouseholdProps> = ({ isOpen, onClo
     const handleLeaveHousehold = async () => {
         setLoading(true)
         try {
+            navigate('/households')
             await dispatch(leaveHouseholdAction(householdId))
             toast.success(t('settings.toast.leave_success'))
             onClose()
-            navigate('/households')
         } catch (error) {
             toast.error(t('settings.toast.leave_error'))
         } finally {
@@ -67,13 +72,12 @@ const SettingsInHousehold: React.FC<SettingsInHouseholdProps> = ({ isOpen, onClo
     const handleDeleteHousehold = async () => {
         setLoading(true)
         try {
+            navigate('/households')
             await deleteHousehold(householdId)
             await dispatch(loadHouseholds()).unwrap()
             toast.success(t('settings.toast.delete_success'))
             onClose()
-            navigate('/households')
         } catch (error) {
-            console.error('Error deleting household:', error)
             toast.error(t('settings.toast.delete_error'))
         } finally {
             setLoading(false)

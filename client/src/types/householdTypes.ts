@@ -1,9 +1,11 @@
 export interface Household {
-    id: string
+    _id: string
     name: string
     owner: string
     members: string[]
     invites: string[]
+    createdAt?: string
+    updatedAt?: string
 }
 
 export interface CreateHouseholdData {

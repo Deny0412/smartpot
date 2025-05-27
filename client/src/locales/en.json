@@ -172,7 +172,13 @@
             "owner": "Owner",
             "member": "Member"
         },
-        "access_denied_toast": "You no longer have access to this household."
+        "access_denied_toast": "You no longer have access to this household.",
+        "filters": {
+            "all": "All",
+            "owner": "Owner",
+            "member": "Member",
+            "search_placeholder": "Search household..."
+        }
     },
     "flower_list": {
         "title": "Flowers in",
@@ -389,6 +395,12 @@
     "flower_detail": {
         "schedule": "Watering Schedule",
         "no_schedule": "No schedule",
+        "schedule_activated": "Schedule has been activated",
+        "schedule_deactivated": "Schedule has been deactivated",
+        "schedule_toggle_error": "Failed to toggle schedule",
+        "enable_schedule": "Enable schedule",
+        "disable_schedule": "Disable schedule",
+        "transplant_description": "You can transplant your flower to another smart pot within the same household or move it to a different household. When moving to a different household, you can choose whether to keep the current smart pot or assign it to another flower.",
         "edit_schedule": {
             "title": "Edit Watering Schedule",
             "error": {
@@ -483,7 +495,8 @@
         "schedule_no_time_placeholder": "-",
         "unit": {
             "celsius": "°C",
-            "percent": "%"
+            "percent": "%",
+            "lightness": "Lux"
         },
         "console": {
             "disconnect_error_prefix": "Error disconnecting flower:",

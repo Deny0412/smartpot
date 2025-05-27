@@ -1,9 +1,8 @@
 @import "../../styles/global.sass"
 
-.main-detail-container
+.flower-detail-container
     width: 100%
     min-height: 100vh
-    background: #1a1a1a
     padding: 1rem
     box-sizing: border-box
 
@@ -165,7 +164,8 @@
                 grid-template-columns: repeat(2, 1fr)
                 gap: 0.75rem
 
-    h4
+    .profile-title
+        color: white
         text-align: center
         width: 100%
         margin-bottom: 1rem
@@ -439,3 +439,150 @@
 
         &:hover
             opacity: 0.8
+
+.measurements-container
+    display: flex
+    flex-direction: column
+    gap: 2rem
+    
+    max-width: 1200px
+    margin: 0 auto
+    padding: 0 1rem
+
+    .measurements-content
+        display: flex
+        flex-direction: column
+        gap: 2rem
+        width: 100%
+        position: relative
+
+        .measurements-chart-row
+            display: flex
+            width: 100%
+
+            @media (max-width: 768px)
+                flex-direction: column
+                gap: 1rem
+
+            .chart-center
+                flex: 1
+                min-width: 0
+
+            .controls-container
+                display: flex
+                flex-direction: column
+                gap: 1rem
+                justify-content: center
+                margin-top: 4rem
+               
+                padding: 0 1rem
+                box-sizing: border-box
+
+                @media (max-width: 768px)
+                    width: 100%
+                    padding: 0 0.5rem
+
+                @media (max-width: 480px)
+                    padding: 0
+
+                .measurement-icons
+                    display: flex
+                    flex-direction: column
+                    
+                    align-items: center
+
+                    @media (max-width: 768px)
+                        flex-direction: row
+                        justify-content: center
+                        flex-wrap: wrap
+
+                    @media (max-width: 480px)
+                        gap: 0.5rem
+
+                    .icon-button
+                        background: none
+                        border: 1px solid $primary-text
+                        color: $primary-text
+                        width: 48px
+                        height: 48px
+                        border-radius: 50%
+                        cursor: pointer
+                        transition: all 0.2s
+                        font-size: 1.5rem
+                        display: flex
+                        align-items: center
+                        justify-content: center
+
+                        @media (max-width: 480px)
+                            width: 40px
+                            height: 40px
+                            font-size: 1.2rem
+
+                        &:hover
+                            transform: scale(1.1)
+
+                        &.active
+                            transform: scale(1.1)
+
+                            &:hover
+                                filter: brightness(1.1)
+
+                        &:nth-child(1)
+                            &.active
+                                background: #6bb9ff
+                                &:hover
+                                    background: darken(#6bb9ff, 10%)
+
+                        &:nth-child(2)
+                            &.active
+                                background: #ff6b6b
+                                &:hover
+                                    background: darken(#ff6b6b, 10%)
+
+                        &:nth-child(3)
+                            &.active
+                                background: #ffa502
+                                &:hover
+                                    background: darken(#ffa502, 10%)
+
+                        &:nth-child(4)
+                            &.active
+                                background: $capacity-color
+                                &:hover
+                                    background: darken($capacity-color, 10%)
+
+            .time-range-controls-row
+                display: flex
+                justify-content: center
+                width: 100%
+                margin-top: 1rem
+
+            @media (max-width: 768px)
+                gap: 0.75rem
+
+                .measurement-icon
+                    padding: 0.75rem
+                    min-width: 80px
+
+                    .icon
+                        font-size: 1.5rem
+
+                    .label
+                        font-size: 0.8rem
+
+            @media (max-width: 480px)
+                gap: 0.5rem
+
+                .measurement-icon
+                    padding: 0.5rem
+                    min-width: 70px
+
+                    .icon
+                        font-size: 1.25rem
+
+                    .label
+                        font-size: 0.7rem
+
+       
+
+        

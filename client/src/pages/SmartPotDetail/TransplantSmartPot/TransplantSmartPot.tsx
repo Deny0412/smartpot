@@ -15,9 +15,13 @@ import {
     fetchSmartPots,
     transplantSmartPotToFlowerThunk,
     transplantSmartPotWithFlowerThunk,
+    transplantSmartPotWithoutFlowerThunk,
+    updateSmartPotLocally,
     updateSmartPotThunk,
 } from '../../../redux/slices/smartPotsSlice'
 import { AppDispatch } from '../../../redux/store/store'
+import { Household } from '../../../types/householdTypes'
+import { SmartPot } from '../../../types/smartPotTypes'
 import './TransplantSmartPot.sass'
 
 interface TransplantSmartPotProps {
@@ -49,9 +53,9 @@ const TransplantSmartPot: React.FC<TransplantSmartPotProps> = ({
     const [assignFlower, setAssignFlower] = useState<boolean>(false)
     const [selectedNewSmartPotId, setSelectedNewSmartPotId] = useState<string>('')
 
-    const households = useSelector(selectHouseholds)
+    const households = useSelector(selectHouseholds) as Household[]
     const flowers = useSelector(selectFlowers)
-    const smartPots = useSelector(selectSmartPots)
+    const smartPots = useSelector(selectSmartPots) as SmartPot[]
     const user = useSelector(selectUser)
 
     const currentHousehold = useMemo(
@@ -80,16 +84,46 @@ const TransplantSmartPot: React.FC<TransplantSmartPotProps> = ({
             throw new Error('No flower selected')
         }
 
-        await dispatch(
-            transplantSmartPotToFlowerThunk({
-                smartPotId,
-                targetFlowerId: selectedFlowerId,
-            }),
-        ).unwrap()
+        try {
+            const result = await dispatch(
+                transplantSmartPotToFlowerThunk({
+                    smartPotId,
+                    targetFlowerId: selectedFlowerId,
+                }),
+            ).unwrap()
 
-        await dispatch(fetchSmartPots(currentHouseholdId))
-        toast.success(t('smart_pot_detail.transplant_success'))
-        onClose()
+            if (result.success) {
+                if (activeFlowerId) {
+                    await dispatch(
+                        updateFlowerData({
+                            id: activeFlowerId,
+                            flower: {
+                                serial_number: '',
+                            },
+                        }),
+                    )
+                }
+
+                const smartPot = smartPots.find(pot => pot._id === smartPotId)
+                if (smartPot) {
+                    await dispatch(
+                        updateFlowerData({
+                            id: selectedFlowerId,
+                            flower: {
+                                serial_number: smartPot.serial_number,
+                            },
+                        }),
+                    )
+                }
+                toast.success(t('smart_pot_detail.transplant_success'))
+                onClose()
+            } else {
+                toast.error(result.message || t('smart_pot_detail.transplant_error'))
+            }
+        } catch (error) {
+            
+            toast.error(t('smart_pot_detail.transplant_error'))
+        }
     }
 
     const handleDifferentHouseholdNoFlower = async () => {
@@ -104,17 +138,24 @@ const TransplantSmartPot: React.FC<TransplantSmartPotProps> = ({
                 }),
             ).unwrap()
 
+            dispatch(
+                updateSmartPotLocally({
+                    smartPotId,
+                    updates: {
+                        active_flower_id: null,
+                        household_id: selectedHouseholdId,
+                    },
+                }),
+            )
+
             onClose()
             toast.success(t('smart_pot_detail.transplant_success'))
 
             if (selectedHouseholdId !== currentHouseholdId) {
                 navigate(`/households/${selectedHouseholdId}/smartpots`)
             }
-
-            await dispatch(fetchSmartPots(currentHouseholdId))
-            await dispatch(fetchSmartPots(selectedHouseholdId))
         } catch (error) {
-            console.error('Transplant error:', error)
+            
             toast.error(t('smart_pot_detail.transplant_error'))
         }
     }
@@ -122,57 +163,57 @@ const TransplantSmartPot: React.FC<TransplantSmartPotProps> = ({
     const handleDifferentHouseholdKeepFlower = async () => {
         const smartPot = smartPots.find(smartPot => smartPot._id === smartPotId)
 
-        await dispatch(
-            transplantSmartPotWithFlowerThunk({
-                smartPotSerialNumber: smartPot?.serial_number || '',
-                targetHouseholdId: selectedHouseholdId,
-                flowerId: smartPot?.active_flower_id ?? '',
-            }),
-        ).unwrap()
+        try {
+            await dispatch(
+                transplantSmartPotWithFlowerThunk({
+                    smartPotSerialNumber: smartPot?.serial_number || '',
+                    targetHouseholdId: selectedHouseholdId,
+                    flowerId: smartPot?.active_flower_id ?? '',
+                }),
+            ).unwrap()
 
-        toast.success(t('smart_pot_detail.transplant_success'))
-        if (selectedHouseholdId !== currentHouseholdId) {
-            navigate(`/households/${selectedHouseholdId}/smartpots`)
+            dispatch(
+                updateSmartPotLocally({
+                    smartPotId,
+                    updates: {
+                        household_id: selectedHouseholdId,
+                    },
+                }),
+            )
+
+            toast.success(t('smart_pot_detail.transplant_success'))
+            if (selectedHouseholdId !== currentHouseholdId) {
+                navigate(`/households/${selectedHouseholdId}/smartpots`)
+            }
+            onClose()
+        } catch (error) {
+            
+            toast.error(t('smart_pot_detail.transplant_error'))
         }
-        onClose()
     }
 
     const handleDifferentHouseholdRemoveFlower = async () => {
-        const smartPot = smartPots.find(smartPot => smartPot._id === smartPotId)
-
-        if (activeFlowerId) {
+        try {
             await dispatch(
-                updateFlowerData({
-                    id: activeFlowerId,
-                    flower: {
-                        serial_number: '',
-                    },
+                transplantSmartPotWithoutFlowerThunk({
+                    smartPotId,
+                    targetHouseholdId: selectedHouseholdId,
+                    assignOldFlower: assignFlower,
+                    oldFlowerId: activeFlowerId || '',
+                    oldHouseholdId: currentHouseholdId,
+                    selectedNewSmartPotId: selectedNewSmartPotId,
                 }),
             ).unwrap()
-        }
 
-        await dispatch(
-            updateSmartPotThunk({
-                serialNumber: smartPot?.serial_number || '',
-                activeFlowerId: null,
-                householdId: selectedHouseholdId,
-            }),
-        ).unwrap()
-
-        if (assignFlower && selectedNewSmartPotId && activeFlowerId) {
-            await dispatch(
-                transplantSmartPotToFlowerThunk({
-                    smartPotId: selectedNewSmartPotId,
-                    targetFlowerId: activeFlowerId,
-                }),
-            ).unwrap()
+            toast.success(t('smart_pot_detail.transplant_success'))
+            if (selectedHouseholdId !== currentHouseholdId) {
+                navigate(`/households/${selectedHouseholdId}/smartpots`)
+            }
+            onClose()
+        } catch (error) {
+            
+            toast.error(t('smart_pot_detail.transplant_error'))
         }
-
-        toast.success(t('smart_pot_detail.transplant_success'))
-        if (selectedHouseholdId !== currentHouseholdId) {
-            navigate(`/households/${selectedHouseholdId}/smartpots`)
-        }
-        onClose()
     }
 
     useEffect(() => {
@@ -196,7 +237,7 @@ const TransplantSmartPot: React.FC<TransplantSmartPotProps> = ({
                     }
                     setIsDataLoaded(true)
                 } catch (error) {
-                    console.error('Chyba pri načítaní dát:', error)
+                    
                     toast.error(t('smart_pot_detail.load_error'))
                 }
             }
@@ -227,7 +268,7 @@ const TransplantSmartPot: React.FC<TransplantSmartPotProps> = ({
                     }
                 }
             } catch (error) {
-                console.error('Transplant error:', error)
+                
                 toast.error(t('smart_pot_detail.transplant_error'))
             } finally {
                 setLoading(false)

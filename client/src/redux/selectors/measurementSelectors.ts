@@ -1,53 +1,32 @@
 import { createSelector } from '@reduxjs/toolkit'
-import { MeasurementsState } from '../../types/flowerTypes'
+import { MeasurementType } from '../../types/flowerTypes'
 import { RootState } from '../store/store'
 
+export const selectMeasurementsState = (state: RootState) => state.measurements
 
-const selectMeasurementsState = (state: RootState) => state.measurements
+export const selectMeasurementsLoading = (state: RootState) => state.measurements.loading
 
+export const selectMeasurementsError = (state: RootState) => state.measurements.error
+
+export const selectWebSocketStatus = (state: RootState) => state.measurements.webSocketStatus
+
+export const selectProcessedMeasurements = (state: RootState, flowerId: string) =>
+    state.measurements.processedMeasurements[flowerId]
+
+export const selectLastChange = (state: RootState) => state.measurements.lastChange
+
+export const selectAllMeasurements = (state: RootState) => state.measurements.measurements
+
+export const selectMeasurementsByFlowerId = (state: RootState, flowerId: string) =>
+    state.measurements.measurements[flowerId]
+
+export const selectMeasurementsByType = (state: RootState, flowerId: string, type: MeasurementType) =>
+    state.measurements.measurements[flowerId]?.[type] || []
 
 export const selectMeasurementsForFlower = createSelector(
     [selectMeasurementsState, (_, flowerId: string) => flowerId],
     (measurementsState, flowerId) => measurementsState.measurements[flowerId] || null,
 )
-
-
-export const selectProcessedMeasurements = createSelector([selectMeasurementsForFlower], measurements => {
-    if (!measurements) {
-        return {
-            humidity: [],
-            temperature: [],
-            light: [],
-            battery: [],
-            water: [],
-        }
-    }
-
-    return {
-        humidity: measurements.humidity || [],
-        temperature: measurements.temperature || [],
-        light: measurements.light || [],
-        battery: measurements.battery || [],
-        water: measurements.water || [],
-    }
-})
-
-
-export const selectMeasurementsLoading = createSelector([selectMeasurementsState], state => state.loading)
-
-
-export const selectMeasurementsError = (state: RootState) => state.measurements.error
-
-
-export const selectActiveWebSocketFlowerId = (state: RootState) => state.measurements.activeWebSocketFlowerId
-
-
-export const selectLastChange = createSelector(
-    [selectMeasurementsState],
-    (state: MeasurementsState) => state.lastChange,
-)
-
-export const selectAllMeasurements = (state: RootState) => state.measurements.measurements
 
 export const selectLatestMeasurement = (state: RootState, flowerId: string) => {
     const measurements = state.measurements.measurements[flowerId]
@@ -168,8 +147,6 @@ export const selectMeasurementLimits = (
         return defaults[measurementType]
     }
 
-   
-
     if (flower.profile?.[measurementType]) {
         return {
             min: flower.profile[measurementType].min,
@@ -185,6 +162,3 @@ export const selectMeasurementLimits = (
     }
     return defaults[measurementType]
 }
-
-// Nový selektor pre stav WebSocketu
-export const selectWebSocketStatus = (state: RootState) => state.measurements.webSocketStatus
