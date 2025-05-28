@@ -81,7 +81,7 @@ async function measurementCreateAbl(data: any, reply: FastifyReply, user: any) {
     const rangeCheckResult = isValueOutOfRange(
       data.typeOfData as string,
       data.value as number,
-      flower as IFlower
+      flower as unknown as IFlower
     );
     const householdOwner = await getUser(String(household?.owner));
     const memberIds = household?.members || [];
