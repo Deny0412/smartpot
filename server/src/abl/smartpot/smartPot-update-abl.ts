@@ -143,7 +143,7 @@ async function smartpotUpdateAbl(data: ISmartPot, reply: FastifyReply) {
       if (alreadyAssigned) {
         sendClientError(
           reply,
-          "Tato květina je již přiřazena k jinému smartpotu."
+          "This flower is already assigned to another smartpot"
         );
         return;
       }
