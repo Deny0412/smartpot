@@ -53,7 +53,7 @@ async function flowerListActiveDao(
         name: "$flower.name",
         profile_id: "$flower.profile_id",
         household_id: "$flower.household_id",
-        serial_number: "$flower.serial_number",
+        serial_number: "$serial_number",
         createdAt: "$flower.createdAt",
         updatedAt: "$flower.updatedAt",
       },
