@@ -14,6 +14,7 @@ import householdGetDao from "../../dao/household/household-get-dao";
 import mongoose from "mongoose";
 import flowerGetDao from "../../dao/flower/flower-get-dao";
 import getSmartBySerialNumberPot from "../../dao/smartpot/smartpot-getBySerial-dao";
+import { smartpotExistsByActiveFlowerIdDao } from "../../dao/smartpot/smartpot-exists-dao";
 
 function isValidObjectId(id: string): boolean {
   return mongoose.Types.ObjectId.isValid(id);
@@ -130,6 +131,19 @@ async function smartpotUpdateAbl(data: ISmartPot, reply: FastifyReply) {
         sendClientError(
           reply,
           "Flower must be from the same household as the smartpot"
+        );
+        return;
+      }
+
+      // Nová validace: jestli už není přiřazena v jiném smartpotu
+      const alreadyAssigned = await smartpotExistsByActiveFlowerIdDao(
+        updateData.active_flower_id.toString(),
+        updateData.serial_number
+      );
+      if (alreadyAssigned) {
+        sendClientError(
+          reply,
+          "Tato květina je již přiřazena k jinému smartpotu."
         );
         return;
       }
