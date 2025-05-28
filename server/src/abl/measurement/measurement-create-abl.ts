@@ -93,6 +93,9 @@ async function measurementCreateAbl(data: any, reply: FastifyReply, user: any) {
     if (householdOwner) {
       usersToNotify.push(householdOwner);
     }
+
+    data.flower_id = new Types.ObjectId(String(activeFlowerId));
+
     if (rangeCheckResult && rangeCheckResult.outOfRange) {
       sendToMultipleUsers(usersToNotify, rangeCheckResult);
       notificationService.sendEmailNotification(
@@ -108,7 +111,6 @@ async function measurementCreateAbl(data: any, reply: FastifyReply, user: any) {
     }
     sendToMultipleUsers(usersToNotify, data);
 
-    data.flower_id = new Types.ObjectId(String(activeFlowerId));
     const createdMeasurement = await createMeasurement(data);
     sendCreated(reply, createdMeasurement, "Measurement created successfully");
   } catch (error) {
