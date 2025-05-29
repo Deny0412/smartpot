@@ -1,6 +1,6 @@
 import { FastifyReply } from "fastify";
 import createMeasurement from "../../dao/measurement/measurement-create-dao";
-import getSmartpot from "../../dao/smartpot/smart-pot-get-by-serial-number";
+import getSmartpot from "../../dao/smartpot/smartpot-getBySerial-dao";
 import getFlower from "../../dao/flower/flower-get-dao";
 import { Types } from "mongoose";
 import { isValueOutOfRange } from "../../utils/flower/flower-range-util";
@@ -32,7 +32,7 @@ const schema = {
 
 const ajv = new Ajv();
 
-async function createMeasurementAbl(data: any, reply: FastifyReply, user: any) {
+async function measurementCreateAbl(data: any, reply: FastifyReply, user: any) {
   try {
     const validate = ajv.compile(schema);
     const valid = validate(data);
@@ -81,7 +81,7 @@ async function createMeasurementAbl(data: any, reply: FastifyReply, user: any) {
     const rangeCheckResult = isValueOutOfRange(
       data.typeOfData as string,
       data.value as number,
-      flower as IFlower
+      flower as unknown as IFlower
     );
     const householdOwner = await getUser(String(household?.owner));
     const memberIds = household?.members || [];
@@ -93,8 +93,11 @@ async function createMeasurementAbl(data: any, reply: FastifyReply, user: any) {
     if (householdOwner) {
       usersToNotify.push(householdOwner);
     }
+
+    data.flower_id = new Types.ObjectId(String(activeFlowerId));
+
     if (rangeCheckResult && rangeCheckResult.outOfRange) {
-      sendToMultipleUsers(usersToNotify, rangeCheckResult);
+      sendToMultipleUsers(usersToNotify, rangeCheckResult, "measurementAlert");
       notificationService.sendEmailNotification(
         usersToNotify,
         rangeCheckResult.message,
@@ -106,9 +109,8 @@ async function createMeasurementAbl(data: any, reply: FastifyReply, user: any) {
       );
       console.log(`Sending notification: ${rangeCheckResult.message}`);
     }
-    sendToMultipleUsers(usersToNotify, data);
+    sendToMultipleUsers(usersToNotify, data, "measurement");
 
-    data.flower_id = new Types.ObjectId(String(activeFlowerId));
     const createdMeasurement = await createMeasurement(data);
     sendCreated(reply, createdMeasurement, "Measurement created successfully");
   } catch (error) {
@@ -116,4 +118,4 @@ async function createMeasurementAbl(data: any, reply: FastifyReply, user: any) {
   }
 }
 
-export default createMeasurementAbl;
+export default measurementCreateAbl;

@@ -18,7 +18,7 @@ const schema = {
     id: { type: "string" },
     typeOfData: {
       type: "string",
-      enum: ["humidity", "water", "temperature", "light"]
+      enum: ["humidity", "water", "temperature", "light" , "battery"]
     },
     dateFrom: { type: "string", format: "date" },
     dateTo: { type: "string", format: "date" },

@@ -7,56 +7,19 @@ const MEMBER_ROLE = "member";
 const OWNER_ROLE = "owner";
 
 export default async function measurementRoutes(fastify: FastifyInstance) {
-  // fastify.post("/measurement/add", flowerController.addMeasurement);
   fastify.post(
     "/history",
     {
-      onRequest: [authMiddleware], // Authenticate first
+      onRequest: [authMiddleware],
     },
     measurementController.history
   );
   fastify.post("/create", measurementController.create);
-
-  /*
-  fastify.post(
-    "/createWater",
-    
+  fastify.get(
+    "/getLatest/:flowerId",
     {
-      onRequest: [authMiddleware], // Authenticate first
-      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
+      onRequest: [authMiddleware],
     },
-    
-    measurementController.create
+    measurementController.getLatest
   );
-  fastify.post(
-    "/createLight",
-    
-    {
-      onRequest: [authMiddleware], // Authenticate first
-      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
-    },
-    
-    measurementController.create
-  );
-  fastify.post(
-    "/createTemperature",
-    
-    {
-      onRequest: [authMiddleware], // Authenticate first
-      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
-    },
-    
-    measurementController.create
-  );
-  fastify.post(
-    "/createHumidity",
-    
-    {
-      onRequest: [authMiddleware], // Authenticate first
-      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
-    },
-    
-    measurementController.create
-  );
-  */
 }

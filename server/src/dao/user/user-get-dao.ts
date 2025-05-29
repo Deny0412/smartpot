@@ -1,8 +1,8 @@
 import UserModel from "../../models/User";
 
-async function getUser(id: string) {
+async function userGetDao(id: string) {
   const user = await UserModel.findById(id);
   return user;
 }
 
-export default getUser;
+export default userGetDao;

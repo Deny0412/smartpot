@@ -7,7 +7,6 @@ import {
   sendError,
   sendClientError,
   sendSuccess,
-  //sendNoContent,
   sendNotFound,
 } from "../../middleware/response-handler";
 import householdDecisionDao from "../../dao/household/household-decision-dao";

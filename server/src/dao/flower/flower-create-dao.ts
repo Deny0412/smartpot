@@ -1,8 +1,8 @@
-import FlowerModel, { IFlower } from '../../models/Flower';
+import FlowerModel, { IFlower } from "../../models/Flower";
 
-async function create(data: IFlower) {
-    const flower = new FlowerModel(data);
-    return await flower.save();
+async function flowerCreateDao(data: IFlower) {
+  const flower = new FlowerModel(data);
+  return await flower.save();
 }
 
-export default create; 
+export default flowerCreateDao;

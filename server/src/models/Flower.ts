@@ -4,7 +4,8 @@ export interface IFlower extends Document {
   profile_id: string;
   name: string;
   household_id: Types.ObjectId;
-  serial_number: string;
+  //serial_number: string;
+  avatar: string;
   profile: {
     humidity: {
       min: number | null;
@@ -18,7 +19,6 @@ export interface IFlower extends Document {
       min: number | null;
       max: number | null;
     };
-
   };
 }
 
@@ -30,7 +30,8 @@ const flowerSchema = new Schema<IFlower>(
       ref: "Household",
       required: false,
     },
-    serial_number: { type: String, required: false, default: null },
+    avatar: { type: String, required: false, default: null },
+    //serial_number: { type: String, required: false, default: null },
     profile: {
       humidity: {
         min: { type: Number, required: false, default: null },
@@ -47,8 +48,7 @@ const flowerSchema = new Schema<IFlower>(
       water_level: {
         min: { type: Number, required: false, default: null },
       },
-
-    }
+    },
   },
   { timestamps: true }
 ); // Adds `createdAt` & `updatedAt` fields

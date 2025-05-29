@@ -46,7 +46,7 @@ export default async function flowerRoutes(fastify: FastifyInstance) {
     "/update",
     {
       onRequest: [authMiddleware], // Authenticate first
-      preHandler: [householdAuthMidlleware([OWNER_ROLE])], // Then check household auth
+      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
     },
     flowerController.update
   );
@@ -66,5 +66,12 @@ export default async function flowerRoutes(fastify: FastifyInstance) {
     },
     flowerController.listActive
   );
-
+  fastify.get(
+    "/getSchedule/:id",
+    {
+      onRequest: [authMiddleware], // Authenticate first
+      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
+    },
+    flowerController.getSchedule
+  );
 }

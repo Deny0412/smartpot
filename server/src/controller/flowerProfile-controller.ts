@@ -1,10 +1,9 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import flowerProfileCreateAbl from "../abl/flower-profile/flowerProfile-create-abl";
-import flowerProfileDeleteAbl from "../abl/flower-profile/flowerProfile-delete-abl";
-import flowerProfileGetAbl from "../abl/flower-profile/flowerProfile-get-abl";
-import flowerProfileListAbl from "../abl/flower-profile/flowerProfile-list-abl";
-import flowerProfileUpdateAbl from "../abl/flower-profile/flowerProfile-update-abl";
-
+import flowerProfileCreateAbl from "../abl/flowerProfile/flowerProfile-create-abl";
+import flowerProfileDeleteAbl from "../abl/flowerProfile/flowerProfile-delete-abl";
+import flowerProfileGetAbl from "../abl/flowerProfile/flowerProfile-get-abl";
+import flowerProfileListAbl from "../abl/flowerProfile/flowerProfile-list-abl";
+import flowerProfileUpdateAbl from "../abl/flowerProfile/flowerProfile-update-abl";
 import { sendError } from "../middleware/response-handler";
 import { IFlowerProfile } from "../models/FlowerProfile";
 

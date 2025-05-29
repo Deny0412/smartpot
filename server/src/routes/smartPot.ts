@@ -40,4 +40,11 @@ export default async function smartpotRoutes(fastify: FastifyInstance) {
     },
     smartpotController.update
   );
+  fastify.get(
+    "/listByHousehold/:id",
+    {
+      onRequest: [authMiddleware], // Authenticate first
+    },
+    smartpotController.listByHousehold
+  );
 }

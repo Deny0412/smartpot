@@ -1,4 +1,3 @@
-
 @import "../../styles/global"
 
 .home-container
@@ -9,4 +8,17 @@
   width: 100%
   background-color: $background-color
   box-sizing: border-box
-  margin:0
+  margin: 0
+  padding: 0
+
+  .home-content
+    display: flex
+    flex-direction: column
+    align-items: center
+    width: 100%
+    max-width: 1200px
+    margin: 0 auto
+    padding: 0
+
+  @media (max-width: 768px)
+    padding-bottom: 20px

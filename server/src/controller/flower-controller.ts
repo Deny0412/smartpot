@@ -4,6 +4,7 @@ import flowerUpdateAbl from "../abl/flower/flower-update-abl";
 import flowerDeleteAbl from "../abl/flower/flower-delete-abl";
 import flowerListAbl from "../abl/flower/flower-list-abl";
 import flowerGetAbl from "../abl/flower/flower-get-abl";
+import flowerGetScheduleAbl from "../abl/flower/flower-getSchedule-abl";
 
 import { sendError } from "../middleware/response-handler";
 import { IFlower } from "../models/Flower";
@@ -70,6 +71,14 @@ export const flowerController = {
     try {
       const data = request.query as QueryParams;
       await listActiveFlowersHandler(data, reply);
+    } catch (error) {
+      sendError(reply, error);
+    }
+  },
+  getSchedule: async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const id = (request.params as Params).id;
+      await flowerGetScheduleAbl(id, reply);
     } catch (error) {
       sendError(reply, error);
     }
