@@ -65,7 +65,6 @@ const MeasurementsList: React.FC<MeasurementsListProps> = ({ flowerId, measureme
         const date = new Date(timestamp)
 
         if (isNaN(date.getTime())) {
-            
             return t('flower_measurments.error.invalid_date_format')
         }
 

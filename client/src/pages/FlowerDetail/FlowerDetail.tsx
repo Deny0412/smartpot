@@ -117,7 +117,7 @@ const FlowerDetail: React.FC = () => {
                 await dispatch(
                     updateFlowerData({
                         id: flowerId,
-                        flower: { serial_number: '' },
+                        flower: { serial_number: null },
                     }),
                 ).unwrap()
             }
@@ -230,7 +230,9 @@ const FlowerDetail: React.FC = () => {
             {flowerId && householdId && flowerpotData && (
                 <div className="measurements-container">
                     <div className="measurements-content">
-                        <CurrentStatus measurements={processedMeasurements} />
+                        {processedMeasurements && (
+                            <CurrentStatus measurements={processedMeasurements} flower={flower} />
+                        )}
 
                         <div className="measurements-chart-row">
                             <div className="chart-center">
@@ -238,9 +240,6 @@ const FlowerDetail: React.FC = () => {
                                     flowerId={flowerId}
                                     householdId={householdId}
                                     flowerpotData={{
-                                        name: flowerpotData.name,
-                                        status: flowerpotData.status,
-                                        flower_avatar: flowerpotData.flower_avatar || '',
                                         humidity_measurement: flowerpotData.humidity_measurement,
                                         temperature_measurement: flowerpotData.temperature_measurement,
                                         light_measurement: flowerpotData.light_measurement,

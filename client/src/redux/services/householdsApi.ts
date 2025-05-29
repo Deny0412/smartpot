@@ -62,7 +62,7 @@ export const inviteMember = async (householdId: string, userId: string): Promise
         id: householdId,
         invited_user_id: userId,
     }
-    console.log('Sending invite request with data:', JSON.stringify(data))
+    
     const response = await api.post<{ message: string }>('/household/invite', data)
     return response.data
 }

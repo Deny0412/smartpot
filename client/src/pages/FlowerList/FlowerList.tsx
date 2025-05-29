@@ -68,7 +68,7 @@ const FlowerList: React.FC = () => {
     const emptyFlowers = householdFlowers.length === 0
 
     const filteredFlowers = householdFlowers.filter(flower => {
-        const hasSmartPot = flower.serial_number !== ''
+        const hasSmartPot = flower.serial_number !== undefined && flower.serial_number !== null
         const matchesProfile =
             profileFilter === 'all' || (profileFilter === 'not_assigned' ? !flower.profile : flower.profile)
 

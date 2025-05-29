@@ -5,7 +5,7 @@ import { toast } from 'react-toastify'
 import Button from '../../../../components/Button/Button'
 import GradientDiv from '../../../../components/GradientDiv/GradientDiv'
 import { H5 } from '../../../../components/Text/Heading/Heading'
-import { updateFlowerData } from '../../../../redux/slices/flowersSlice'
+import { updateFlowerData, updateFlowerLocally } from '../../../../redux/slices/flowersSlice'
 import { AppDispatch } from '../../../../redux/store/store'
 import './EditNameAndAvatar.sass'
 
@@ -46,42 +46,44 @@ const EditNameAndAvatar: React.FC<EditNameAndAvatarProps> = ({
         }
         setError(null)
 
-        dispatch({
-            type: 'flowers/updateFlowerLocally',
-            payload: {
+        const updates = {
+            name,
+            avatar: selectedAvatar,
+        }
+
+       
+
+        dispatch(
+            updateFlowerLocally({
                 id: flowerId,
-                updates: {
-                    name,
-                    avatar: selectedAvatar,
-                },
-            },
-        })
+                updates,
+            }),
+        )
 
         onClose()
 
         try {
+           
+
             await dispatch(
                 updateFlowerData({
                     id: flowerId,
-                    flower: {
-                        name,
-                        avatar: selectedAvatar,
-                    },
+                    flower: updates,
                 }),
             ).unwrap()
 
             toast.success(t('flower_detail.edit_name_avatar.success.updated'))
         } catch (err) {
-            dispatch({
-                type: 'flowers/updateFlowerLocally',
-                payload: {
+           
+            dispatch(
+                updateFlowerLocally({
                     id: flowerId,
                     updates: {
                         name: currentName,
                         avatar: currentAvatar,
                     },
-                },
-            })
+                }),
+            )
 
             const errorMessage = t('flower_detail.edit_name_avatar.error.update_failed')
             setError(errorMessage)

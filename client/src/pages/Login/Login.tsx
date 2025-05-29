@@ -110,7 +110,7 @@ const Login: React.FC = () => {
                         {loading
                             ? t('login_page.loading')
                             : isForgotPassword
-                            ? t('login_page.reset_password_button')
+                            ? t('login_page.reset_password')
                             : t('login_page.button')}
                     </Button>
 

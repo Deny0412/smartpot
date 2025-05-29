@@ -62,10 +62,27 @@ export const removeFlower = createAsyncThunk('flowers/delete', async (id: string
 
 export const updateFlowerData = createAsyncThunk<Flower, { id: string; flower: Partial<Flower> }>(
     'flowers/update',
-    async ({ id, flower }, { rejectWithValue }) => {
+    async ({ id, flower }, { getState, rejectWithValue }) => {
         try {
+            const state = getState() as RootState
+            const currentFlower = state.flowers.flowers.find(f => f._id === id)
+
+            if (!currentFlower) {
+                throw new Error('Flower not found')
+            }
+
             const response = await updateFlower(id, flower)
-            return response
+
+            // If serial_number is explicitly set in flower updates, use that value
+            // Otherwise preserve the current serial_number
+            const serial_number = 'serial_number' in flower ? flower.serial_number : currentFlower.serial_number
+
+            return {
+                ...currentFlower,
+                ...response,
+                serial_number,
+                household_id: currentFlower.household_id,
+            }
         } catch (error) {
             return rejectWithValue(error instanceof Error ? error.message : 'Chyba pri aktualizácii kvetiny')
         }
@@ -96,14 +113,13 @@ export const transplantFlowerWithSmartPotThunk = createAsyncThunk(
     'flowers/transplantWithSmartPot',
     async (
         {
-            flowerId,
+            smartPotSerialNumber,
             targetHouseholdId,
-            smartPotId,
-        }: { flowerId: string; targetHouseholdId: string; smartPotId: string },
+        }: {smartPotSerialNumber: string ; targetHouseholdId: string },
         { rejectWithValue },
     ) => {
         try {
-            return await transplantFlowerWithSmartPot(flowerId, targetHouseholdId, smartPotId)
+            return await transplantFlowerWithSmartPot(smartPotSerialNumber, targetHouseholdId)
         } catch (error) {
             return rejectWithValue(
                 error instanceof Error ? error.message : 'Chyba pri presadzovaní kvetiny s kvetináčom',
@@ -169,13 +185,34 @@ const flowersSlice = createSlice({
         },
         updateFlowerLocally: (state, action: PayloadAction<{ id: string; updates: Partial<Flower> }>) => {
             const { id, updates } = action.payload
-            const flowerIndex = state.flowers.findIndex(flower => flower._id === id)
-            if (flowerIndex !== -1) {
-                state.flowers[flowerIndex] = { ...state.flowers[flowerIndex], ...updates }
+
+            const newState = {
+                ...state,
+                flowers: state.flowers.map(flower => {
+                    if (flower._id === id) {
+                        const updatedFlower = {
+                            ...flower,
+                            ...updates,
+                            serial_number: flower.serial_number,
+                            household_id: flower.household_id,
+                        }
+                        return updatedFlower
+                    }
+                    return flower
+                }),
+                selectedFlower:
+                    state.selectedFlower?._id === id
+                        ? {
+                              ...state.selectedFlower,
+                              ...updates,
+                              serial_number: state.selectedFlower.serial_number,
+                              household_id: state.selectedFlower.household_id,
+                          }
+                        : state.selectedFlower,
             }
-            if (state.selectedFlower?._id === id) {
-                state.selectedFlower = { ...state.selectedFlower, ...updates }
-            }
+
+
+            return newState
         },
     },
     extraReducers: builder => {
@@ -308,10 +345,10 @@ const flowersSlice = createSlice({
             .addCase(detachFlowerFromPotThunk.fulfilled, (state, action: PayloadAction<string>) => {
                 const index = state.flowers.findIndex(flower => flower._id === action.payload)
                 if (index !== -1) {
-                    state.flowers[index] = { ...state.flowers[index], serial_number: '' }
+                    state.flowers[index] = { ...state.flowers[index], serial_number: null }
                 }
                 if (state.selectedFlower?._id === action.payload) {
-                    state.selectedFlower = { ...state.selectedFlower, serial_number: '' }
+                    state.selectedFlower = { ...state.selectedFlower, serial_number: null }
                 }
                 state.loading = false
                 state.error = null
@@ -323,5 +360,5 @@ const flowersSlice = createSlice({
     },
 })
 
-export const { clearSelectedFlower, clearError } = flowersSlice.actions
+export const { clearSelectedFlower, clearError, updateFlowerLocally } = flowersSlice.actions
 export default flowersSlice.reducer

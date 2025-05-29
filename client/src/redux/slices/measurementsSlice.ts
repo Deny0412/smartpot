@@ -27,6 +27,7 @@ export interface MeasurementsByType {
     light: MeasurementValue[]
     humidity: MeasurementValue[]
     battery: MeasurementValue[]
+    soil: MeasurementValue[]
 }
 
 export interface Measurements extends MeasurementsByType {
@@ -59,6 +60,16 @@ const initialState: MeasurementsState = {
     processedMeasurements: {},
 }
 
+const createEmptyMeasurements = (): Measurements => ({
+    water: [],
+    temperature: [],
+    light: [],
+    humidity: [],
+    battery: [],
+    soil: [],
+    lastChange: new Date().toISOString(),
+})
+
 export const startWebSocketConnectionThunk = createAsyncThunk(
     'measurements/startWebSocketConnection',
     async (_, { dispatch, getState }) => {
@@ -69,7 +80,6 @@ export const startWebSocketConnectionThunk = createAsyncThunk(
             dispatch(measurementsSlice.actions.setWebSocketStatus('connecting'))
             webSocketService.connect()
         } else if (measurementsState.webSocketStatus === 'connected') {
-            
         }
     },
 )
@@ -113,7 +123,7 @@ export const fetchMeasurementsForFlower = createAsyncThunk(
             const formattedDateFrom = formatDate(fromDate)
             const formattedDateTo = formatDate(toDate)
 
-            const types = ['water', 'humidity', 'temperature', 'light', 'battery'] as const
+            const types = ['water', 'humidity', 'temperature', 'light', 'battery', 'soil'] as const
             const results = await Promise.all(
                 types.map(async type => {
                     try {
@@ -131,6 +141,7 @@ export const fetchMeasurementsForFlower = createAsyncThunk(
                 light: [],
                 humidity: [],
                 battery: [],
+                soil: [],
             } as MeasurementsByType
 
             results.forEach((result, index) => {
@@ -195,6 +206,7 @@ export const measurementsSlice = createSlice({
                 light: [],
                 humidity: [],
                 battery: [],
+                soil: [],
                 lastChange: new Date().toISOString(),
             }
 
@@ -212,47 +224,23 @@ export const measurementsSlice = createSlice({
         },
         addMeasurement: (state, action: PayloadAction<{ flowerId: string; measurement: MeasurementValue }>) => {
             const { flowerId, measurement } = action.payload
-            
-
-            if (
-                !measurement.type ||
-                !['water', 'temperature', 'light', 'humidity', 'battery'].includes(measurement.type)
-            ) {
-                
-                return
-            }
-
-            const measurementType = measurement.type as keyof MeasurementsByType
 
             if (!state.measurements[flowerId]) {
-                
-                state.measurements[flowerId] = {
-                    water: [],
-                    temperature: [],
-                    light: [],
-                    humidity: [],
-                    battery: [],
-                    lastChange: new Date().toISOString(),
-                }
+                state.measurements[flowerId] = createEmptyMeasurements()
             }
 
             if (!state.processedMeasurements[flowerId]) {
-                state.processedMeasurements[flowerId] = {
-                    water: [],
-                    temperature: [],
-                    light: [],
-                    humidity: [],
-                    battery: [],
-                    lastChange: new Date().toISOString(),
-                }
+                state.processedMeasurements[flowerId] = createEmptyMeasurements()
             }
 
+            const measurementType = measurement.typeOfData as keyof MeasurementsByType
             const measurements = state.measurements[flowerId][measurementType]
             const processedMeasurements = state.processedMeasurements[flowerId][measurementType]
 
-            if (measurements.some(m => m._id === measurement._id)) {
-                
-                return
+            const existingIndex = measurements.findIndex(m => m._id === measurement._id)
+            if (existingIndex !== -1) {
+                measurements.splice(existingIndex, 1)
+                processedMeasurements.splice(existingIndex, 1)
             }
 
             measurements.unshift(measurement)
@@ -261,19 +249,23 @@ export const measurementsSlice = createSlice({
             state.measurements[flowerId].lastChange = new Date().toISOString()
             state.processedMeasurements[flowerId].lastChange = new Date().toISOString()
 
-           
+            state.lastChange = {
+                flowerId,
+                type: measurement.typeOfData,
+                timestamp: new Date().toISOString(),
+            }
         },
         updateMeasurement: (state, action: PayloadAction<{ flowerId: string; measurement: MeasurementValue }>) => {
             const { flowerId, measurement } = action.payload
-            const validTypes = ['water', 'temperature', 'light', 'humidity', 'battery'] as const
+            const validTypes = ['water', 'temperature', 'light', 'humidity', 'battery', 'soil'] as const
             type ValidType = (typeof validTypes)[number]
 
             if (
                 state.measurements[flowerId] &&
-                measurement.type &&
-                validTypes.includes(measurement.type as ValidType)
+                measurement.typeOfData &&
+                validTypes.includes(measurement.typeOfData as ValidType)
             ) {
-                const measurementType = measurement.type as ValidType
+                const measurementType = measurement.typeOfData as ValidType
                 const index = state.measurements[flowerId][measurementType].findIndex(
                     (m: MeasurementValue) => m._id === measurement._id,
                 )
@@ -288,7 +280,7 @@ export const measurementsSlice = createSlice({
             action: PayloadAction<{ flowerId: string; type: MeasurementType; measurementId: string }>,
         ) => {
             const { flowerId, type, measurementId } = action.payload
-            const validTypes = ['water', 'temperature', 'light', 'humidity', 'battery'] as const
+            const validTypes = ['water', 'temperature', 'light', 'humidity', 'battery', 'soil'] as const
             type ValidType = (typeof validTypes)[number]
 
             if (state.measurements[flowerId] && validTypes.includes(type as ValidType)) {
@@ -299,9 +291,7 @@ export const measurementsSlice = createSlice({
                 state.measurements[flowerId].lastChange = new Date().toISOString()
             }
         },
-        clearActiveWebSocketFlowerId: state => {
-           
-        },
+        clearActiveWebSocketFlowerId: state => {},
     },
     extraReducers: builder => {
         builder
@@ -320,6 +310,7 @@ export const measurementsSlice = createSlice({
                         light: [],
                         humidity: [],
                         battery: [],
+                        soil: [],
                         lastChange: new Date().toISOString(),
                     }
                 }
@@ -331,6 +322,7 @@ export const measurementsSlice = createSlice({
                         light: [],
                         humidity: [],
                         battery: [],
+                        soil: [],
                         lastChange: new Date().toISOString(),
                     }
                 }
@@ -395,6 +387,7 @@ export const measurementsSlice = createSlice({
                         light: [],
                         humidity: [],
                         battery: [],
+                        soil: [],
                         lastChange: new Date().toISOString(),
                     }
                 }
@@ -438,9 +431,7 @@ export const measurementsSlice = createSlice({
                 state.processedMeasurements = {}
                 state.lastChange = null
             })
-            .addCase(setActiveWebSocketFlowerId, (state, action) => {
-              
-            })
+            .addCase(setActiveWebSocketFlowerId, (state, action) => {})
     },
 })
 

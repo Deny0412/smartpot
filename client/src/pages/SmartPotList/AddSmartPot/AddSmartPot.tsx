@@ -3,10 +3,11 @@ import { useTranslation } from 'react-i18next'
 import { useDispatch } from 'react-redux'
 import { useParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
+import Button from '../../../components/Button/Button'
 import { H5 } from '../../../components/Text/Heading/Heading'
+import { connectNewSmartPotThunk } from '../../../redux/slices/smartPotsSlice'
 import { AppDispatch } from '../../../redux/store/store'
 import './AddSmartPot.sass'
-import Button from '../../../components/Button/Button'
 
 interface AddSmartPotProps {
     onClose: () => void
@@ -31,14 +32,18 @@ const AddSmartPot: React.FC<AddSmartPotProps> = ({ onClose }) => {
             return
         }
 
+        if (!householdId) {
+            toast.error(t('add_smart_pot.error.household_required'))
+            setLoading(false)
+            return
+        }
+
         try {
-            // TODO: Implementovať pridanie smart potu
-            // await dispatch(addSmartPot({ serialNumber, householdId }))
+            await dispatch(connectNewSmartPotThunk({ serialNumber, householdId }))
             onClose()
             toast.success(t('add_smart_pot.success'))
         } catch (err) {
             setError(t('add_smart_pot.error.general'))
-            
             toast.error(t('add_smart_pot.error.general'))
         } finally {
             setLoading(false)

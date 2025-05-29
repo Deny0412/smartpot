@@ -214,11 +214,15 @@ const EditFlowerHousehold: React.FC<EditFlowerHouseholdProps> = ({
             throw new Error('No smart pot ID provided')
         }
 
+        const currentSmartPot = smartPots.find(pot => pot._id === smartPotId)
+        if (!currentSmartPot) {
+            throw new Error('Smart pot not found')
+        }
+
         await dispatch(
             transplantFlowerWithSmartPotThunk({
-                flowerId,
+                smartPotSerialNumber: currentSmartPot.serial_number,
                 targetHouseholdId: selectedHouseholdId,
-                smartPotId: smartPotId,
             }),
         ).unwrap()
 
@@ -228,7 +232,7 @@ const EditFlowerHousehold: React.FC<EditFlowerHouseholdProps> = ({
         toast.success(t('flower_detail.transplant_success'))
         navigate(`/households/${selectedHouseholdId}/flowers`)
         onClose()
-    }, [dispatch, flowerId, smartPotId, selectedHouseholdId, currentHouseholdId, t, navigate, onClose])
+    }, [dispatch, flowerId, smartPotId, selectedHouseholdId, currentHouseholdId, t, navigate, onClose, smartPots])
 
     const handleDifferentHouseholdWithoutSmartPot = useCallback(async () => {
         await dispatch(
@@ -321,7 +325,6 @@ const EditFlowerHousehold: React.FC<EditFlowerHouseholdProps> = ({
                             ×
                         </button>
                         <H5 variant="primary">{t('flower_detail.transplant_title')}</H5>
-                        <p className="edit-flower-household-description">{t('flower_detail.transplant_description')}</p>
 
                         <form onSubmit={handleSubmit} className="edit-flower-household-form">
                             <div className="edit-flower-household-form-group">
