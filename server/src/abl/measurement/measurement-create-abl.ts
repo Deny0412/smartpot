@@ -97,7 +97,7 @@ async function measurementCreateAbl(data: any, reply: FastifyReply, user: any) {
     data.flower_id = new Types.ObjectId(String(activeFlowerId));
 
     if (rangeCheckResult && rangeCheckResult.outOfRange) {
-      sendToMultipleUsers(usersToNotify, rangeCheckResult);
+      sendToMultipleUsers(usersToNotify, rangeCheckResult, "measurementAlert");
       notificationService.sendEmailNotification(
         usersToNotify,
         rangeCheckResult.message,
@@ -109,7 +109,7 @@ async function measurementCreateAbl(data: any, reply: FastifyReply, user: any) {
       );
       console.log(`Sending notification: ${rangeCheckResult.message}`);
     }
-    sendToMultipleUsers(usersToNotify, data);
+    sendToMultipleUsers(usersToNotify, data, "measurement");
 
     const createdMeasurement = await createMeasurement(data);
     sendCreated(reply, createdMeasurement, "Measurement created successfully");
