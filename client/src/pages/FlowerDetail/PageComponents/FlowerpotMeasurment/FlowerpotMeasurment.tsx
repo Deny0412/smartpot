@@ -24,9 +24,6 @@ interface FlowerpotMeasurmentProps {
     flowerId: string
     householdId: string
     flowerpotData: {
-        name: string
-        status: string
-        flower_avatar: string
         humidity_measurement: Array<{
             timestamp: string
             humidity: number

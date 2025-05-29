@@ -38,6 +38,15 @@ const DisconnectSmarpotModal: React.FC<DisconnectSmarpotModalProps> = ({
         try {
             setIsLoading(true)
             if (type === 'flower') {
+                if (smartPot.active_flower_id) {
+                    await dispatch(
+                        updateFlowerData({
+                            id: smartPot.active_flower_id,
+                            flower: { serial_number: null },
+                        }),
+                    )
+                }
+
                 const response = await dispatch(
                     disconnectSmartPot({ serialNumber, householdId, activeFlowerId: smartPot.active_flower_id }),
                 ).unwrap()
@@ -50,20 +59,20 @@ const DisconnectSmarpotModal: React.FC<DisconnectSmarpotModalProps> = ({
                         }),
                     )
 
-                    if (smartPot.active_flower_id) {
-                        dispatch(
-                            updateFlowerData({
-                                id: smartPot.active_flower_id,
-                                flower: { serial_number: '' },
-                            }),
-                        )
-                    }
-
                     toast.success(t('smart_pot_detail.disconnect_success'))
                 } else {
                     toast.error(response.message || t('smart_pot_detail.disconnect_error'))
                 }
             } else {
+                if (smartPot.active_flower_id) {
+                    await dispatch(
+                        updateFlowerData({
+                            id: smartPot.active_flower_id,
+                            flower: { serial_number: null },
+                        }),
+                    )
+                }
+
                 const response = await dispatch(
                     updateSmartPotThunk({
                         serialNumber,
@@ -79,15 +88,6 @@ const DisconnectSmarpotModal: React.FC<DisconnectSmarpotModalProps> = ({
                             updates: { active_flower_id: null, household_id: null },
                         }),
                     )
-
-                    if (smartPot.active_flower_id) {
-                        dispatch(
-                            updateFlowerData({
-                                id: smartPot.active_flower_id,
-                                flower: { serial_number: '' },
-                            }),
-                        )
-                    }
 
                     toast.success(t('smart_pot_detail.disconnect_from_household_success'))
                 }

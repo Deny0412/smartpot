@@ -218,6 +218,7 @@
     "flower_measurments": {
         "status": "Status",
         "measurements": "measurements",
+        "no_measurements": "No measurements available",
         "measurments": {
             "humidity": "Humidity",
             "temperature": "Temperature",
@@ -251,7 +252,7 @@
         "loading_flowerpot_data": "Loading flowerpot data...",
         "no_value_placeholder": "-",
         "unit": {
-            "lux": "Lux"
+            "lux": "%"
         },
         "error": {
             "invalid_date_format": "Invalid date format"
@@ -496,7 +497,7 @@
         "unit": {
             "celsius": "°C",
             "percent": "%",
-            "lightness": "Lux"
+            "lightness": "%"
         },
         "console": {
             "disconnect_error_prefix": "Error disconnecting flower:",

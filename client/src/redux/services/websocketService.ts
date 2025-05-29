@@ -1,4 +1,5 @@
 import { MeasurementValue } from '../../types/flowerTypes'
+import { addInvite, loadInvites } from '../slices/invitesSlice'
 import { measurementsSlice } from '../slices/measurementsSlice'
 import { AppDispatch } from '../store/store'
 
@@ -21,7 +22,7 @@ class WebSocketService {
 
     setDispatch(dispatch: AppDispatch) {
         this.dispatch = dispatch
-       
+        
     }
 
     prepareForIntentionalDisconnect() {
@@ -33,6 +34,7 @@ class WebSocketService {
         if (this.heartbeatInterval) {
             clearInterval(this.heartbeatInterval)
         }
+        
         this.heartbeatInterval = setInterval(() => {
             if (this.ws?.readyState === WebSocket.OPEN) {
                 
@@ -50,15 +52,16 @@ class WebSocketService {
 
     private stopHeartbeat() {
         if (this.heartbeatInterval) {
+            
             clearInterval(this.heartbeatInterval)
             this.heartbeatInterval = null
         }
     }
 
     connect() {
-      
+        
         if (this.ws) {
-          
+            
             this.ws.close()
             this.ws = null
         }
@@ -85,8 +88,9 @@ class WebSocketService {
             if (!payload.user || !payload.user.id) {
                 throw new Error('Invalid token structure - missing user.id')
             }
-        } catch (error) {
             
+        } catch (error) {
+            console.error('Token validation failed:', error)
             if (this.dispatch) {
                 this.dispatch(measurementsSlice.actions.setWebSocketStatus('error'))
             }
@@ -116,72 +120,79 @@ class WebSocketService {
                     
 
                     if (!this.dispatch) {
+                        
                         return
                     }
 
-                    switch (message.type) {
-                        case 'connection':
+                    if (message.message && message.message.startsWith('Welcome')) {
+                        return
+                    }
+
+                    if (message.echo) {
+                        try {
+                            const echoData = JSON.parse(message.echo)
+                            if (echoData.type === 'ping') {
+                                this.lastPongTime = Date.now()
+                            }
+                        } catch (error) {
+                            console.error('Error parsing echo message:', error)
+                        }
+                        return
+                    }
+
+                    if (message.wsType === 'measurement') {
+                        const measurementData = {
+                            typeOfData: message.data.typeOfData === 'soil' ? 'humidity' : message.data.typeOfData,
+                            value: message.data.value,
+                            flower_id: message.data.flower_id,
+                            createdAt: message.data.createdAt,
+                            updatedAt: message.data.updatedAt,
+                            _id: message.data._id || Date.now().toString(),
+                        }
+
+                        this.dispatch(
+                            measurementsSlice.actions.addMeasurement({
+                                flowerId: message.data.flower_id,
+                                measurement: this.createMeasurementFromData(measurementData),
+                            }),
+                        )
+                        return
+                    }
+
+                    if (message.wsType === 'invite') {
+                        if (this.dispatch) {
+                            this.dispatch(addInvite(message.data))
+                        } else {
+                           
+                        }
+                        return
+                    }
+
+                    if (message.wsType === 'household_decision') {
+                      
+                        if (this.dispatch) {
                             
-                            break
+                            this.dispatch(loadInvites())
+                            
+                        }
+                        return
+                    }
+
+                    
+                    switch (message.type) {
                         case 'pong':
                             
                             this.lastPongTime = Date.now()
                             break
-                        case 'measurement_inserted':
-                           
-                            if (!message.data || !message.data.type) {
-                                
-                                break
-                            }
-                            if (!['water', 'temperature', 'light', 'humidity', 'battery'].includes(message.data.type)) {
-                                
-                                break
-                            }
-
-                            this.dispatch(
-                                measurementsSlice.actions.addMeasurement({
-                                    flowerId: message.data.flower_id,
-                                    measurement: this.createMeasurementFromData(message.data),
-                                }),
-                            )
-                            break
-                        case 'measurement_updated':
-                            if (!message.data || !message.data.type) {
-                                
-                                break
-                            }
-                            this.dispatch(
-                                measurementsSlice.actions.updateMeasurement({
-                                    flowerId: message.data.flower_id,
-                                    measurement: this.createMeasurementFromData(message.data),
-                                }),
-                            )
-                            break
-                        case 'measurement_deleted':
-                            
-                            if (!message.data || !message.data.type) {
-                                
-                                break
-                            }
-                            this.dispatch(
-                                measurementsSlice.actions.removeMeasurement({
-                                    flowerId: message.data.flower_id,
-                                    type: message.data.type,
-                                    measurementId: message.data.measurement_id,
-                                }),
-                            )
-                            break
                         case 'error':
-                            
                             break
                         case 'confirmation':
-                            
                             break
                         default:
                             
                     }
                 } catch (error) {
-                   
+                    console.error('Error processing WebSocket message:', error)
                 }
             }
 
@@ -202,7 +213,7 @@ class WebSocketService {
             }
 
             this.ws.onerror = error => {
-                
+                console.error('WebSocket error:', error)
                 this.stopHeartbeat()
                 if (this.dispatch) {
                     this.dispatch(measurementsSlice.actions.setWebSocketStatus('error'))
@@ -210,7 +221,7 @@ class WebSocketService {
                 this.handleReconnect()
             }
         } catch (error) {
-            
+            console.error('Error creating WebSocket connection:', error)
             this.stopHeartbeat()
             if (this.dispatch) {
                 this.dispatch(measurementsSlice.actions.setWebSocketStatus('error'))
@@ -261,7 +272,6 @@ class WebSocketService {
 
     sendMessage(message: any) {
         if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-            
             this.ws.send(JSON.stringify(message))
         } 
     }
@@ -298,7 +308,7 @@ class WebSocketService {
 
         return {
             _id: data._id || Date.now().toString(),
-            type: data.type,
+            typeOfData: data.typeOfData,
             value: data.value,
             createdAt,
             updatedAt,

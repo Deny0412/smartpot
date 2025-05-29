@@ -164,7 +164,7 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
                 name: string
                 household_id: string
                 avatar: string
-                serial_number: string
+                serial_number: string | null
                 profile_id: string | null
                 profile: {
                     humidity: { min: number; max: number }
@@ -175,7 +175,7 @@ const AddFlower: React.FC<AddFlowerProps> = ({ onClose }) => {
                 name: name || t('add_flower.default_flower_name'),
                 household_id: householdId || '',
                 avatar: selectedAvatar || '',
-                serial_number: '',
+                serial_number: null,
                 profile_id: null,
                 profile: {
                     humidity: { min: 40, max: 60 },

@@ -9,6 +9,7 @@ import {
 } from "../../middleware/response-handler";
 import householdInviteDao from "../../dao/household/household-invite-dao";
 import householdGetDao from "../../dao/household/household-get-dao";
+import { sendToUser } from "../../plugins/websocket/sender";
 
 const schema = {
   type: "object",
@@ -66,6 +67,8 @@ async function householdInviteAbl(data: Object, reply: FastifyReply) {
       String(data.id),
       String(data.invited_user_id)
     );
+
+    sendToUser(String(data.invited_user_id), updatedHousehold, "invite");
     sendSuccess(reply, updatedHousehold, "User invited successfully");
   } catch (error) {
     sendError(reply, error);

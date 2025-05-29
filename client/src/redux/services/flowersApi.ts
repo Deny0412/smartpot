@@ -1,4 +1,3 @@
-import { AxiosError } from 'axios'
 import { Flower, FlowerProfile, Schedule, ScheduleResponse, SmartPot } from '../../types/flowerTypes'
 import { api } from './api'
 
@@ -36,7 +35,11 @@ export const fetchFlowerDetails = async (flowerId: string): Promise<{ status: st
 }
 
 export const addFlower = async (flower: Omit<Flower, '_id'>): Promise<Flower> => {
-    const response = await api.post<{ status: string; data: Flower }>('/flower/add', flower)
+    const flowerWithNullSerial = {
+        ...flower,
+        serial_number: null,
+    }
+    const response = await api.post<{ status: string; data: Flower }>('/flower/add', flowerWithNullSerial)
 
     if (!response.data.data) {
         throw new Error('ID from flower not returned from server')
@@ -61,7 +64,7 @@ export const deleteFlower = async (id: string): Promise<void> => {
             household_id: flower.household_id,
         })
 
-        await updateFlower(id, { serial_number: '' })
+        await updateFlower(id, { serial_number: null })
     }
 
     await api.delete(`/flower/delete/${id}`)
@@ -141,7 +144,7 @@ export const createSmartPot = async (smartPot: Omit<SmartPot, 'id'>): Promise<Sm
 }
 
 export const updateSmartPot = async (id: string, smartPot: Partial<SmartPot>): Promise<SmartPot> => {
-    const response = await api.put<SmartPot>(`/smart-pots/${id}`, smartPot)
+    const response = await api.put<SmartPot>(`/smart-pot/update`, smartPot)
     return response.data
 }
 
@@ -152,47 +155,12 @@ export const updateFlower = async (id: string, flower: Partial<Flower>): Promise
 }
 
 export const transplantFlowerWithSmartPot = async (
-    flowerId: string,
+    smartPotSerialNumber: string,
     targetHouseholdId: string,
-    smartPotId: string,
 ): Promise<Flower> => {
     try {
-        const flowerDetails = await fetchFlowerDetails(flowerId)
-        if (!flowerDetails.data.serial_number) {
-            throw new Error('Flower has no smart pot')
-        }
-
-        const smartPot = await api.get<{ status: string; data: SmartPot }>(
-            `/smart-pot/get/household_id=${flowerDetails.data.household_id}`,
-        )
-
-        if (!smartPot.data.data) {
-            throw new Error('Smart pot not found')
-        }
-
-        const serialNumber = smartPot.data.data.serial_number
-
-        await api.put('/flower/update', {
-            id: flowerId,
-            serial_number: '',
-            household_id: targetHouseholdId,
-        })
-
-        await api.put('/smart-pot/update', {
-            serial_number: serialNumber,
-            active_flower_id: null,
-            household_id: targetHouseholdId,
-        })
-
-        const response = await api.put<{ status: string; data: Flower }>('/flower/update', {
-            id: flowerId,
-            serial_number: serialNumber,
-            household_id: targetHouseholdId,
-        })
-
-        await api.put('/smart-pot/update', {
-            serial_number: serialNumber,
-            active_flower_id: flowerId,
+        const response = await api.post('/smart-pot/transplant-smartpot-with-flower', {
+            serial_number: smartPotSerialNumber,
             household_id: targetHouseholdId,
         })
 
@@ -221,7 +189,7 @@ export const transplantFlowerWithoutSmartPot = async (
 
             await api.put('/flower/update', {
                 id: flowerId,
-                serial_number: '',
+                serial_number: null,
                 household_id: targetHouseholdId,
             })
 
@@ -247,7 +215,7 @@ export const transplantFlowerWithoutSmartPot = async (
 
             await api.put('/flower/update', {
                 id: flowerId,
-                serial_number: '',
+                serial_number: null,
                 household_id: targetHouseholdId,
             })
         }
@@ -283,7 +251,7 @@ export const transplantFlowerToSmartPot = async (
             })
         }
 
-        const response = await api.put<{ status: string; data: Flower }>(`/flower/update`, {
+        await api.put<{ status: string; data: Flower }>(`/flower/update`, {
             id: flowerId,
             serial_number: smartPot.data.data.serial_number,
         })
@@ -294,7 +262,8 @@ export const transplantFlowerToSmartPot = async (
             household_id: householdId,
         })
 
-        return response.data.data
+        const updatedFlower = await fetchFlowerDetails(flowerId)
+        return updatedFlower.data
     } catch (error) {
         throw error
     }
@@ -317,7 +286,7 @@ export const detachFlower = async (
                 household_id: flowerDetails.data.household_id,
             })
         }
-        await api.put('/flower/update', { id: flowerId, serial_number: '' })
+        await api.put('/flower/update', { id: flowerId, serial_number: null })
         return { success: true }
     } catch (error) {
         return {

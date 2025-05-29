@@ -224,6 +224,7 @@
     "flower_measurments": {
         "status": "Stav",
         "measurements": "měření",
+        "no_measurements": "Žádná měření k dispozici",
         "measurments": {
             "humidity": "Vlhkost",
             "temperature": "Teplota",
@@ -257,7 +258,7 @@
         "loading_flowerpot_data": "Načítám data květináče...",
         "no_value_placeholder": "-",
         "unit": {
-            "lux": "Lux"
+            "lux": "%"
         },
         "error": {
             "invalid_date_format": "Neplatný formát data"
@@ -502,7 +503,7 @@
         "unit": {
             "celsius": "°C",
             "percent": "%",
-            "lightness": "Lux"
+            "lightness": "%"
         },
         "console": {
             "disconnect_error_prefix": "Chyba při odpojení květiny:",

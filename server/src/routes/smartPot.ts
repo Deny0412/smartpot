@@ -47,4 +47,12 @@ export default async function smartpotRoutes(fastify: FastifyInstance) {
     },
     smartpotController.listByHousehold
   );
+  fastify.post(
+    "/transplant-smartpot-with-flower",
+    {
+      onRequest: [authMiddleware],
+      preHandler: [householdAuthMidlleware([OWNER_ROLE])],
+    },
+    smartpotController.transplantSmartpotWithFlower
+  );
 }

@@ -1,6 +1,6 @@
 import FlowerModel, { IFlower } from "../../models/Flower";
 
-async function flowerUpdateDao(id: string, flowerData: IFlower) {
+async function flowerUpdateDao(id: string, flowerData: any) {
   console.log("flowerData", flowerData.profile);
   const existingFlower = await FlowerModel.findById(id);
   if (!existingFlower) {

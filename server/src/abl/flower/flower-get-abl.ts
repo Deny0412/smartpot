@@ -14,7 +14,6 @@ async function flowerGetAbl(id: string, reply: FastifyReply) {
     if (!MongoValidator.validateId(id)) {
       return sendClientError(reply, "Invalid flower ID format");
     }
-
     const flower = await getFlower(id);
     if (!flower) {
       return sendNotFound(reply, "Flower not found");

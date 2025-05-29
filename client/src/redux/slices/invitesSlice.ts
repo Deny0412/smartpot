@@ -46,6 +46,12 @@ const invitesSlice = createSlice({
         clearError: state => {
             state.error = null
         },
+        addInvite: (state, action: PayloadAction<HouseholdInvite>) => {
+            const exists = state.invites.some(invite => invite._id === action.payload._id)
+            if (!exists) {
+                state.invites.push(action.payload)
+            }
+        },
     },
     extraReducers: builder => {
         builder
@@ -88,5 +94,5 @@ const invitesSlice = createSlice({
     },
 })
 
-export const { clearError } = invitesSlice.actions
+export const { clearError, addInvite } = invitesSlice.actions
 export default invitesSlice.reducer

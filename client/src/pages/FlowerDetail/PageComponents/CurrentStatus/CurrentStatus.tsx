@@ -6,7 +6,7 @@ import { selectLastChange } from '../../../../redux/selectors/measurementSelecto
 import { MeasurementValue } from '../../../../types/flowerTypes'
 import './CurrentStatus.sass'
 
-type FlowerpotMeasurementType = 'humidity' | 'temperature' | 'light' | 'battery'
+type FlowerpotMeasurementType = 'humidity' | 'temperature' | 'light' | 'battery' /* | 'water' */
 
 interface CurrentStatusProps {
     measurements: {
@@ -14,6 +14,14 @@ interface CurrentStatusProps {
         temperature?: MeasurementValue[]
         light?: MeasurementValue[]
         battery?: MeasurementValue[]
+        water?: MeasurementValue[]
+    }
+    flower?: {
+        profile?: {
+            humidity?: { min: number; max: number }
+            temperature?: { min: number; max: number }
+            light?: { min: number; max: number }
+        }
     }
 }
 
@@ -39,7 +47,7 @@ const itemVariants = {
     },
 }
 
-const CurrentStatus: React.FC<CurrentStatusProps> = ({ measurements }) => {
+const CurrentStatus: React.FC<CurrentStatusProps> = ({ measurements, flower }) => {
     const { t } = useTranslation()
     const lastChange = useSelector(selectLastChange)
 
@@ -63,9 +71,18 @@ const CurrentStatus: React.FC<CurrentStatusProps> = ({ measurements }) => {
         }
 
         const limits = {
-            humidity: { min: 30, max: 70 },
-            temperature: { min: 15, max: 30 },
-            light: { min: 1000, max: 10000 },
+            humidity: {
+                min: flower?.profile?.humidity?.min ?? 30,
+                max: flower?.profile?.humidity?.max ?? 70,
+            },
+            temperature: {
+                min: flower?.profile?.temperature?.min ?? 15,
+                max: flower?.profile?.temperature?.max ?? 30,
+            },
+            light: {
+                min: flower?.profile?.light?.min ?? 100,
+                max: flower?.profile?.light?.max ?? 1000,
+            },
         }
 
         const currentLimits = limits[type] || { min: 0, max: 100 }

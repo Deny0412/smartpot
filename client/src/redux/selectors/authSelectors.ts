@@ -10,7 +10,15 @@ export const selectUserId = (state: RootState) => state.auth.user?.id
 
 export const selectUserFullName = (state: RootState) => {
     const user = state.auth.user
-    return user ? `${user.name} ${user.surname}` : ''
+    if (!user) return ''
+
+    try {
+        const name = decodeURIComponent(escape(user.name || ''))
+        const surname = decodeURIComponent(escape(user.surname || ''))
+        return `${name} ${surname}`
+    } catch (e) {
+        return `${user.name} ${user.surname}`
+    }
 }
 
 export const selectIsAuthenticated = (state: RootState) => !!state.auth.user

@@ -81,7 +81,7 @@ async function measurementCreateAbl(data: any, reply: FastifyReply, user: any) {
     const rangeCheckResult = isValueOutOfRange(
       data.typeOfData as string,
       data.value as number,
-      flower as IFlower
+      flower as unknown as IFlower
     );
     const householdOwner = await getUser(String(household?.owner));
     const memberIds = household?.members || [];
@@ -93,22 +93,24 @@ async function measurementCreateAbl(data: any, reply: FastifyReply, user: any) {
     if (householdOwner) {
       usersToNotify.push(householdOwner);
     }
+
+    data.flower_id = new Types.ObjectId(String(activeFlowerId));
+
     if (rangeCheckResult && rangeCheckResult.outOfRange) {
-      sendToMultipleUsers(usersToNotify, rangeCheckResult);
+      /* sendToMultipleUsers(usersToNotify, rangeCheckResult, "measurementAlert");
       notificationService.sendEmailNotification(
         usersToNotify,
         rangeCheckResult.message,
         rangeCheckResult
-      );
-      notificationService.sendDiscordNotification(
+      ); */
+      /* notificationService.sendDiscordNotification(
         rangeCheckResult.message,
         rangeCheckResult
-      );
+      ); */
       console.log(`Sending notification: ${rangeCheckResult.message}`);
     }
-    sendToMultipleUsers(usersToNotify, data);
+    sendToMultipleUsers(usersToNotify, data, "measurement");
 
-    data.flower_id = new Types.ObjectId(String(activeFlowerId));
     const createdMeasurement = await createMeasurement(data);
     sendCreated(reply, createdMeasurement, "Measurement created successfully");
   } catch (error) {

@@ -1,5 +1,5 @@
 import { AxiosError } from 'axios'
-import { SmartPot } from '../../types/flowerTypes'
+import { SmartPot , Flower} from '../../types/flowerTypes'
 import { api } from './api'
 import { updateFlower } from './flowersApi'
 
@@ -8,11 +8,19 @@ export const loadSmartPots = async (householdId: string): Promise<SmartPot[]> =>
     return response.data.data
 }
 
-export const updateSmartPot = async (serialNumber: string, smartPot: Partial<SmartPot>): Promise<SmartPot> => {
+export const updateSmartPot = async (serialNumber: string | null, smartPot: Partial<SmartPot>): Promise<SmartPot> => {
     const response = await api.put<{ status: string; data: SmartPot }>('/smart-pot/update', {
         serial_number: serialNumber,
         active_flower_id: smartPot.active_flower_id,
         household_id: smartPot.household_id,
+    })
+    return response.data.data
+}
+
+export const connectNewSmartPot = async (serialNumber: string, householdId: string): Promise<SmartPot> => {
+    const response = await api.put<{ status: string; data: SmartPot }>('/smart-pot/update', {
+        serial_number: serialNumber,
+        household_id: householdId,
     })
     return response.data.data
 }
@@ -30,67 +38,49 @@ export const disconnectSmartPot = async (
         }
 
         if (activeFlowerId) {
-            await updateFlower(activeFlowerId, { serial_number: '' })
+            await updateFlower(activeFlowerId, { serial_number: null })
         }
 
         const response = await api.put('/smart-pot/update', requestData)
         return { success: true, data: response.data.data }
     } catch (error) {
         console.error('Error disconnecting smart pot:', error)
-        if (error instanceof AxiosError && error.response) {
-            console.error('Error response data:', error.response.data)
-            console.error('Error response status:', error.response.status)
-        }
+        
         return { success: false, message: 'Failed to disconnect smart pot' }
     }
 }
 
+
+
 export const transplantSmartPotWithFlower = async (
     smartPotSerialNumber: string,
     targetHouseholdId: string,
-    flowerId: string,
-): Promise<{ success: boolean; message?: string }> => {
+): Promise<Flower> => {
     try {
-        await api.put('/flower/update', {
-            id: flowerId,
-            serial_number: '',
-            household_id: targetHouseholdId,
-        })
-
-        await api.put('/smart-pot/update', {
-            serial_number: smartPotSerialNumber,
-            household_id: targetHouseholdId,
-            active_flower_id: null,
-        })
-
-        await api.put('/flower/update', {
-            id: flowerId,
+        const response = await api.post('/smart-pot/transplant-smartpot-with-flower', {
             serial_number: smartPotSerialNumber,
             household_id: targetHouseholdId,
         })
 
-        await api.put('/smart-pot/update', {
-            serial_number: smartPotSerialNumber,
-            household_id: targetHouseholdId,
-            active_flower_id: flowerId,
-        })
-
-        return { success: true, message: 'Smart pot transplanted successfully' }
+        return response.data.data
     } catch (error) {
-        console.error('Transplant smartpot with flower error:', error)
-        return { success: false, message: 'Failed to transplant smart pot' }
+        throw error
     }
 }
 
 export const transplantSmartPotWithoutFlower = async (
     smartPotSerialNumber: string,
-    newSmartPotSerialNumber: string,
+    newSmartPotSerialNumber: string | null,
     targetHouseholdId: string,
     currentHouseholdId: string,
     assignOldFlower: boolean,
     oldFlowerId: string,
 ): Promise<{ success: boolean; message?: string; data?: SmartPot }> => {
     try {
+        if (!smartPotSerialNumber) {
+            throw new Error('Smart pot serial number is required')
+        }
+
         await api.put('/smart-pot/update', {
             serial_number: smartPotSerialNumber,
             active_flower_id: null,
@@ -98,12 +88,12 @@ export const transplantSmartPotWithoutFlower = async (
         })
         await api.put('/flower/update', {
             id: oldFlowerId,
-            serial_number: '',
+            serial_number: null,
             household_id: currentHouseholdId,
         })
 
         let response
-        
+
         if (assignOldFlower && newSmartPotSerialNumber) {
             await api.put('/smart-pot/update', {
                 serial_number: newSmartPotSerialNumber,
@@ -135,10 +125,7 @@ export const transplantSmartPotWithoutFlower = async (
         }
     } catch (error) {
         console.error('Transplant error:', error)
-        if (error instanceof AxiosError) {
-            console.error('Request data:', error.config?.data)
-            console.error('Response data:', error.response?.data)
-        }
+       
         return { success: false, message: 'Failed to transplant smart pot' }
     }
 }
@@ -148,7 +135,6 @@ export const transplantSmartPotToFlower = async (
     targetFlowerId: string,
 ): Promise<{ success: boolean; message?: string; data?: SmartPot }> => {
     try {
-      
         const flowerResponse = await api.get<{
             status: string
             data: { serial_number: string | null; household_id: string }
@@ -167,7 +153,7 @@ export const transplantSmartPotToFlower = async (
         if (smartPot.active_flower_id) {
             await api.put('/flower/update', {
                 id: smartPot.active_flower_id,
-                serial_number: '',
+                serial_number: null,
                 household_id: householdId,
             })
         }

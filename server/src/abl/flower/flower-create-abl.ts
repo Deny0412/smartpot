@@ -15,7 +15,7 @@ const schema = {
   properties: {
     household_id: { type: "string" },
     name: { type: "string" },
-    serial_number: { type: "string" },
+    //serial_number: { type: "string" },
   },
   required: ["household_id", "name"],
 };
@@ -48,7 +48,7 @@ async function flowerCreateAbl(data: IFlower, reply: FastifyReply) {
         return;
       }
     }
-    if (data.serial_number) {
+    /* if (data.serial_number) {
       const doesSmartPotExist = await checkSmartPotExists(
         data.serial_number.toString()
       );
@@ -56,7 +56,7 @@ async function flowerCreateAbl(data: IFlower, reply: FastifyReply) {
         sendClientError(reply, "Smart pot does not exist");
         return;
       }
-    }
+    } */
     const createdFlower = await flowerCreateDao(data);
     sendCreated(reply, createdFlower, "Flower created successfully");
   } catch (error) {

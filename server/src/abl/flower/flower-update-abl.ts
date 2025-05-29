@@ -19,7 +19,7 @@ const SCHEMA = {
   properties: {
     id: { type: "string" },
     name: { type: "string" },
-    serial_number: { type: "string" },
+    //serial_number: { type: "string" },
     household_id: { type: "string" },
     profile: {
       type: "object",
@@ -70,7 +70,7 @@ async function flowerUpdateAbl(data: IFlower, reply: FastifyReply) {
       return sendClientError(reply, "Invalid flower ID format");
     }
 
-    if (data.serial_number) {
+    /*  if (data.serial_number) {
       const doesSerialNumberExist = await smartpotGetBySerialNumberDao(
         data.serial_number
       );
@@ -81,7 +81,7 @@ async function flowerUpdateAbl(data: IFlower, reply: FastifyReply) {
         );
         return;
       }
-    }
+    } */
 
     const old_flower = await flowerGetDao(data.id);
     if (!old_flower) {
@@ -93,17 +93,17 @@ async function flowerUpdateAbl(data: IFlower, reply: FastifyReply) {
       data.household_id = old_flower.household_id;
     }
 
-    const old_serial_number = old_flower.serial_number;
+    /*  const old_serial_number = old_flower.serial_number;
     const old_smart_pot = await smartpotGetBySerialNumberDao(
       String(old_serial_number)
-    );
+    ); */
 
-    const new_smart_pot = data.serial_number
+    /*  const new_smart_pot = data.serial_number
       ? await smartpotGetBySerialNumberDao(String(data.serial_number))
-      : null;
+      : null;  */
 
     // Logic for when the flower is moved to a different smartpot
-    if (
+    /* if (
       old_smart_pot &&
       old_smart_pot.active_flower_id?.toString() ===
         old_flower._id?.toString() &&
@@ -115,12 +115,12 @@ async function flowerUpdateAbl(data: IFlower, reply: FastifyReply) {
         household_id: old_smart_pot.household_id,
       };
       await updateSmartPot(updateData as unknown as ISmartPot);
-    }
+    } */
 
     // Validate household consistency
     if (
-      new_smart_pot?.household_id.toString() !==
-        old_flower?.household_id.toString() &&
+      //new_smart_pot?.household_id.toString() !==
+      //old_flower?.household_id.toString() &&
       !data.household_id
     ) {
       sendClientError(
@@ -130,22 +130,22 @@ async function flowerUpdateAbl(data: IFlower, reply: FastifyReply) {
       return;
     }
 
-    if (
-      data.serial_number &&
-      data.household_id &&
-      new_smart_pot?.household_id.toString() !== data.household_id.toString()
+    /* if (
+      //data.serial_number &&
+      data.household_id
+      // && new_smart_pot?.household_id.toString() !== data.household_id.toString()
     ) {
       sendClientError(
         reply,
         "Flower must be from the same household as the smartpot"
       );
       return;
-    }
+    } */
 
     // Handle household change
-    if (data.household_id?.toString() !== old_flower.household_id?.toString()) {
+    /*  if (data.household_id?.toString() !== old_flower.household_id?.toString()) {
       data.serial_number = "";
-    }
+    } */
 
     const updatedFlower = await updateFlower(String(data.id), data);
     if (!updatedFlower) {

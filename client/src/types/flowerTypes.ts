@@ -33,25 +33,23 @@ export interface HumidityMeasurement extends BaseMeasurement {
     type: 'humidity'
 }
 
-export type MeasurementType = 'water' | 'temperature' | 'light' | 'humidity' | 'battery'
-export type MeasurementValue =
-    | WaterMeasurement
-    | TemperatureMeasurement
-    | LightMeasurement
-    | HumidityMeasurement
-    | BatteryMeasurement
-
-interface MeasurementSettings {
-    min: number
-    max: number
+export interface MeasurementValue {
+    _id?: string
+    typeOfData: 'water' | 'temperature' | 'light' | 'humidity' | 'battery' | 'soil'
+    value: number | string
+    createdAt: string
+    updatedAt: string
+    flower_id?: string
 }
+
+export type MeasurementType = 'water' | 'temperature' | 'light' | 'humidity' | 'battery' | 'soil'
 
 export interface Flower {
     _id: string
     name: string
     household_id: string
     avatar?: string
-    serial_number: string | null
+    serial_number?: string | null
     profile_id: string | null
     profile?: {
         humidity: { min: number; max: number }

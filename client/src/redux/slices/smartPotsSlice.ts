@@ -2,6 +2,7 @@ import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { SmartPot } from '../../types/flowerTypes'
 import { api } from '../services/api'
 import {
+    connectNewSmartPot,
     disconnectSmartPot as disconnectSmartPotApi,
     loadSmartPots,
     transplantSmartPotToFlower,
@@ -94,13 +95,12 @@ export const transplantSmartPotWithFlowerThunk = createAsyncThunk(
     async (
         {
             smartPotSerialNumber,
-            targetHouseholdId,
-            flowerId,
-        }: { smartPotSerialNumber: string; targetHouseholdId: string; flowerId: string },
+            targetHouseholdId
+        }: { smartPotSerialNumber: string ; targetHouseholdId: string },
         { rejectWithValue },
     ) => {
         try {
-            await transplantSmartPotWithFlower(smartPotSerialNumber, targetHouseholdId, flowerId)
+            await transplantSmartPotWithFlower(smartPotSerialNumber , targetHouseholdId)
         } catch (error) {
             return rejectWithValue(error instanceof Error ? error.message : 'Chyba pri presádzaní smartpotu s kvetinou')
         }
@@ -128,7 +128,6 @@ export const transplantSmartPotWithoutFlowerThunk = createAsyncThunk(
         { rejectWithValue },
     ) => {
         try {
-           
             const currentSmartPotResponse = await api.get<{ status: string; data: SmartPot }>(
                 `/smart-pot/get/${smartPotId}?household_id=${oldHouseholdId}`,
             )
@@ -142,8 +141,7 @@ export const transplantSmartPotWithoutFlowerThunk = createAsyncThunk(
                 throw new Error('Current smart pot has no household ID')
             }
 
-            
-            let newSmartPotSerialNumber = ''
+            let newSmartPotSerialNumber = null
             if (assignOldFlower) {
                 const newSmartPotResponse = await api.get<{ status: string; data: SmartPot }>(
                     `/smart-pot/get/${selectedNewSmartPotId}?household_id=${oldHouseholdId}`,
@@ -179,16 +177,28 @@ export const updateSmartPotThunk = createAsyncThunk(
             serialNumber,
             activeFlowerId,
             householdId,
-        }: { serialNumber: string; activeFlowerId: string | null; householdId: string | null },
+        }: { serialNumber: string | null; activeFlowerId: string | null; householdId: string | null },
         { rejectWithValue },
     ) => {
         try {
-            return await updateSmartPotApi(serialNumber, {
+            return await updateSmartPotApi(serialNumber ?? null, {
                 active_flower_id: activeFlowerId,
                 household_id: householdId,
             })
         } catch (error) {
             return rejectWithValue(error instanceof Error ? error.message : 'Chyba pri update smartpotu')
+        }
+    },
+)
+
+export const connectNewSmartPotThunk = createAsyncThunk(
+    'smartPots/connectNew',
+    async ({ serialNumber, householdId }: { serialNumber: string; householdId: string }, { rejectWithValue }) => {
+        try {
+            const result = await connectNewSmartPot(serialNumber, householdId)
+            return result
+        } catch (error) {
+            return rejectWithValue(error instanceof Error ? error.message : 'Chyba pri pripájaní smart potu')
         }
     },
 )
@@ -330,6 +340,19 @@ const smartPotsSlice = createSlice({
                 state.error = null
             })
             .addCase(updateSmartPotThunk.rejected, (state, action) => {
+                state.loading = false
+                state.error = action.payload as string
+            })
+            .addCase(connectNewSmartPotThunk.pending, state => {
+                state.loading = true
+                state.error = null
+            })
+            .addCase(connectNewSmartPotThunk.fulfilled, (state, action: PayloadAction<SmartPot>) => {
+                state.smartPots.push(action.payload)
+                state.loading = false
+                state.error = null
+            })
+            .addCase(connectNewSmartPotThunk.rejected, (state, action) => {
                 state.loading = false
                 state.error = action.payload as string
             })

@@ -37,20 +37,24 @@ const App = () => {
 
     useEffect(() => {
         const initializeApp = async () => {
-            await dispatch(checkAuthStatus())
-            initializeWebSocket(dispatch)
+          
+            try {
+                await dispatch(checkAuthStatus())
+                
+                initializeWebSocket(dispatch)
+            } catch (error) {
+                console.error('Error during initialization:', error)
+            }
         }
         initializeApp()
     }, [dispatch])
 
-  
     useEffect(() => {
         if (user && ['disconnected', 'error', 'idle'].includes(webSocketStatus)) {
             dispatch(startWebSocketConnection())
         }
     }, [dispatch, user, webSocketStatus])
 
- 
     useEffect(() => {
         const handleVisibilityChange = () => {
             if (document.visibilityState === 'visible' && user) {
