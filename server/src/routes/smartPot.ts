@@ -36,7 +36,7 @@ export default async function smartpotRoutes(fastify: FastifyInstance) {
     "/update",
     {
       onRequest: [authMiddleware], // Authenticate first
-      preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
+      //preHandler: [householdAuthMidlleware([OWNER_ROLE, MEMBER_ROLE])], // Then check household auth
     },
     smartpotController.update
   );
