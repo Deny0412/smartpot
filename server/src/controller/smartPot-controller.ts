@@ -12,6 +12,15 @@ interface Params {
   id: string;
   household_id?: string;
 }
+
+interface AuthenticatedRequest extends FastifyRequest {
+  user: {
+    user: {
+      id: string;
+    };
+  };
+}
+
 export const smartpotController = {
   create: async (request: FastifyRequest, reply: FastifyReply) => {
     try {
@@ -59,8 +68,8 @@ export const smartpotController = {
   ) => {
     try {
       const data = request.body as any;
-
-      data.user_id = request.user?.user.id;
+      const authRequest = request as AuthenticatedRequest;
+      data.user_id = authRequest.user.user.id;
       await smartpotTransplantAbl(data, reply);
     } catch (error) {
       sendError(reply, error);
