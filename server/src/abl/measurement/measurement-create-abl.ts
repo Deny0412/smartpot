@@ -97,20 +97,21 @@ async function measurementCreateAbl(data: any, reply: FastifyReply, user: any) {
     data.flower_id = new Types.ObjectId(String(activeFlowerId));
 
     if (rangeCheckResult && rangeCheckResult.outOfRange) {
-
-      /* sendToMultipleUsers(usersToNotify, rangeCheckResult, "measurementAlert");
       sendToMultipleUsers(usersToNotify, rangeCheckResult, "measurementAlert");
-      notificationService.sendEmailNotification(
-        usersToNotify,
-        rangeCheckResult.message,
-        rangeCheckResult
-      ); */
-      /* notificationService.sendDiscordNotification(
-        rangeCheckResult.message,
-        rangeCheckResult
-      ); */
-      console.log(`Sending notification: ${rangeCheckResult.message}`);
+      if (data.typeOfData == "soil") {
+        notificationService.sendEmailNotification(
+          usersToNotify,
+          rangeCheckResult.message,
+          rangeCheckResult
+        );
+        notificationService.sendDiscordNotification(
+          rangeCheckResult.message,
+          rangeCheckResult
+        );
+        console.log(`Sending notification: ${rangeCheckResult.message}`);
+      }
     }
+
     sendToMultipleUsers(usersToNotify, data, "measurement");
 
     const createdMeasurement = await createMeasurement(data);
