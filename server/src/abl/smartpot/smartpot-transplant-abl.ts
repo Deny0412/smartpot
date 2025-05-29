@@ -29,7 +29,7 @@ const schema = {
 interface SmartPotTransplantData {
   serial_number: string;
   household_id: string;
-  user_id: { id: string };
+  user_id: string;
 }
 
 async function smartpotTransplantAbl(
@@ -142,6 +142,21 @@ async function smartpotTransplantAbl(
       const flower = await flowerGetDao(
         existingSmartPot.active_flower_id.toString()
       );
+      /* if (
+        flower &&
+        existsHousehold &&
+        flower.household_id?.toString() !== existsHousehold._id?.toString()
+      ) {
+        console.log("[DEBUG] Flower household mismatch:", {
+          flower_household: flower.household_id?.toString(),
+          target_household: existsHousehold._id?.toString(),
+        });
+        sendClientError(
+          reply,
+          "Flower is not in the same household as smartpot."
+        );
+        return;
+      } */
     }
 
     //smart nemá aktivní flower
