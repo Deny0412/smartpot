@@ -15,7 +15,7 @@ async function sendEmailNotification(
   message: string,
   data: any
 ) {
-  try {
+  /* try {
     const { token } = await oAuth2Client.getAccessToken();
 
     const transporter = nodemailer.createTransport(<SMTPTransport.Options>{
@@ -45,7 +45,7 @@ async function sendEmailNotification(
     }
   } catch (error) {
     console.error(error);
-  }
+  } */
 }
 
 import axios from "axios";
