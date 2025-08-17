@@ -53,7 +53,9 @@ Tento projekt je zaměřený na vytvoření **chytrého květináče**, který a
 ---
 
 ## 📸 Ukázky
+![IMG_4709](https://github.com/user-attachments/assets/8d468c96-03f1-4dc7-9cd5-ad49007c840f)
+![IMG_4711](https://github.com/user-attachments/assets/aa0be4a0-9df2-4f55-9351-982cfa36b2b8)
 
-> *(Sem můžeš dát později fotky květináče, schéma zapojení nebo screen z aplikace)*
+> 
 
 ---
